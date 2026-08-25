@@ -20,7 +20,13 @@ import {
   BookOpen,
   CalendarClock,
   Globe,
+  CandlestickChart,
+  ClipboardCheck,
+  ScrollText,
+  Receipt,
+  ShieldAlert,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   applyTheme,
   getStoredUser,
@@ -33,7 +39,15 @@ import { api } from "@/lib/api";
 import { LoaderOverlay } from "@/components/Loader";
 import { Brand } from "@/components/fx";
 
-const NAV_SECTIONS = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  /** Match this href exactly, ignoring child routes. */
+  exact?: boolean;
+}
+
+const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Command",
     items: [
@@ -51,6 +65,16 @@ const NAV_SECTIONS = [
       { name: "AI Bots", href: "/ai-calling-bots", icon: Bot },
       { name: "AI Chat", href: "/bot-chat", icon: MessageSquareText },
       { name: "WebPilot", href: "/web-pilot", icon: Globe },
+    ],
+  },
+  {
+    label: "Markets",
+    items: [
+      { name: "Trade Desk", href: "/trade-agent", icon: CandlestickChart, exact: true },
+      { name: "Proposals", href: "/trade-agent/proposals", icon: ClipboardCheck },
+      { name: "Agent Runs", href: "/trade-agent/runs", icon: ScrollText },
+      { name: "Orders", href: "/trade-agent/orders", icon: Receipt },
+      { name: "Risk Policy", href: "/trade-agent/policy", icon: ShieldAlert },
     ],
   },
   {
@@ -133,9 +157,11 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
               </p>
               <div className="space-y-0.5">
                 {section.items.map((item) => {
+                  // `exact` keeps a section index (e.g. /trade-agent) from
+                  // lighting up alongside its own child routes.
                   const isActive =
                     pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
+                    (!item.exact && pathname.startsWith(item.href + "/"));
                   const Icon = item.icon;
 
                   return (

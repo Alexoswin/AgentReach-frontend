@@ -10,6 +10,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 const REQUEST_TIMEOUT_MS = 8000;
 const AI_REQUEST_TIMEOUT_MS = 45000;
 const IMPORT_REQUEST_TIMEOUT_MS = 60000;
+// A master/worker cycle runs for minutes, not seconds.
+const CYCLE_REQUEST_TIMEOUT_MS = 15 * 60 * 1000;
 
 type ApiPayload = { [key: string]: unknown };
 export type LooseApiResponse = ReturnType<typeof JSON.parse>;
@@ -30,7 +32,37 @@ type SettingsUpdate = {
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
   twilioStatus?: string;
+  callProvider?: "twilio" | "plivo";
+  plivoAuthId?: string;
+  plivoAuthToken?: string;
+  plivoPhoneNumber?: string;
+  plivoStatus?: string;
   geminiStatus?: string;
+  growwApiKey?: string;
+  growwApiSecret?: string;
+  growwTotpSecret?: string;
+  growwStatus?: string;
+  tradeMasterModel?: string;
+  tradeWorkerModel?: string;
+};
+
+type TradePolicyUpdate = {
+  mode?: "paper" | "approval" | "auto";
+  killSwitch?: boolean;
+  reason?: string;
+  maxOrderValue?: number;
+  maxDailyLoss?: number;
+  maxOpenPositions?: number;
+  allowedSegments?: string[];
+  allowNakedOptions?: boolean;
+  marginBuffer?: number;
+  maxTokensPerRun?: number;
+  maxTokensPerDay?: number;
+};
+
+type IntentDecision = {
+  decision: "approve" | "decline";
+  reason?: string;
 };
 
 type GeminiKeyTestPayload = {
@@ -378,12 +410,15 @@ export const api = {
       }),
     testSes: () => request("/settings/test-ses", { method: "POST" }),
     testTwilio: () => request("/settings/test-twilio", { method: "POST" }),
+    testPlivo: () => request("/settings/test-plivo", { method: "POST" }),
     testGemini: (data?: GeminiKeyTestPayload) =>
       request("/settings/test-gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data || {}),
       }),
+    testGroww: () =>
+      request("/settings/test-groww", { method: "POST" }, AI_REQUEST_TIMEOUT_MS),
     previewGeminiVoice: (data: GeminiVoicePreviewPayload) =>
       request(
         "/settings/preview-gemini-voice",
@@ -392,6 +427,65 @@ export const api = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
+  },
+
+  // Trade-Agent
+  tradeAgent: {
+    overview: () => request("/trade-agent/overview"),
+    refreshPortfolio: () =>
+      request(
+        "/trade-agent/portfolio/refresh",
+        { method: "POST" },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
+
+    runs: (limit?: number) =>
+      request(`/trade-agent/runs${limit ? `?limit=${limit}` : ""}`),
+    run: (runId: string) => request(`/trade-agent/runs/${runId}`),
+    startRun: () =>
+      request("/trade-agent/runs", { method: "POST" }, CYCLE_REQUEST_TIMEOUT_MS),
+
+    proposals: (status?: string) =>
+      request(`/trade-agent/proposals${status ? `?status=${status}` : ""}`),
+    decide: (intentId: string, data: IntentDecision) =>
+      request(
+        `/trade-agent/proposals/${intentId}/decide`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
+
+    orders: (limit?: number) =>
+      request(`/trade-agent/orders${limit ? `?limit=${limit}` : ""}`),
+    reconcile: () =>
+      request(
+        "/trade-agent/orders/reconcile",
+        { method: "POST" },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
+
+    riskEvents: (limit?: number) =>
+      request(`/trade-agent/risk-events${limit ? `?limit=${limit}` : ""}`),
+
+    policy: () => request("/trade-agent/policy"),
+    updatePolicy: (data: TradePolicyUpdate) =>
+      request("/trade-agent/policy", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+
+    searchInstruments: (term: string) =>
+      request(`/trade-agent/instruments?q=${encodeURIComponent(term)}`),
+    refreshInstruments: () =>
+      request(
+        "/trade-agent/instruments/refresh",
+        { method: "POST" },
         AI_REQUEST_TIMEOUT_MS,
       ),
   },

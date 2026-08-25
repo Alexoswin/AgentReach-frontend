@@ -687,26 +687,26 @@ export default function CallingCampaignsPage() {
           queryKey: ["calling-campaign", selectedCampaignId],
         });
       }
-      const twilio = result?.twilio;
+      const dialer = result?.twilio;
       if (
-        twilio &&
-        Number(twilio.placed || 0) === 0 &&
-        Number(twilio.failed || 0) > 0
+        dialer &&
+        Number(dialer.placed || 0) === 0 &&
+        Number(dialer.failed || 0) > 0
       ) {
         showAlert(
-          twilio.errors?.[0] ||
-            "Twilio did not queue any calls. Check Twilio settings and PUBLIC_API_URL.",
+          dialer.errors?.[0] ||
+            "The telephony provider did not queue any calls. Check your provider settings and PUBLIC_API_URL.",
           "error",
           "Calling not queued",
         );
         return;
       }
       showAlert(
-        twilio
-          ? `Twilio queued ${twilio.placed || 0} call(s). Failed: ${twilio.failed || 0}.`
+        dialer
+          ? `Queued ${dialer.placed || 0} call(s). Failed: ${dialer.failed || 0}.`
           : variables.isRelaunch
-            ? "The calling campaign has been relaunched. Twilio queue status will appear in the call logs."
-            : "The calling campaign has started. Twilio queue status will appear in the call logs.",
+            ? "The calling campaign has been relaunched. Queue status will appear in the call logs."
+            : "The calling campaign has started. Queue status will appear in the call logs.",
         "success",
         variables.isRelaunch ? "Calling relaunched" : "Calling started",
       );
@@ -1434,16 +1434,33 @@ export default function CallingCampaignsPage() {
     );
   };
 
-  if (
-    settings &&
-    (!settings.twilioAccountSid ||
-      !settings.twilioAuthToken ||
-      !settings.twilioPhoneNumber)
-  ) {
+  const activeProvider = settings?.callProvider === "plivo" ? "plivo" : "twilio";
+  const hasActiveProviderCredentials =
+    activeProvider === "plivo"
+      ? Boolean(
+          settings?.plivoAuthId &&
+            settings?.plivoAuthToken &&
+            settings?.plivoPhoneNumber,
+        )
+      : Boolean(
+          settings?.twilioAccountSid &&
+            settings?.twilioAuthToken &&
+            settings?.twilioPhoneNumber,
+        );
+
+  if (settings && !hasActiveProviderCredentials) {
     return (
       <MissingCredentials
-        title="Twilio Credentials Required"
-        description="To create and manage AI calling campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
+        title={
+          activeProvider === "plivo"
+            ? "Plivo Credentials Required"
+            : "Twilio Credentials Required"
+        }
+        description={
+          activeProvider === "plivo"
+            ? "To create and manage AI calling campaigns, you need to configure your Plivo Auth ID, Auth Token, and Phone Number in settings."
+            : "To create and manage AI calling campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
+        }
       />
     );
   }
@@ -1466,7 +1483,9 @@ export default function CallingCampaignsPage() {
             ? "Relaunching campaign"
             : "Starting AI dialer"
         }
-        sublabel="Queuing calls with your Gemini Live voice agent via Twilio…"
+        sublabel={`Queuing calls with your Gemini Live voice agent via ${
+          activeProvider === "plivo" ? "Plivo" : "Twilio"
+        }…`}
       />
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-zinc-900">

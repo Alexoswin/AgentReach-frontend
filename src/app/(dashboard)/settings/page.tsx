@@ -4,10 +4,54 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
 import { useState, useEffect } from "react";
-import { Settings, Server, Key, Mail, Check, RefreshCw } from "lucide-react";
+import {
+  Settings,
+  Server,
+  Key,
+  Mail,
+  Check,
+  RefreshCw,
+  CandlestickChart,
+  ShieldAlert,
+} from "lucide-react";
 
 const DEFAULT_GEMINI_TEXT_MODEL = "gemini-2.5-flash-lite";
 const MASKED_CREDENTIAL = "••••••••••••••••";
+const DEFAULT_TRADE_MASTER_MODEL = "gemini-pro-latest";
+const DEFAULT_TRADE_WORKER_MODEL = "gemini-flash-latest";
+
+function StatusPill({ status }: { status?: string }) {
+  return (
+    <span
+      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+        status === "CONNECTED"
+          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/10"
+          : status === "FAILED"
+            ? "bg-rose-500/10 text-rose-400 border-rose-500/10"
+            : "bg-zinc-850 text-zinc-400 border-zinc-800"
+      }`}
+    >
+      {status || "DISCONNECTED"}
+    </span>
+  );
+}
+
+/**
+ * The API returns saved credentials masked. If the user has typed something
+ * new that has not been saved yet, keep their text rather than replacing it
+ * with the mask.
+ */
+function keepSecret(incoming: string | undefined, previous: string) {
+  const value = incoming || "";
+  if (
+    value === MASKED_CREDENTIAL &&
+    previous &&
+    previous !== MASKED_CREDENTIAL
+  ) {
+    return previous;
+  }
+  return value;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Settings page                                                      */
@@ -26,7 +70,26 @@ export default function SettingsPage() {
   const [twilioAccountSid, setTwilioAccountSid] = useState("");
   const [twilioAuthToken, setTwilioAuthToken] = useState("");
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
+  const [callProvider, setCallProvider] = useState<"twilio" | "plivo">(
+    "twilio",
+  );
+  const [plivoAuthId, setPlivoAuthId] = useState("");
+  const [plivoAuthToken, setPlivoAuthToken] = useState("");
+  const [plivoPhoneNumber, setPlivoPhoneNumber] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
+
+  // Trade-Agent: Groww
+  const [growwApiKey, setGrowwApiKey] = useState("");
+  const [growwApiSecret, setGrowwApiSecret] = useState("");
+  const [growwTotpSecret, setGrowwTotpSecret] = useState("");
+
+  // Trade-Agent: Gemini model split (the desk reuses the Gemini API key above)
+  const [tradeMasterModel, setTradeMasterModel] = useState(
+    DEFAULT_TRADE_MASTER_MODEL,
+  );
+  const [tradeWorkerModel, setTradeWorkerModel] = useState(
+    DEFAULT_TRADE_WORKER_MODEL,
+  );
 
   // Fetch saved settings
   const { data: settings, isLoading } = useQuery({
@@ -48,6 +111,21 @@ export default function SettingsPage() {
         setTwilioAccountSid(settings.twilioAccountSid || "");
         setTwilioAuthToken(settings.twilioAuthToken || "");
         setTwilioPhoneNumber(settings.twilioPhoneNumber || "");
+        setCallProvider(settings.callProvider === "plivo" ? "plivo" : "twilio");
+        setPlivoAuthId(settings.plivoAuthId || "");
+        setPlivoAuthToken(settings.plivoAuthToken || "");
+        setPlivoPhoneNumber(settings.plivoPhoneNumber || "");
+        setGrowwApiKey((prev) => keepSecret(settings.growwApiKey, prev));
+        setGrowwApiSecret((prev) => keepSecret(settings.growwApiSecret, prev));
+        setGrowwTotpSecret((prev) =>
+          keepSecret(settings.growwTotpSecret, prev),
+        );
+        setTradeMasterModel(
+          settings.tradeMasterModel || DEFAULT_TRADE_MASTER_MODEL,
+        );
+        setTradeWorkerModel(
+          settings.tradeWorkerModel || DEFAULT_TRADE_WORKER_MODEL,
+        );
         setGeminiApiKey((prev) => {
           const incoming = settings.geminiApiKey || "";
           if (
@@ -132,6 +210,33 @@ export default function SettingsPage() {
     },
   });
 
+  const testPlivoMutation = useMutation({
+    mutationFn: api.settings.testPlivo,
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      if (res.success) {
+        showAlert(
+          res.message || "Your Plivo integration is working.",
+          "success",
+          "Plivo settings verified",
+        );
+      } else {
+        showAlert(
+          res.error ||
+            "We could not verify your Plivo integration. Please check details.",
+          "error",
+        );
+      }
+    },
+    onError: (err: Error) => {
+      showAlert(
+        err.message ||
+          "We could not test your Plivo settings. Please try again.",
+        "error",
+      );
+    },
+  });
+
   const testGeminiMutation = useMutation({
     mutationFn: () => api.settings.testGemini({ geminiApiKey }),
     onSuccess: (res) => {
@@ -158,6 +263,31 @@ export default function SettingsPage() {
     },
   });
 
+  const testGrowwMutation = useMutation({
+    mutationFn: api.settings.testGroww,
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      if (res.success) {
+        showAlert(
+          res.message || "Your Groww connection is working.",
+          "success",
+          "Groww verified",
+        );
+      } else {
+        showAlert(
+          res.error || "We could not verify your Groww credentials.",
+          "error",
+        );
+      }
+    },
+    onError: (err: Error) => {
+      showAlert(
+        err.message || "We could not test your Groww connection.",
+        "error",
+      );
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateSettingsMutation.mutate({
@@ -170,6 +300,15 @@ export default function SettingsPage() {
       twilioAccountSid,
       twilioAuthToken,
       twilioPhoneNumber,
+      callProvider,
+      plivoAuthId,
+      plivoAuthToken,
+      plivoPhoneNumber,
+      growwApiKey,
+      growwApiSecret,
+      growwTotpSecret,
+      tradeMasterModel,
+      tradeWorkerModel,
     });
   };
 
@@ -191,7 +330,8 @@ export default function SettingsPage() {
           System Settings
         </h2>
         <p className="text-sm text-zinc-400 mt-1">
-          Configure API credentials for AWS SES, Twilio, and Gemini AI.
+          Configure API credentials for AWS SES, Twilio/Plivo telephony,
+          Gemini AI, and Groww.
         </p>
       </div>
 
@@ -276,90 +416,178 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Twilio Panel */}
+        {/* Telephony Panel (Twilio / Plivo) */}
         <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60">
             <div className="flex items-center gap-2">
               <Server className="h-5 w-5 text-indigo-400" />
               <h3 className="text-base font-bold text-white">
-                Twilio Telephony Configuration
+                Telephony Configuration
               </h3>
             </div>
             <div className="flex items-center gap-4">
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  settings?.twilioStatus === "CONNECTED"
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/10"
-                    : settings?.twilioStatus === "FAILED"
-                      ? "bg-rose-500/10 text-rose-400 border-rose-500/10"
-                      : "bg-zinc-850 text-zinc-400 border-zinc-800"
-                }`}
-              >
-                {settings?.twilioStatus || "DISCONNECTED"}
-              </span>
-              {settings?.twilioLastVerified && (
+              <StatusPill
+                status={
+                  callProvider === "plivo"
+                    ? settings?.plivoStatus
+                    : settings?.twilioStatus
+                }
+              />
+              {(callProvider === "plivo"
+                ? settings?.plivoLastVerified
+                : settings?.twilioLastVerified) && (
                 <span className="text-[10px] text-zinc-500">
                   Verified:{" "}
-                  {new Date(settings.twilioLastVerified).toLocaleString()}
+                  {new Date(
+                    (callProvider === "plivo"
+                      ? settings?.plivoLastVerified
+                      : settings?.twilioLastVerified) as string,
+                  ).toLocaleString()}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Twilio Account SID
-              </label>
-              <input
-                type="text"
-                value={twilioAccountSid}
-                onChange={(e) => setTwilioAccountSid(e.target.value)}
-                placeholder="AC..."
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
-              />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              Active Provider
+            </span>
+            <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl p-1">
+              {(["twilio", "plivo"] as const).map((prov) => (
+                <button
+                  key={prov}
+                  type="button"
+                  onClick={() => setCallProvider(prov)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                    callProvider === prov
+                      ? "bg-indigo-500/20 text-indigo-300"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  {prov}
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Twilio Auth Token
-              </label>
-              <input
-                type="password"
-                value={twilioAuthToken}
-                onChange={(e) => setTwilioAuthToken(e.target.value)}
-                placeholder="••••••••••••••••••••••••••••••••"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Twilio Phone Number
-              </label>
-              <input
-                type="text"
-                value={twilioPhoneNumber}
-                onChange={(e) => setTwilioPhoneNumber(e.target.value)}
-                placeholder="+1234567890"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
-              />
-            </div>
+            <span className="text-[11px] text-zinc-600">
+              Calling campaigns launch through the active provider.
+            </span>
           </div>
 
-          <div className="flex justify-start gap-3 pt-3">
-            <button
-              type="button"
-              disabled={testTwilioMutation.isPending}
-              onClick={() => testTwilioMutation.mutate()}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {testTwilioMutation.isPending ? (
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Server className="h-3.5 w-3.5" />
-              )}
-              Test Twilio Connection
-            </button>
-          </div>
+          {callProvider === "twilio" ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Twilio Account SID
+                  </label>
+                  <input
+                    type="text"
+                    value={twilioAccountSid}
+                    onChange={(e) => setTwilioAccountSid(e.target.value)}
+                    placeholder="AC..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Twilio Auth Token
+                  </label>
+                  <input
+                    type="password"
+                    value={twilioAuthToken}
+                    onChange={(e) => setTwilioAuthToken(e.target.value)}
+                    placeholder="••••••••••••••••••••••••••••••••"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Twilio Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={twilioPhoneNumber}
+                    onChange={(e) => setTwilioPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-start gap-3 pt-3">
+                <button
+                  type="button"
+                  disabled={testTwilioMutation.isPending}
+                  onClick={() => testTwilioMutation.mutate()}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testTwilioMutation.isPending ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Server className="h-3.5 w-3.5" />
+                  )}
+                  Test Twilio Connection
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Plivo Auth ID
+                  </label>
+                  <input
+                    type="text"
+                    value={plivoAuthId}
+                    onChange={(e) => setPlivoAuthId(e.target.value)}
+                    placeholder="MA..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Plivo Auth Token
+                  </label>
+                  <input
+                    type="password"
+                    value={plivoAuthToken}
+                    onChange={(e) => setPlivoAuthToken(e.target.value)}
+                    placeholder="••••••••••••••••••••••••••••••••"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Plivo Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={plivoPhoneNumber}
+                    onChange={(e) => setPlivoPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-start gap-3 pt-3">
+                <button
+                  type="button"
+                  disabled={testPlivoMutation.isPending}
+                  onClick={() => testPlivoMutation.mutate()}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testPlivoMutation.isPending ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Server className="h-3.5 w-3.5" />
+                  )}
+                  Test Plivo Connection
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Gemini Live API Key Panel */}
@@ -429,6 +657,56 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Trade-Agent model split — same key, different models per role. */}
+          <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <CandlestickChart className="h-4 w-4 text-emerald-400" />
+              <h4 className="text-sm font-bold text-white">
+                Trade-Agent models
+              </h4>
+            </div>
+            <p className="mb-4 text-[11px] leading-relaxed text-zinc-500">
+              The trading desk runs on this same Gemini key. Split the work so
+              judgement-heavy calls get the stronger model and high-volume ones
+              stay cheap.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Master Model
+                </label>
+                <input
+                  type="text"
+                  value={tradeMasterModel}
+                  onChange={(e) => setTradeMasterModel(e.target.value)}
+                  placeholder={DEFAULT_TRADE_MASTER_MODEL}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
+                />
+                <p className="mt-1.5 text-[11px] text-zinc-600">
+                  Orchestrator, F&amp;O strategy and equity workers. Default:{" "}
+                  {DEFAULT_TRADE_MASTER_MODEL}.
+                </p>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Worker Model
+                </label>
+                <input
+                  type="text"
+                  value={tradeWorkerModel}
+                  onChange={(e) => setTradeWorkerModel(e.target.value)}
+                  placeholder={DEFAULT_TRADE_WORKER_MODEL}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
+                />
+                <p className="mt-1.5 text-[11px] text-zinc-600">
+                  Research and technical workers — high volume, cheap. Default:{" "}
+                  {DEFAULT_TRADE_WORKER_MODEL}.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-start gap-3 pt-3">
             <button
               type="button"
@@ -442,6 +720,105 @@ export default function SettingsPage() {
                 <Key className="h-3.5 w-3.5" />
               )}
               Test Gemini Live Key
+            </button>
+          </div>
+        </div>
+
+        {/* Groww Trading API Panel */}
+        <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60">
+            <div className="flex items-center gap-2">
+              <CandlestickChart className="h-5 w-5 text-emerald-400" />
+              <h3 className="text-base font-bold text-white">
+                Groww Trading API
+              </h3>
+            </div>
+            <div className="flex items-center gap-4">
+              <StatusPill status={settings?.growwStatus} />
+              {settings?.growwLastVerified && (
+                <span className="text-[10px] text-zinc-500">
+                  Verified:{" "}
+                  {new Date(settings.growwLastVerified).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+            <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-amber-400" />
+            <p className="text-[11px] leading-relaxed text-amber-700/80">
+              These credentials reach a live demat account. Set{" "}
+              <code className="rounded bg-zinc-950 px-1 py-0.5 text-amber-300">
+                CREDENTIAL_ENCRYPTION_KEY
+              </code>{" "}
+              (32+ characters) on the backend first — saving is refused without
+              it. Groww access tokens expire at 06:00 IST daily; storing a
+              secret or TOTP seed is what lets the desk renew unattended.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                API Key
+              </label>
+              <input
+                type="password"
+                value={growwApiKey}
+                onChange={(e) => setGrowwApiKey(e.target.value)}
+                placeholder="From groww.in/trade-api/api-keys"
+                autoComplete="off"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                API Secret
+              </label>
+              <input
+                type="password"
+                value={growwApiSecret}
+                onChange={(e) => setGrowwApiSecret(e.target.value)}
+                placeholder="Daily approval flow"
+                autoComplete="off"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
+              />
+              <p className="mt-1.5 text-[11px] text-zinc-600">
+                Needs approval on the Groww keys page each morning.
+              </p>
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                TOTP Secret
+              </label>
+              <input
+                type="password"
+                value={growwTotpSecret}
+                onChange={(e) => setGrowwTotpSecret(e.target.value)}
+                placeholder="Base32 seed"
+                autoComplete="off"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
+              />
+              <p className="mt-1.5 text-[11px] text-zinc-600">
+                Alternative to the secret. This is your second factor — storing
+                it means a server compromise is an account compromise.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-start gap-3 pt-3">
+            <button
+              type="button"
+              disabled={testGrowwMutation.isPending}
+              onClick={() => testGrowwMutation.mutate()}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {testGrowwMutation.isPending ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CandlestickChart className="h-3.5 w-3.5" />
+              )}
+              Test Groww Connection
             </button>
           </div>
         </div>
