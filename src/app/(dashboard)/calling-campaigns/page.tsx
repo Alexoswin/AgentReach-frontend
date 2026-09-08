@@ -87,8 +87,27 @@ type CallingCampaignGenerationJob = {
 type VoiceGender = "female" | "male";
 type ResponseSpeed = "fast" | "balanced" | "conservative";
 
-const DEFAULT_GEMINI_LIVE_MODEL =
-  "gemini-3.1-flash-native-audio-preview-12-2025";
+// Mirrors the backend's GeminiLiveModel enum (src/config/gemini-live.ts) —
+// not every Gemini model id supports the Live/bidiGenerateContent API, so
+// this stays a closed list instead of a free-text field the user could
+// mistype into a nonexistent model.
+type GeminiLiveModel =
+  | "gemini-3.1-flash-live-preview"
+  | "gemini-2.5-flash-native-audio-preview-12-2025";
+
+const GEMINI_LIVE_MODEL_OPTIONS: Array<{
+  value: GeminiLiveModel;
+  label: string;
+}> = [
+  { value: "gemini-3.1-flash-live-preview", label: "Flash Live (preview)" },
+  {
+    value: "gemini-2.5-flash-native-audio-preview-12-2025",
+    label: "Flash Native Audio (preview)",
+  },
+];
+
+const DEFAULT_GEMINI_LIVE_MODEL: GeminiLiveModel =
+  "gemini-3.1-flash-live-preview";
 
 const RESPONSE_SPEED_OPTIONS: Array<{
   value: ResponseSpeed;
@@ -2357,12 +2376,19 @@ export default function CallingCampaignsPage() {
                     <label className="block text-xs font-semibold text-zinc-400 mb-2">
                       Gemini Live Model
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={realtimeModel}
-                      onChange={(e) => setRealtimeModel(e.target.value)}
+                      onChange={(e) =>
+                        setRealtimeModel(e.target.value as GeminiLiveModel)
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
+                    >
+                      {GEMINI_LIVE_MODEL_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-400 mb-2">
