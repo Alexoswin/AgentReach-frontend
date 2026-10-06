@@ -395,7 +395,6 @@ const DIAGRAMS = {
 
   aiBots: String.raw`flowchart TB
   BotsPage["/ai-calling-bots"]
-  ChatPage["/bot-chat"]
   Api["api.aiCallingBots"]
   BotService["BotService"]
   Pdf["PDF/text extraction"]
@@ -406,27 +405,11 @@ const DIAGRAMS = {
   Search["Semantic search"]
   Calling["Calling campaign defaults + fetch_context"]
   BotsPage --> Api --> BotService
-  ChatPage --> Api
   BotService --> Bot
   BotService --> Pdf --> Chunks --> Embed --> Embedding
   BotService --> Search --> Embedding
-  Search --> ChatPage
   BotService --> Calling`,
 
-  aiChat: String.raw`flowchart LR
-  Page["/bot-chat"]
-  Api["api.aiCallingBots.chat"]
-  Service["BotService.chat"]
-  Search["searchBotKnowledge"]
-  Bot["AiCallingBot persona"]
-  Embeddings["Knowledge chunks"]
-  Reply["Grounded assistant reply + sources"]
-  Page --> Api --> Service
-  Service --> Bot
-  Service --> Search --> Embeddings
-  Bot --> Reply
-  Embeddings --> Reply
-  Reply --> Page`,
 
   signals: String.raw`flowchart TB
   Contacts["Contacts import/create"]
@@ -637,29 +620,22 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
   {
     slug: 'architecture-ai-bots',
     title: 'Calling agents & RAG architecture',
-    tagline: 'Reusable voice personas, knowledge ingestion, local embeddings, search, and chat.',
+    tagline: 'Reusable voice personas, knowledge ingestion, local embeddings, and search.',
     icon: 'bot',
     category: 'Feature architecture',
     intro: [
-      'Calling Agents provide reusable persona and knowledge settings for live calls and test chat. Knowledge ingestion is local-friendly: text/PDF content is chunked and embedded with local-hash-embedding-v1.',
+      'Calling Agents provide reusable persona and knowledge settings for live calls. Knowledge ingestion is local-friendly: text/PDF content is chunked and embedded with local-hash-embedding-v1.',
     ],
     sections: [
       {
         heading: 'Runtime flow',
         body: [
-          'BotService normalizes persona fields, extracts knowledge, stores embeddings, performs semantic search, builds chat replies, and provides default voice/persona context to calling campaigns.',
+          'BotService normalizes persona fields, extracts knowledge, stores embeddings, performs semantic search, and provides default voice/persona context to calling campaigns.',
         ],
         diagram: { caption: 'Bot persona and RAG knowledge flow', chart: DIAGRAMS.aiBots },
       },
-      {
-        heading: 'Chat flow',
-        body: [
-          '/bot-chat uses the same BotService search path as live-call context, making it a safe place to test persona tone and knowledge quality before launching calls.',
-        ],
-        diagram: { caption: 'Bot chat response flow', chart: DIAGRAMS.aiChat },
-      },
     ],
-    related: ['ai-bots', 'ai-chat', 'architecture-ai-calling'],
+    related: ['ai-bots', 'architecture-ai-calling'],
   },
   {
     slug: 'architecture-signals',
@@ -1374,47 +1350,8 @@ export const DOC_PAGES: DocPage[] = [
         ],
       },
     ],
-    tips: ['Test an agent in Agent Chat before putting it on live calls — it’s the fastest way to feel out its tone and answers.'],
-    related: ['architecture-ai-bots', 'ai-calling', 'ai-chat', 'settings'],
-  },
-  {
-    slug: 'ai-chat',
-    title: 'Agent chat',
-    tagline: 'Chat with your calling agents to test their answers.',
-    icon: 'message',
-    category: 'AI outreach',
-    intro: [
-      'Agent Chat is a text playground for your calling agents. Use it to rehearse an agent’s conversation and pressure-test its answers without picking up the phone.',
-    ],
-    sections: [
-      {
-        heading: 'End-to-end operator flow',
-        steps: [
-          'Start: open this feature from the dashboard sidebar and confirm your prerequisites are connected in Settings.',
-          'Configure: complete the required fields and selections for your target audience and objective.',
-          'Launch: run the action immediately or schedule it for later based on your workflow.',
-          'Monitor: watch status, history, and dashboard metrics to confirm progress and outcomes.',
-          'Troubleshoot: if results stall, verify credentials, audience data quality, and feature-specific validation messages.',
-        ],
-      },
-      {
-        heading: 'What you can do',
-        capabilities: [
-          { title: 'Rehearse a persona', text: 'Chat as if you were the prospect to hear how an agent responds and where its script needs work.' },
-          { title: 'Validate knowledge', text: 'Confirm an agent answers product and objection questions correctly before it goes live.' },
-        ],
-      },
-      {
-        heading: 'Using it',
-        steps: [
-          'Open Agent Chat and select the agent you want to talk to.',
-          'Send messages as the prospect would, and read the agent’s replies.',
-          'Refine the agent’s script under Calling Agents based on what you learn, then re-test.',
-        ],
-      },
-    ],
-    tips: ['Chat is the safe place to break an agent — try the hardest objections here so live calls go smoothly.'],
-    related: ['architecture-ai-bots', 'ai-bots', 'ai-calling'],
+    tips: ['Use the knowledge search on the Calling Agents page to check an agent finds the right answers before putting it on live calls.'],
+    related: ['architecture-ai-bots', 'ai-calling', 'settings'],
   },
 
   // ─────────────────────────────── Configuration

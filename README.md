@@ -65,7 +65,6 @@ src/
 │   │   ├── email-campaigns/    # MailReach: templates, preview, launch, relaunch
 │   │   ├── ai-calling-bots/    # Calling Agents: personas + RAG knowledge bases
 │   │   ├── calling-campaigns/  # VoiceReach: AI voice calling campaigns
-│   │   ├── bot-chat/           # Agent Chat: chat with an agent's knowledge base
 │   │   ├── history/            # email + call history
 │   │   ├── settings/           # SES / Twilio / Gemini credentials
 │   │   └── profile/            # profile, theme, accent colour, password
@@ -98,7 +97,6 @@ src/
 | `/ai-calling-bots`   | **Calling Agents** — create agent personas with a PDF-backed RAG knowledge base. |
 | `/calling-campaigns` | **VoiceReach** — configure and run AI voice calling campaigns with live outcomes. |
 | `/scheduler`         | View and cancel future MailReach/VoiceReach launches. |
-| `/bot-chat`          | **Agent Chat** — chat against a calling agent's knowledge base (semantic search). |
 | `/history`           | Filterable email and call history, including replies. |
 | `/settings`          | Connect AWS SES, Twilio, and Gemini; test each connection. |
 | `/profile`           | User profile, theme, accent colours, and password update. |

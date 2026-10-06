@@ -8,7 +8,7 @@ import {
   Mail,
   PhoneCall,
   Bot,
-  MessageSquareText,
+  Radar,
   Users,
   BarChart3,
   Check,
@@ -56,9 +56,9 @@ const FEATURES = [
     tone: 'a2' as const,
   },
   {
-    icon: MessageSquareText,
-    title: 'Agent chat',
-    body: 'Question a calling agent and check its answers against its knowledge base before it goes live.',
+    icon: Radar,
+    title: 'Signals & playbooks',
+    body: 'Watch filings, job posts, news, and bounces for buying signals, then trigger outreach with playbooks.',
     tone: 'a3' as const,
   },
   {
