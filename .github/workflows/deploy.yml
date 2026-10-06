@@ -1,0 +1,91 @@
+name: Vercel Deploy
+
+# Builds the Next.js app on the runner and ships the prebuilt output to Vercel.
+# Pushes to main go to production, pull requests get a preview deployment, and
+# a run can also be started manually from the Actions tab ("Run workflow").
+#
+# Required repo settings:
+#   secrets.VERCEL_TOKEN   - Vercel access token (vercel.com/account/tokens)
+#   vars.VERCEL_ORG_ID     - "orgId" from .vercel/project.json
+#   vars.VERCEL_PROJECT_ID - "projectId" from .vercel/project.json
+#   vars.BACKEND_URL       - Cloud Run URL of agentreach-backend, no trailing
+#                            slash, e.g. https://agentreach-backend-xxxx.asia-south1.run.app
+# Optional:
+#   vars.WEBPILOT_URL, vars.NEXT_PUBLIC_WEBPILOT_WS_URL
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Queue deploys per ref; a newer push supersedes an in-flight preview.
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+  # NEXT_PUBLIC_* values and next.config.ts rewrites are baked in at build
+  # time, so they must point at the Cloud Run backend before `vercel build`.
+  NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}/api
+  WEBPILOT_URL: ${{ vars.WEBPILOT_URL }}
+  NEXT_PUBLIC_WEBPILOT_WS_URL: ${{ vars.NEXT_PUBLIC_WEBPILOT_WS_URL }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check config
+        run: |
+          missing=0
+          for name in VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            [ -n "${!name}" ] || { echo "::error::vars.$name is not set"; missing=1; }
+          done
+          [ -n "${{ secrets.VERCEL_TOKEN }}" ] || { echo "::error::secrets.VERCEL_TOKEN is not set"; missing=1; }
+          # Without this the build silently falls back to localhost.
+          [ -n "${{ vars.BACKEND_URL }}" ] || { echo "::error::vars.BACKEND_URL (Cloud Run URL) is not set"; missing=1; }
+          exit $missing
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel project settings
+        run: |
+          target=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+          echo "TARGET=$target" >> "$GITHUB_ENV"
+          vercel pull --yes --environment="$target" --token="${{ secrets.VERCEL_TOKEN }}"
+
+          # Make the backend URL from this workflow win over whatever is
+          # stored in the Vercel dashboard for this environment.
+          env_file=".vercel/.env.$target.local"
+          touch "$env_file"
+          for key in NEXT_PUBLIC_API_URL WEBPILOT_URL NEXT_PUBLIC_WEBPILOT_WS_URL; do
+            [ -n "${!key}" ] || continue
+            sed -i "/^$key=/d" "$env_file"
+            echo "$key=\"${!key}\"" >> "$env_file"
+          done
+          echo "Building against NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+
+      - name: Build
+        run: vercel build ${{ env.TARGET == 'production' && '--prod' || '' }} --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt ${{ env.TARGET == 'production' && '--prod' || '' }} --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
