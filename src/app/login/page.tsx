@@ -5,8 +5,8 @@ import { applyTheme, getStoredUser, saveAuthSession } from '@/lib/localAuth';
 import { LoaderOverlay } from '@/components/Loader';
 import { Brand } from '@/components/fx';
 import { ArrowLeft, ArrowRight, KeyRound, Mail, RefreshCw, User, Radio, ShieldCheck, BarChart3 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
 type AuthMode = 'login' | 'reset' | 'register';
 type PendingAction = 'login' | 'register' | 'reset' | null;
@@ -24,14 +24,25 @@ const SHOWCASE_POINTS = [
 ];
 
 export default function LoginPage() {
+  // useSearchParams needs a Suspense boundary for static prerendering.
+  return (
+    <Suspense fallback={null}>
+      <LoginScreen />
+    </Suspense>
+  );
+}
+
+function LoginScreen() {
   const router = useRouter();
   const storedUser = getStoredUser();
-  const [mode, setMode] = useState<AuthMode>('login');
+  // Reset emails link to /login?resetToken=…
+  const linkResetToken = useSearchParams().get('resetToken') || '';
+  const [mode, setMode] = useState<AuthMode>(linkResetToken ? 'reset' : 'login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState(storedUser.email);
   const [password, setPassword] = useState('');
   const [resetEmail, setResetEmail] = useState(storedUser.email);
-  const [resetVerified, setResetVerified] = useState(false);
+  const [resetToken, setResetToken] = useState(linkResetToken);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -40,6 +51,11 @@ export default function LoginPage() {
   useEffect(() => {
     applyTheme(storedUser.theme, storedUser.accentColor);
   }, [storedUser.accentColor, storedUser.theme]);
+
+  // Drop the token from the address bar so it does not linger in history.
+  useEffect(() => {
+    if (linkResetToken) window.history.replaceState(null, '', window.location.pathname);
+  }, [linkResetToken]);
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -81,16 +97,17 @@ export default function LoginPage() {
 
   const handleResetRequest = (event: React.FormEvent) => {
     event.preventDefault();
-    const user = getStoredUser();
-
-    if (resetEmail.trim().toLowerCase() !== user.email.toLowerCase()) {
-      setMessage('No account found for that email.');
-      setResetVerified(false);
-      return;
-    }
-
-    setMessage('Email verified. Set a new password below.');
-    setResetVerified(true);
+    setPendingAction('reset');
+    api.auth.forgotPassword({ email: resetEmail.trim() })
+      .then((result: { message?: string }) => {
+        setMessage(result?.message || 'If an account exists for that email, a reset link has been sent.');
+      })
+      .catch((error: Error) => {
+        setMessage(error.message || 'Could not send reset link.');
+      })
+      .finally(() => {
+        setPendingAction(null);
+      });
   };
 
   const handlePasswordReset = (event: React.FormEvent) => {
@@ -107,11 +124,11 @@ export default function LoginPage() {
     }
 
     setPendingAction('reset');
-    api.auth.resetPassword({ email: resetEmail, newPassword })
+    api.auth.resetPassword({ token: resetToken, newPassword })
       .then(() => {
         setPassword(newPassword);
         setMode('login');
-        setResetVerified(false);
+        setResetToken('');
         setNewPassword('');
         setConfirmPassword('');
         setMessage('Password reset. Sign in with the new password.');
@@ -127,13 +144,13 @@ export default function LoginPage() {
   const openReset = () => {
     setMode('reset');
     setResetEmail(email || getStoredUser().email);
-    setResetVerified(false);
+    setResetToken('');
     setMessage('');
   };
 
   const backToLogin = () => {
     setMode('login');
-    setResetVerified(false);
+    setResetToken('');
     setNewPassword('');
     setConfirmPassword('');
     setMessage('');
@@ -348,9 +365,12 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <h2 className="sig-display text-2xl font-extrabold text-white">Reset password</h2>
                   <p className="text-sm leading-6 text-zinc-500">
-                    Enter your account email first. Once verified, choose a new password.
+                    {resetToken
+                      ? 'Choose a new password for your account.'
+                      : 'Enter your account email and we will send you a link to reset your password.'}
                   </p>
                 </div>
+                {!resetToken && (
                 <form onSubmit={handleResetRequest} className="space-y-4">
                   <div>
                     <label className="sig-label mb-2 block text-zinc-500">Account Email</label>
@@ -366,14 +386,16 @@ export default function LoginPage() {
                   </div>
                   <button
                     type="submit"
-                    className="sig-btn-ghost w-full"
+                    disabled={pendingAction !== null}
+                    className="sig-btn-ghost w-full disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <RefreshCw className="h-4 w-4" /> Verify Email
+                    <RefreshCw className="h-4 w-4" /> Send Reset Link
                   </button>
                 </form>
+                )}
 
-                {resetVerified && (
-                  <form onSubmit={handlePasswordReset} className="space-y-4 border-t border-zinc-850 pt-5">
+                {resetToken && (
+                  <form onSubmit={handlePasswordReset} className="space-y-4">
                     <div>
                       <label className="sig-label mb-2 block text-zinc-500">New Password</label>
                       <input

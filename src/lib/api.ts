@@ -363,7 +363,13 @@ export const api = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
-    resetPassword: (data: { email: string; newPassword: string }) =>
+    forgotPassword: (data: { email: string }) =>
+      request("/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    resetPassword: (data: { token: string; newPassword: string }) =>
       request("/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

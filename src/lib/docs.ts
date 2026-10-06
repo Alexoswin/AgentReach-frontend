@@ -325,7 +325,7 @@ const DIAGRAMS = {
   Campaign["EmailCampaign"]
   Recipients["EmailCampaignContact"]
   Contacts["Contact"]
-  SES["AWS SES or mock send"]
+  SES["AWS SES send"]
   History["History + analytics"]
   Page --> ApiTemplates --> Templates
   Templates --> AI
@@ -502,7 +502,7 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
       {
         heading: 'Runtime flow',
         body: [
-          'Register, login, refresh, reset-password, profile update, and logout are exposed by /api/auth. The frontend stores access and refresh tokens in localAuth, applies theme values immediately, and verifies dashboard access with GET /auth/me.',
+          'Register, login, refresh, forgot-password (emails a one-time reset link), reset-password, profile update, and logout are exposed by /api/auth. The frontend stores access and refresh tokens in localAuth, applies theme values immediately, and verifies dashboard access with GET /auth/me.',
         ],
         diagram: { caption: 'Auth, token, profile, and theme flow', chart: DIAGRAMS.profile },
       },
@@ -589,7 +589,7 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
       {
         heading: 'Runtime flow',
         body: [
-          'A campaign references a template, recipient rows reference contacts, and launch personalizes subject/body per contact before sending with AWS SES or mock local behavior. Recipient rows become the source of truth for history and analytics.',
+          'A campaign references a template, recipient rows reference contacts, and launch personalizes subject/body per contact before sending with AWS SES. Recipient rows become the source of truth for history and analytics.',
         ],
         diagram: { caption: 'Template and email campaign lifecycle', chart: DIAGRAMS.email },
       },
@@ -921,7 +921,7 @@ export const DOC_PAGES: DocPage[] = [
       },
     ],
     tips: [
-      'You can run entirely in mock mode for email: with test AWS keys, sends are simulated so you can explore the full flow without real delivery.',
+      'Email campaigns need working AWS SES credentials and a verified sender address; a launch without them fails instead of pretending to send.',
       'Every list view supports live sync — leave the Dashboard open during a launch to watch metrics update every 10 seconds.',
     ],
     related: ['architecture', 'architecture-contacts', 'architecture-email-campaigns', 'architecture-signals', 'dashboard'],
@@ -1191,7 +1191,7 @@ export const DOC_PAGES: DocPage[] = [
       },
     ],
     tips: [
-      'With test/mock AWS keys, sends are simulated (about 90% success) so you can rehearse the full flow without delivering real mail.',
+      'Every send goes through AWS SES. To rehearse safely, launch to a small directory of your own addresses first.',
       'Signal-triggered campaigns reuse this exact pipeline, so anything you learn here applies to automated outreach too.',
     ],
     related: ['architecture-email-campaigns', 'contacts', 'signals', 'scheduler', 'dashboard', 'settings'],
@@ -1458,7 +1458,7 @@ export const DOC_PAGES: DocPage[] = [
       },
     ],
     tips: [
-      'Mock/test AWS keys keep email in simulation mode — great for demos, and no mail actually leaves.',
+      'Use the SES sandbox (verified recipients only) to test campaigns without reaching real prospects.',
       'Stored credentials are encrypted at rest and masked in the UI once saved.',
     ],
     related: ['architecture-settings', 'email-campaigns', 'ai-calling', 'signals'],

@@ -4,9 +4,11 @@ Next.js dashboard for **ReachConvert** — an outreach platform that unifies
 personalized bulk email, autonomous AI voice calling, and signal-based automation in
 one workspace for exploring job opportunities and driving conversions.
 
+**Live app:**  
 This app is the operator UI. It talks to the [ReachConvert backend](../AgentReach-backend)
 over REST (`NEXT_PUBLIC_API_URL`) and ships a full in-app **Documentation portal** at
 `/documentation` with two explicit tracks:
+
 - User Documentation (operator workflows, setup, launch, monitor, troubleshooting)
 - Technical Documentation (architecture, data flow, module boundaries, APIs)
 
@@ -32,17 +34,17 @@ The markdown files in `../docs` remain the contributor-facing technical source o
 
 ## Tech stack
 
-| Concern           | Choice                                                  |
-| ----------------- | ------------------------------------------------------- |
-| Framework         | [Next.js 16](https://nextjs.org) (App Router, RSC)      |
-| Runtime           | React 19                                                |
-| Language          | TypeScript 5                                            |
-| Styling           | Tailwind CSS v4 (`@tailwindcss/postcss`)                |
-| Server state      | [TanStack Query v5](https://tanstack.com/query)         |
-| Client state      | [Zustand](https://zustand-demo.pmnd.rs) (`useOutreachStore`) |
-| Charts            | [Recharts](https://recharts.org)                        |
-| Icons             | `lucide-react`                                          |
-| Bundler (dev)     | Webpack (`next dev --webpack`)                          |
+| Concern       | Choice                                                       |
+| ------------- | ------------------------------------------------------------ |
+| Framework     | [Next.js 16](https://nextjs.org) (App Router, RSC)           |
+| Runtime       | React 19                                                     |
+| Language      | TypeScript 5                                                 |
+| Styling       | Tailwind CSS v4 (`@tailwindcss/postcss`)                     |
+| Server state  | [TanStack Query v5](https://tanstack.com/query)              |
+| Client state  | [Zustand](https://zustand-demo.pmnd.rs) (`useOutreachStore`) |
+| Charts        | [Recharts](https://recharts.org)                             |
+| Icons         | `lucide-react`                                               |
+| Bundler (dev) | Webpack (`next dev --webpack`)                               |
 
 ---
 
@@ -85,22 +87,22 @@ src/
 
 ## Screens
 
-| Route | Purpose |
-| ----- | ------- |
-| `/login` | Sign in and password reset. |
-| `/dashboard` | Cross-channel overview and live metrics. |
-| `/signals` | Signal feed (funding, hiring, news, bounces) and human review queue. |
-| `/signals/playbooks` | Rules that turn signals into automatic outreach. |
-| `/contacts` | Recruiter, company, hiring-team, and lead contacts + directories; CSV/XLSX import. |
-| `/email-campaigns` | Build/generate templates, preview, launch, and relaunch bulk email. |
-| `/ai-calling-bots` | Create bot personas with a PDF-backed RAG knowledge base. |
-| `/calling-campaigns` | Configure and run AI voice calling campaigns with live outcomes. |
-| `/scheduler` | View and cancel future email/calling campaign launches. |
-| `/bot-chat` | Chat against a bot's knowledge base (semantic search). |
-| `/history` | Filterable email and call history, including replies. |
-| `/settings` | Connect AWS SES, Twilio, and Gemini; test each connection. |
-| `/profile` | User profile, theme, accent colours, and password update. |
-| `/documentation` | In-app documentation portal (see below). |
+| Route                | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `/login`             | Sign in and password reset.                                                        |
+| `/dashboard`         | Cross-channel overview and live metrics.                                           |
+| `/signals`           | Signal feed (funding, hiring, news, bounces) and human review queue.               |
+| `/signals/playbooks` | Rules that turn signals into automatic outreach.                                   |
+| `/contacts`          | Recruiter, company, hiring-team, and lead contacts + directories; CSV/XLSX import. |
+| `/email-campaigns`   | Build/generate templates, preview, launch, and relaunch bulk email.                |
+| `/ai-calling-bots`   | Create bot personas with a PDF-backed RAG knowledge base.                          |
+| `/calling-campaigns` | Configure and run AI voice calling campaigns with live outcomes.                   |
+| `/scheduler`         | View and cancel future email/calling campaign launches.                            |
+| `/bot-chat`          | Chat against a bot's knowledge base (semantic search).                             |
+| `/history`           | Filterable email and call history, including replies.                              |
+| `/settings`          | Connect AWS SES, Twilio, and Gemini; test each connection.                         |
+| `/profile`           | User profile, theme, accent colours, and password update.                          |
+| `/documentation`     | In-app documentation portal (see below).                                           |
 
 ---
 
@@ -161,8 +163,8 @@ npm run dev            # http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
-| Variable | Description |
-| -------- | ----------- |
+| Variable              | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_URL` | Base URL of the backend REST API. Defaults to `http://localhost:3001/api` when unset. |
 
 ### Scripts

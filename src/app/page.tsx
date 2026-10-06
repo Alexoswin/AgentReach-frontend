@@ -93,16 +93,12 @@ const STEPS = [
   },
 ];
 
+// Product facts, not usage claims — keep these in sync with the backend.
 const STATS = [
-  { value: '3.2M+', label: 'Emails delivered' },
-  { value: '480K', label: 'AI calls placed' },
-  { value: '42%', label: 'Avg. reply lift' },
-  { value: '12K', label: 'Teams onboard' },
-];
-
-const MARQUEE = [
-  'Northwind', 'Acme Labs', 'Vertex', 'Lumina', 'Cascade',
-  'Brightpath', 'Orbital', 'Meridian', 'Ironclad', 'Quanta',
+  { value: '3', label: 'Outreach channels' },
+  { value: '2', label: 'Telephony providers' },
+  { value: '4', label: 'Signal sources' },
+  { value: '28', label: 'Voice languages' },
 ];
 
 function useScrolled(threshold = 12) {
@@ -407,25 +403,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- Marquee ---------------- */}
-      <section className="border-y border-zinc-850 bg-zinc-950/60 py-8">
-        <p className="sig-label mb-6 text-center text-zinc-600">
-          POWERING OUTREACH FOR MODERN REVENUE TEAMS
-        </p>
-        <div className="mask-fade-edges relative overflow-hidden">
-          <div className="marquee-track flex w-max items-center pr-4">
-            {[...MARQUEE, ...MARQUEE].map((name, i) => (
-              <span key={i} className="flex items-center">
-                <span className="sig-display whitespace-nowrap text-xl font-bold tracking-tight text-zinc-650 transition-colors hover:text-indigo-400">
-                  {name}
-                </span>
-                <span className="mx-7 font-mono text-xs text-zinc-700">//</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ---------------- Stats ---------------- */}
       <section className="px-5 py-20 sm:px-8">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-4 lg:grid-cols-4">
@@ -613,28 +590,6 @@ export default function Home() {
             </TiltCard>
           </Reveal>
         </div>
-      </section>
-
-      {/* ---------------- Testimonial ---------------- */}
-      <section className="px-5 py-16 sm:px-8">
-        <Reveal>
-          <figure className="sig-card sig-ticks sig-ticks-on mx-auto w-full max-w-3xl rounded-3xl p-8 text-center sm:p-12">
-            <p className="sig-label text-indigo-400">[ FIELD REPORT ]</p>
-            <blockquote className="sig-display mt-6 text-xl font-semibold leading-8 text-zinc-100 sm:text-2xl">
-              “We replaced three tools with ReachConvert. Our reply rates jumped 40% in the first month,
-              and the AI calling agents book meetings while we sleep.”
-            </blockquote>
-            <figcaption className="mt-6 flex items-center justify-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/50 bg-indigo-500/10 font-mono text-xs font-bold text-indigo-300">
-                JM
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-bold text-white">Jordan Meyer</p>
-                <p className="sig-label mt-0.5 text-zinc-500">HEAD OF GROWTH · MERIDIAN</p>
-              </div>
-            </figcaption>
-          </figure>
-        </Reveal>
       </section>
 
       {/* ---------------- CTA ---------------- */}
