@@ -20,11 +20,6 @@ import {
   BookOpen,
   CalendarClock,
   Globe,
-  CandlestickChart,
-  ClipboardCheck,
-  ScrollText,
-  Receipt,
-  ShieldAlert,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -65,16 +60,6 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { name: "AI Bots", href: "/ai-calling-bots", icon: Bot },
       { name: "AI Chat", href: "/bot-chat", icon: MessageSquareText },
       { name: "WebPilot", href: "/web-pilot", icon: Globe },
-    ],
-  },
-  {
-    label: "Markets",
-    items: [
-      { name: "Trade Desk", href: "/trade-agent", icon: CandlestickChart, exact: true },
-      { name: "Proposals", href: "/trade-agent/proposals", icon: ClipboardCheck },
-      { name: "Agent Runs", href: "/trade-agent/runs", icon: ScrollText },
-      { name: "Orders", href: "/trade-agent/orders", icon: Receipt },
-      { name: "Risk Policy", href: "/trade-agent/policy", icon: ShieldAlert },
     ],
   },
   {
@@ -157,7 +142,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
               </p>
               <div className="space-y-0.5">
                 {section.items.map((item) => {
-                  // `exact` keeps a section index (e.g. /trade-agent) from
+                  // `exact` keeps a section index (e.g. /settings) from
                   // lighting up alongside its own child routes.
                   const isActive =
                     pathname === item.href ||

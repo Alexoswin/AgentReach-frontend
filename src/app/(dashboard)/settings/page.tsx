@@ -11,14 +11,10 @@ import {
   Mail,
   Check,
   RefreshCw,
-  CandlestickChart,
-  ShieldAlert,
 } from "lucide-react";
 
 const DEFAULT_GEMINI_TEXT_MODEL = "gemini-2.5-flash-lite";
 const MASKED_CREDENTIAL = "••••••••••••••••";
-const DEFAULT_TRADE_MASTER_MODEL = "gemini-pro-latest";
-const DEFAULT_TRADE_WORKER_MODEL = "gemini-flash-latest";
 
 function StatusPill({ status }: { status?: string }) {
   return (
@@ -34,23 +30,6 @@ function StatusPill({ status }: { status?: string }) {
       {status || "DISCONNECTED"}
     </span>
   );
-}
-
-/**
- * The API returns saved credentials masked. If the user has typed something
- * new that has not been saved yet, keep their text rather than replacing it
- * with the mask.
- */
-function keepSecret(incoming: string | undefined, previous: string) {
-  const value = incoming || "";
-  if (
-    value === MASKED_CREDENTIAL &&
-    previous &&
-    previous !== MASKED_CREDENTIAL
-  ) {
-    return previous;
-  }
-  return value;
 }
 
 /* ------------------------------------------------------------------ */
@@ -78,19 +57,6 @@ export default function SettingsPage() {
   const [plivoPhoneNumber, setPlivoPhoneNumber] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
 
-  // Trade-Agent: Groww
-  const [growwApiKey, setGrowwApiKey] = useState("");
-  const [growwApiSecret, setGrowwApiSecret] = useState("");
-  const [growwTotpSecret, setGrowwTotpSecret] = useState("");
-
-  // Trade-Agent: Gemini model split (the desk reuses the Gemini API key above)
-  const [tradeMasterModel, setTradeMasterModel] = useState(
-    DEFAULT_TRADE_MASTER_MODEL,
-  );
-  const [tradeWorkerModel, setTradeWorkerModel] = useState(
-    DEFAULT_TRADE_WORKER_MODEL,
-  );
-
   // Fetch saved settings
   const { data: settings, isLoading } = useQuery({
     queryKey: ["settings"],
@@ -115,17 +81,6 @@ export default function SettingsPage() {
         setPlivoAuthId(settings.plivoAuthId || "");
         setPlivoAuthToken(settings.plivoAuthToken || "");
         setPlivoPhoneNumber(settings.plivoPhoneNumber || "");
-        setGrowwApiKey((prev) => keepSecret(settings.growwApiKey, prev));
-        setGrowwApiSecret((prev) => keepSecret(settings.growwApiSecret, prev));
-        setGrowwTotpSecret((prev) =>
-          keepSecret(settings.growwTotpSecret, prev),
-        );
-        setTradeMasterModel(
-          settings.tradeMasterModel || DEFAULT_TRADE_MASTER_MODEL,
-        );
-        setTradeWorkerModel(
-          settings.tradeWorkerModel || DEFAULT_TRADE_WORKER_MODEL,
-        );
         setGeminiApiKey((prev) => {
           const incoming = settings.geminiApiKey || "";
           if (
@@ -263,31 +218,6 @@ export default function SettingsPage() {
     },
   });
 
-  const testGrowwMutation = useMutation({
-    mutationFn: api.settings.testGroww,
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      if (res.success) {
-        showAlert(
-          res.message || "Your Groww connection is working.",
-          "success",
-          "Groww verified",
-        );
-      } else {
-        showAlert(
-          res.error || "We could not verify your Groww credentials.",
-          "error",
-        );
-      }
-    },
-    onError: (err: Error) => {
-      showAlert(
-        err.message || "We could not test your Groww connection.",
-        "error",
-      );
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateSettingsMutation.mutate({
@@ -304,11 +234,6 @@ export default function SettingsPage() {
       plivoAuthId,
       plivoAuthToken,
       plivoPhoneNumber,
-      growwApiKey,
-      growwApiSecret,
-      growwTotpSecret,
-      tradeMasterModel,
-      tradeWorkerModel,
     });
   };
 
@@ -331,7 +256,7 @@ export default function SettingsPage() {
         </h2>
         <p className="text-sm text-zinc-400 mt-1">
           Configure API credentials for AWS SES, Twilio/Plivo telephony,
-          Gemini AI, and Groww.
+          and Gemini AI.
         </p>
       </div>
 
@@ -657,56 +582,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Trade-Agent model split — same key, different models per role. */}
-          <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <CandlestickChart className="h-4 w-4 text-emerald-400" />
-              <h4 className="text-sm font-bold text-white">
-                Trade-Agent models
-              </h4>
-            </div>
-            <p className="mb-4 text-[11px] leading-relaxed text-zinc-500">
-              The trading desk runs on this same Gemini key. Split the work so
-              judgement-heavy calls get the stronger model and high-volume ones
-              stay cheap.
-            </p>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Master Model
-                </label>
-                <input
-                  type="text"
-                  value={tradeMasterModel}
-                  onChange={(e) => setTradeMasterModel(e.target.value)}
-                  placeholder={DEFAULT_TRADE_MASTER_MODEL}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-                />
-                <p className="mt-1.5 text-[11px] text-zinc-600">
-                  Orchestrator, F&amp;O strategy and equity workers. Default:{" "}
-                  {DEFAULT_TRADE_MASTER_MODEL}.
-                </p>
-              </div>
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Worker Model
-                </label>
-                <input
-                  type="text"
-                  value={tradeWorkerModel}
-                  onChange={(e) => setTradeWorkerModel(e.target.value)}
-                  placeholder={DEFAULT_TRADE_WORKER_MODEL}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-                />
-                <p className="mt-1.5 text-[11px] text-zinc-600">
-                  Research and technical workers — high volume, cheap. Default:{" "}
-                  {DEFAULT_TRADE_WORKER_MODEL}.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="flex justify-start gap-3 pt-3">
             <button
               type="button"
@@ -720,105 +595,6 @@ export default function SettingsPage() {
                 <Key className="h-3.5 w-3.5" />
               )}
               Test Gemini Live Key
-            </button>
-          </div>
-        </div>
-
-        {/* Groww Trading API Panel */}
-        <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60">
-            <div className="flex items-center gap-2">
-              <CandlestickChart className="h-5 w-5 text-emerald-400" />
-              <h3 className="text-base font-bold text-white">
-                Groww Trading API
-              </h3>
-            </div>
-            <div className="flex items-center gap-4">
-              <StatusPill status={settings?.growwStatus} />
-              {settings?.growwLastVerified && (
-                <span className="text-[10px] text-zinc-500">
-                  Verified:{" "}
-                  {new Date(settings.growwLastVerified).toLocaleString()}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
-            <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-amber-400" />
-            <p className="text-[11px] leading-relaxed text-amber-700/80">
-              These credentials reach a live demat account. Set{" "}
-              <code className="rounded bg-zinc-950 px-1 py-0.5 text-amber-300">
-                CREDENTIAL_ENCRYPTION_KEY
-              </code>{" "}
-              (32+ characters) on the backend first — saving is refused without
-              it. Groww access tokens expire at 06:00 IST daily; storing a
-              secret or TOTP seed is what lets the desk renew unattended.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                API Key
-              </label>
-              <input
-                type="password"
-                value={growwApiKey}
-                onChange={(e) => setGrowwApiKey(e.target.value)}
-                placeholder="From groww.in/trade-api/api-keys"
-                autoComplete="off"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                API Secret
-              </label>
-              <input
-                type="password"
-                value={growwApiSecret}
-                onChange={(e) => setGrowwApiSecret(e.target.value)}
-                placeholder="Daily approval flow"
-                autoComplete="off"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-              />
-              <p className="mt-1.5 text-[11px] text-zinc-600">
-                Needs approval on the Groww keys page each morning.
-              </p>
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                TOTP Secret
-              </label>
-              <input
-                type="password"
-                value={growwTotpSecret}
-                onChange={(e) => setGrowwTotpSecret(e.target.value)}
-                placeholder="Base32 seed"
-                autoComplete="off"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-              />
-              <p className="mt-1.5 text-[11px] text-zinc-600">
-                Alternative to the secret. This is your second factor — storing
-                it means a server compromise is an account compromise.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-start gap-3 pt-3">
-            <button
-              type="button"
-              disabled={testGrowwMutation.isPending}
-              onClick={() => testGrowwMutation.mutate()}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {testGrowwMutation.isPending ? (
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <CandlestickChart className="h-3.5 w-3.5" />
-              )}
-              Test Groww Connection
             </button>
           </div>
         </div>
