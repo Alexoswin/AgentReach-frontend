@@ -559,9 +559,9 @@ export default function SettingsPage() {
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
               />
               <p className="mt-2 text-[11px] text-zinc-500">
-                Saved encrypted and used for Gemini Live campaign calls, agent
-                chat, voice previews, VoiceReach campaign generation, and AI
-                email template text generation.
+                Saved encrypted and used for Gemini Live campaign calls, voice
+                previews, VoiceReach campaign generation, and AI email template
+                text generation.
               </p>
             </div>
             <div>
