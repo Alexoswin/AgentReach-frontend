@@ -33,20 +33,20 @@ const NAV_LINKS = [
 const FEATURES = [
   {
     icon: Mail,
-    title: 'Personalized bulk email',
+    title: 'MailReach — personalized email',
     body: 'Send thousands of tailored emails with AI-written variables, merge fields, and deliverability built in.',
     tone: 'a' as const,
   },
   {
     icon: PhoneCall,
-    title: 'AI voice calling',
-    body: 'Launch automated calling campaigns where lifelike AI agents dial, qualify, and book on your behalf.',
+    title: 'VoiceReach — AI voice calling',
+    body: 'Launch VoiceReach calling campaigns where lifelike AI agents dial, qualify, and book on your behalf.',
     tone: 'a2' as const,
   },
   {
     icon: Bot,
-    title: 'Configurable calling bots',
-    body: 'Design bot personas, scripts, and objection handling, then deploy them across every campaign.',
+    title: 'Configurable calling agents',
+    body: 'Design agent personas, scripts, and objection handling, then deploy them across every campaign.',
     tone: 'a3' as const,
   },
   {
@@ -57,8 +57,8 @@ const FEATURES = [
   },
   {
     icon: MessageSquareText,
-    title: 'AI chat assistant',
-    body: 'Draft templates, refine copy, and get outreach strategy on demand from a built-in AI copilot.',
+    title: 'Agent chat',
+    body: 'Question a calling agent and check its answers against its knowledge base before it goes live.',
     tone: 'a3' as const,
   },
   {
@@ -520,7 +520,7 @@ export default function Home() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  'Live sync across email and calling campaigns',
+                  'Live sync across MailReach and VoiceReach campaigns',
                   'Template & company-segment performance breakdowns',
                   'Deliverability, open, reply, and call success rates',
                 ].map((item) => (
@@ -618,7 +618,7 @@ export default function Home() {
                 Ready to convert more replies?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-base text-zinc-300">
-                Join thousands of teams using ReachConvert to run email and AI calling campaigns that
+                Use ReachConvert to run MailReach email and VoiceReach calling campaigns that
                 actually book meetings.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

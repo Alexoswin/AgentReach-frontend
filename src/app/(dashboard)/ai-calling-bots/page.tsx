@@ -164,9 +164,9 @@ export default function AiCallingBotsPage() {
       resetForm();
       setMode("search");
       showAlert(
-        "Bot created and knowledge base embedded successfully.",
+        "Calling agent created and knowledge base embedded successfully.",
         "success",
-        "Bot created",
+        "Agent created",
       );
     },
     onError: (error: Error) => showAlert(error.message, "error"),
@@ -182,7 +182,7 @@ export default function AiCallingBotsPage() {
       showAlert(
         "The calling agent profile was updated.",
         "success",
-        "Bot updated",
+        "Agent updated",
       );
       resetForm();
     },
@@ -197,9 +197,9 @@ export default function AiCallingBotsPage() {
       setEditingBotId(null);
       setSearchResults([]);
       showAlert(
-        "The bot and its embeddings were deleted.",
+        "The agent and its embeddings were deleted.",
         "success",
-        "Bot deleted",
+        "Agent deleted",
       );
     },
     onError: (error: Error) => showAlert(error.message, "error"),
@@ -218,7 +218,7 @@ export default function AiCallingBotsPage() {
   const submitBot = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.name.trim()) {
-      showAlert("Bot name is required.", "error");
+      showAlert("Agent name is required.", "error");
       return;
     }
     if (!form.knowledgeBaseText.trim() && !knowledgeBasePdf && !editingBotId) {
@@ -244,7 +244,7 @@ export default function AiCallingBotsPage() {
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedBot) return showAlert("Select a bot first.", "error");
+    if (!selectedBot) return showAlert("Select an agent first.", "error");
     if (!searchQuery.trim())
       return showAlert("Enter a search question.", "error");
     searchMutation.mutate();
@@ -268,7 +268,7 @@ export default function AiCallingBotsPage() {
             Calling Agents
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Create bots and embed knowledge during bot creation, then validate
+            Create calling agents and embed knowledge during agent creation, then validate
             retrieval using search.
           </p>
         </div>
@@ -286,7 +286,7 @@ export default function AiCallingBotsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Metric icon={Bot} label="Bots" value={bots.length} />
+        <Metric icon={Bot} label="Agents" value={bots.length} />
         <Metric icon={CheckCircle2} label="Trained" value={trainedCount} />
         <Metric icon={Database} label="Knowledge Chunks" value={totalChunks} />
       </div>
@@ -295,7 +295,7 @@ export default function AiCallingBotsPage() {
         <section className={`${panelClass} overflow-hidden`}>
           <div className="flex items-center justify-between border-b border-zinc-850 px-5 py-4">
             <div>
-              <p className="text-sm font-bold text-white">Bot Library</p>
+              <p className="text-sm font-bold text-white">Agent Library</p>
               <p className="text-xs text-zinc-500">
                 Reusable calling agent profiles
               </p>
@@ -350,13 +350,13 @@ export default function AiCallingBotsPage() {
               <p className="text-sm font-bold text-white">
                 {mode === "create"
                   ? editingBotId
-                    ? "Edit Bot"
-                    : "Create Bot"
-                  : selectedBot?.name || "Select Bot"}
+                    ? "Edit Agent"
+                    : "Create Agent"
+                  : selectedBot?.name || "Select Agent"}
               </p>
               <p className="text-xs text-zinc-500">
                 {mode === "create"
-                  ? "Configure bot identity and knowledge base."
+                  ? "Configure agent identity and knowledge base."
                   : "Search embedded knowledge chunks."}
               </p>
             </div>
@@ -395,7 +395,7 @@ export default function AiCallingBotsPage() {
                       onChange={(e) =>
                         updateForm("description", e.target.value)
                       }
-                      placeholder="Outbound sales qualification bot"
+                      placeholder="Outbound sales qualification agent"
                     />
                   </Field>
                 </div>
@@ -406,21 +406,21 @@ export default function AiCallingBotsPage() {
                     onChange={(e) => updateForm("personality", e.target.value)}
                   />
                 </Field>
-                <Field label="Bot Objective">
+                <Field label="Agent Objective">
                   <textarea
                     className={`${inputClass} min-h-20`}
                     value={form.botObjective}
                     onChange={(e) => updateForm("botObjective", e.target.value)}
                   />
                 </Field>
-                <Field label="Bot Goal">
+                <Field label="Agent Goal">
                   <textarea
                     className={`${inputClass} min-h-20`}
                     value={form.botGoal}
                     onChange={(e) => updateForm("botGoal", e.target.value)}
                   />
                 </Field>
-                <Field label="Bot Flow">
+                <Field label="Agent Flow">
                   <textarea
                     className={`${inputClass} min-h-24`}
                     value={form.botFlow}
@@ -477,7 +477,7 @@ export default function AiCallingBotsPage() {
                     ) : (
                       <Upload className="h-4 w-4" />
                     )}
-                    {editingBotId ? "Save Changes" : "Create & Train Bot"}
+                    {editingBotId ? "Save Changes" : "Create & Train Agent"}
                   </button>
                   {editingBotId && (
                     <button
@@ -508,7 +508,7 @@ export default function AiCallingBotsPage() {
                     className={inputClass}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Ask something this bot should know"
+                    placeholder="Ask something this agent should know"
                   />
                   <button
                     type="submit"

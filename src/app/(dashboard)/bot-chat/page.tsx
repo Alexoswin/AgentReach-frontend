@@ -36,7 +36,7 @@ const selectClass =
 
 function buildAssistantReply(results: SearchResult[]) {
   if (!results.length) {
-    return "I could not find relevant training knowledge for that question yet. Please train this bot with more content and try again.";
+    return "I could not find relevant training knowledge for that question yet. Please train this agent with more content and try again.";
   }
 
   const topSnippets = results
@@ -72,7 +72,7 @@ export default function BotChatPage() {
 
   const chatMutation = useMutation({
     mutationFn: async (question: string) => {
-      if (!selectedBotId) throw new Error("Please select a trained bot first.");
+      if (!selectedBotId) throw new Error("Please select a trained agent first.");
       const response = (await api.aiCallingBots.chat(selectedBotId, {
         message: question,
         topK: 4,
@@ -105,7 +105,7 @@ export default function BotChatPage() {
         {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
-          text: "I ran into an issue while searching bot knowledge. Please try again.",
+          text: "I ran into an issue while searching agent knowledge. Please try again.",
         },
       ]);
     },
@@ -116,7 +116,7 @@ export default function BotChatPage() {
     const question = input.trim();
     if (!question) return;
     if (!selectedBotId) {
-      showAlert("Select a trained bot first.", "error");
+      showAlert("Select a trained agent first.", "error");
       return;
     }
 
@@ -139,7 +139,7 @@ export default function BotChatPage() {
         <div>
           <h2 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white">
             <MessageSquareText className="h-8 w-8 text-indigo-400" />
-            Bot Chat
+            Agent Chat
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
             Pick a trained calling agent and chat over its knowledge chunks.
@@ -150,7 +150,7 @@ export default function BotChatPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.5fr)]">
         <section className={panelClass}>
           <div className="border-b border-zinc-850 px-5 py-4">
-            <p className="text-sm font-bold text-white">Trained Bots</p>
+            <p className="text-sm font-bold text-white">Trained Agents</p>
             <p className="text-xs text-zinc-500">
               Choose a bot with trained chunks to start chatting
             </p>
@@ -177,7 +177,7 @@ export default function BotChatPage() {
                     }`}
                   >
                     <p className="truncate text-sm font-bold text-zinc-100">
-                      {bot.name || "Unnamed Bot"}
+                      {bot.name || "Unnamed Agent"}
                     </p>
                     <p className="mt-1 text-xs text-zinc-500">
                       {bot.role || bot.description || "AI calling specialist"}
@@ -196,8 +196,8 @@ export default function BotChatPage() {
           <div className="border-b border-zinc-850 px-5 py-4">
             <p className="text-sm font-bold text-white">
               {selectedBot
-                ? `Chatting with ${selectedBot.name || "Selected Bot"}`
-                : "Select a bot to chat"}
+                ? `Chatting with ${selectedBot.name || "Selected Agent"}`
+                : "Select an agent to chat"}
             </p>
             <p className="text-xs text-zinc-500">
               Responses are grounded in trained bot chunks.
@@ -230,7 +230,7 @@ export default function BotChatPage() {
                     ) : (
                       <Bot className="h-4 w-4" />
                     )}
-                    <span>{message.role === "user" ? "You" : "Bot"}</span>
+                    <span>{message.role === "user" ? "You" : "Agent"}</span>
                   </header>
                   <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-200">
                     {message.text}
@@ -272,7 +272,7 @@ export default function BotChatPage() {
                 className={selectClass}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                placeholder="Ask the selected bot a question..."
+                placeholder="Ask the selected agent a question..."
                 disabled={!selectedBot || chatMutation.isPending}
               />
               <button

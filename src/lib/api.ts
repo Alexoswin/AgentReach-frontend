@@ -168,11 +168,11 @@ function toFriendlyApiError(message: unknown, status: number) {
   if (lower.includes("no pending contacts"))
     return "Everyone in this campaign has already been sent successfully. Add more recipients to send to more people.";
   if (lower.includes("no pending calls"))
-    return "Please add contacts before launching this calling campaign.";
+    return "Please add contacts before launching this VoiceReach campaign.";
   if (lower.includes("not running or queued"))
-    return "This calling campaign is not currently running or in queue.";
+    return "This VoiceReach campaign is not currently running or in queue.";
   if (lower.includes("no contacts with phone numbers"))
-    return "Add at least one contact with a phone number before launching this calling campaign.";
+    return "Add at least one contact with a phone number before launching this VoiceReach campaign.";
   if (lower.includes("no contacts"))
     return "Please add recipients before launching this campaign.";
   if (lower.includes("template"))

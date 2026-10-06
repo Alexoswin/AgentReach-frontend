@@ -62,10 +62,10 @@ src/
 │   │   ├── signals/            # signal feed + review queue
 │   │   │   └── playbooks/      # automation playbooks
 │   │   ├── contacts/           # contacts + directories
-│   │   ├── email-campaigns/    # templates, preview, launch, relaunch
-│   │   ├── ai-calling-bots/    # bot personas + RAG knowledge bases
-│   │   ├── calling-campaigns/  # AI voice calling campaigns
-│   │   ├── bot-chat/           # chat with a bot's knowledge base
+│   │   ├── email-campaigns/    # MailReach: templates, preview, launch, relaunch
+│   │   ├── ai-calling-bots/    # Calling Agents: personas + RAG knowledge bases
+│   │   ├── calling-campaigns/  # VoiceReach: AI voice calling campaigns
+│   │   ├── bot-chat/           # Agent Chat: chat with an agent's knowledge base
 │   │   ├── history/            # email + call history
 │   │   ├── settings/           # SES / Twilio / Gemini credentials
 │   │   └── profile/            # profile, theme, accent colour, password
@@ -89,20 +89,20 @@ src/
 
 | Route                | Purpose                                                                            |
 | -------------------- | ---------------------------------------------------------------------------------- |
-| `/login`             | Sign in and password reset.                                                        |
-| `/dashboard`         | Cross-channel overview and live metrics.                                           |
-| `/signals`           | Signal feed (funding, hiring, news, bounces) and human review queue.               |
-| `/signals/playbooks` | Rules that turn signals into automatic outreach.                                   |
+| `/login`             | Sign in and password reset. |
+| `/dashboard`         | Cross-channel overview and live metrics. |
+| `/signals`           | Signal feed (funding, hiring, news, bounces) and human review queue. |
+| `/signals/playbooks` | Rules that turn signals into automatic outreach. |
 | `/contacts`          | Recruiter, company, hiring-team, and lead contacts + directories; CSV/XLSX import. |
-| `/email-campaigns`   | Build/generate templates, preview, launch, and relaunch bulk email.                |
-| `/ai-calling-bots`   | Create bot personas with a PDF-backed RAG knowledge base.                          |
-| `/calling-campaigns` | Configure and run AI voice calling campaigns with live outcomes.                   |
-| `/scheduler`         | View and cancel future email/calling campaign launches.                            |
-| `/bot-chat`          | Chat against a bot's knowledge base (semantic search).                             |
-| `/history`           | Filterable email and call history, including replies.                              |
-| `/settings`          | Connect AWS SES, Twilio, and Gemini; test each connection.                         |
-| `/profile`           | User profile, theme, accent colours, and password update.                          |
-| `/documentation`     | In-app documentation portal (see below).                                           |
+| `/email-campaigns`   | **MailReach** — build/generate templates, preview, launch, and relaunch bulk email. |
+| `/ai-calling-bots`   | **Calling Agents** — create agent personas with a PDF-backed RAG knowledge base. |
+| `/calling-campaigns` | **VoiceReach** — configure and run AI voice calling campaigns with live outcomes. |
+| `/scheduler`         | View and cancel future MailReach/VoiceReach launches. |
+| `/bot-chat`          | **Agent Chat** — chat against a calling agent's knowledge base (semantic search). |
+| `/history`           | Filterable email and call history, including replies. |
+| `/settings`          | Connect AWS SES, Twilio, and Gemini; test each connection. |
+| `/profile`           | User profile, theme, accent colours, and password update. |
+| `/documentation`     | In-app documentation portal (see below). |
 
 ---
 

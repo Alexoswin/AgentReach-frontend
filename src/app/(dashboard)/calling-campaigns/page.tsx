@@ -1230,7 +1230,7 @@ export default function CallingCampaignsPage() {
   const handleLaunchCampaign = (campaign: LooseApiResponse) => {
     if (isCampaignActive(campaign.status)) return;
     const isRelaunch = campaign.status !== "DRAFT";
-    console.debug("[AI Calling] Launch requested", {
+    console.debug("[VoiceReach] Launch requested", {
       campaignId: campaign.id,
       status: campaign.status,
       contactCount: campaign.contactCount,
@@ -1396,7 +1396,7 @@ export default function CallingCampaignsPage() {
       contactIds: selectedContactIds,
     };
 
-    console.debug("[AI Calling] Saving campaign", {
+    console.debug("[VoiceReach] Saving campaign", {
       mode: editingCampaignId ? "edit" : "create",
       campaignId: editingCampaignId,
       selectedContacts: selectedContactIds.length,
@@ -2099,8 +2099,8 @@ export default function CallingCampaignsPage() {
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-indigo-400" />
               {editingCampaignId
-                ? "Edit Calling Campaign"
-                : "Create Calling Campaign"}
+                ? "Edit VoiceReach Campaign"
+                : "Create VoiceReach Campaign"}
             </h3>
             <p className="text-xs text-zinc-500 mt-1">
               Configure your outbound calling AI persona, scripts, and targeting
@@ -2208,7 +2208,7 @@ export default function CallingCampaignsPage() {
               )}
             </div>
 
-            {/* SECTION 2: Bot Picker */}
+            {/* SECTION 2: Calling Agent Picker */}
             <div className="bg-zinc-950/40 border border-zinc-850 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-850 pb-2 mb-2">
                 <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
@@ -2259,7 +2259,7 @@ export default function CallingCampaignsPage() {
                         <p
                           className={`text-xs font-bold truncate pr-5 ${isSelected ? "text-indigo-300" : "text-zinc-200"}`}
                         >
-                          {bot.name || "Unnamed Bot"}
+                          {bot.name || "Unnamed Agent"}
                         </p>
                         {bot.role && (
                           <p className="text-[10px] text-zinc-500 truncate mt-0.5">
@@ -2722,7 +2722,7 @@ export default function CallingCampaignsPage() {
                     addContactsMutation.isPending
                   }
                   onClick={() => {
-                    console.debug("[AI Calling] Adding contacts to campaign", {
+                    console.debug("[VoiceReach] Adding contacts to campaign", {
                       campaignId: selectedCampaignId,
                       selectedContacts: addSelectedContactIds.length,
                     });

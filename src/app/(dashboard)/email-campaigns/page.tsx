@@ -1566,7 +1566,7 @@ export default function EmailCampaignsPage() {
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <Mail className="h-8 w-8 text-indigo-400" />
-            Automated Email
+            MailReach
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
             Automate personalized bulk outreach pipelines with tracking and AI
