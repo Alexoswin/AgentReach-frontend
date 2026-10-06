@@ -54,10 +54,10 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Outreach",
     items: [
       { name: "Contacts", href: "/contacts", icon: Users },
-      { name: "Email Campaigns", href: "/email-campaigns", icon: Mail },
-      { name: "AI Calling", href: "/calling-campaigns", icon: PhoneCall },
+      { name: "Automated Email", href: "/email-campaigns", icon: Mail },
+      { name: "VoiceReach", href: "/calling-campaigns", icon: PhoneCall },
       { name: "Scheduler", href: "/scheduler", icon: CalendarClock },
-      { name: "AI Bots", href: "/ai-calling-bots", icon: Bot },
+      { name: "Calling Agents", href: "/ai-calling-bots", icon: Bot },
       { name: "AI Chat", href: "/bot-chat", icon: MessageSquareText },
       { name: "WebPilot", href: "/web-pilot", icon: Globe },
     ],

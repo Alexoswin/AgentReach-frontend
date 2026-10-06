@@ -560,7 +560,7 @@ export default function SettingsPage() {
               />
               <p className="mt-2 text-[11px] text-zinc-500">
                 Saved encrypted and used for Gemini Live campaign calls, bot
-                chat, voice previews, AI calling campaign generation, and AI
+                chat, voice previews, VoiceReach campaign generation, and AI
                 email template text generation.
               </p>
             </div>

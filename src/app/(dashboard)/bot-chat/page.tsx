@@ -142,7 +142,7 @@ export default function BotChatPage() {
             Bot Chat
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Pick a trained AI bot and chat over its knowledge chunks.
+            Pick a trained calling agent and chat over its knowledge chunks.
           </p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function BotChatPage() {
               ))
             ) : trainedBots.length === 0 ? (
               <div className="p-6 text-sm text-zinc-500">
-                No trained bots found. Train a bot in AI Bots first.
+                No trained bots found. Train one in Calling Agents first.
               </div>
             ) : (
               trainedBots.map((bot) => {

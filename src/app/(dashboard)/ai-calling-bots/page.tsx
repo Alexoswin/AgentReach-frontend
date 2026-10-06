@@ -180,7 +180,7 @@ export default function AiCallingBotsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ai-calling-bots"] });
       showAlert(
-        "The AI calling bot profile was updated.",
+        "The calling agent profile was updated.",
         "success",
         "Bot updated",
       );
@@ -254,7 +254,7 @@ export default function AiCallingBotsPage() {
     return (
       <MissingCredentials
         title="Gemini Live Key Required"
-        description="To create and train AI calling bots, add and verify your Gemini API key for Gemini Live in Settings."
+        description="To create and train calling agents, add and verify your Gemini API key for Gemini Live in Settings."
       />
     );
   }
@@ -265,7 +265,7 @@ export default function AiCallingBotsPage() {
         <div>
           <h2 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white">
             <Bot className="h-8 w-8 text-indigo-400" />
-            AI Calling Bots
+            Calling Agents
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
             Create bots and embed knowledge during bot creation, then validate
@@ -297,7 +297,7 @@ export default function AiCallingBotsPage() {
             <div>
               <p className="text-sm font-bold text-white">Bot Library</p>
               <p className="text-xs text-zinc-500">
-                Reusable AI calling profiles
+                Reusable calling agent profiles
               </p>
             </div>
             <RefreshCw className="h-4 w-4 text-zinc-500" />

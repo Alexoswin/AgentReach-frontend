@@ -83,7 +83,7 @@ export default function SchedulerPage() {
           Scheduler
         </h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Every email and AI calling campaign queued for a future launch. They
+          Every email and VoiceReach campaign queued for a future launch. They
           fire automatically at the scheduled time.
         </p>
       </div>
@@ -111,13 +111,13 @@ export default function SchedulerPage() {
               href="/email-campaigns"
               className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-900"
             >
-              <Mail className="h-3.5 w-3.5" /> Email Campaigns
+              <Mail className="h-3.5 w-3.5" /> Automated Email
             </Link>
             <Link
               href="/calling-campaigns"
               className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-900"
             >
-              <PhoneCall className="h-3.5 w-3.5" /> AI Calling
+              <PhoneCall className="h-3.5 w-3.5" /> VoiceReach
             </Link>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function SchedulerPage() {
                   <div>
                     <p className="text-sm font-bold text-white">{item.name}</p>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      {isEmail ? "Email campaign" : "AI calling campaign"}
+                      {isEmail ? "Automated email" : "VoiceReach campaign"}
                     </p>
                   </div>
                 </div>

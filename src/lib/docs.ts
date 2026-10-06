@@ -228,7 +228,7 @@ const DIAGRAMS = {
   Templates["Templates"]
   Calling["Calling campaigns"]
   Realtime["Realtime calling"]
-  Bots["AI bots + RAG"]
+  Bots["Calling agents + RAG"]
   Signals["Signals"]
   Settings --> Email
   Settings --> Templates
@@ -251,10 +251,10 @@ const DIAGRAMS = {
   Settings --> VoiceInfra["Twilio + Gemini Live"]
   Settings --> AiText["Gemini text generation"]
   Contacts["Contacts + directories"] --> Email["Email campaigns"]
-  Contacts --> Calling["AI calling campaigns"]
+  Contacts --> Calling["VoiceReach campaigns"]
   Contacts --> Watches["Company watches"]
   Templates["Templates"] --> Email
-  Bots["AI calling bots"] --> Calling
+  Bots["Calling agents"] --> Calling
   Watches --> Signals["Signals"]
   Signals --> Matches["Signal matches"]
   Matches --> Playbooks["Playbooks"]
@@ -607,12 +607,12 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
   },
   {
     slug: 'architecture-ai-calling',
-    title: 'AI calling architecture',
+    title: 'VoiceReach architecture',
     tagline: 'Twilio outbound calls, media streams, Gemini Live, transcripts, and recordings.',
     icon: 'phone',
     category: 'Feature architecture',
     intro: [
-      'AI Calling combines REST campaign management with public Twilio webhooks and a raw media WebSocket. The backend owns every provider callback and persists call state in CallHistory.',
+      'VoiceReach combines REST campaign management with public Twilio webhooks and a raw media WebSocket. The backend owns every provider callback and persists call state in CallHistory.',
     ],
     sections: [
       {
@@ -636,12 +636,12 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
   },
   {
     slug: 'architecture-ai-bots',
-    title: 'AI bots & RAG architecture',
+    title: 'Calling agents & RAG architecture',
     tagline: 'Reusable voice personas, knowledge ingestion, local embeddings, search, and chat.',
     icon: 'bot',
     category: 'Feature architecture',
     intro: [
-      'AI Calling Bots provide reusable persona and knowledge settings for live calls and test chat. Knowledge ingestion is local-friendly: text/PDF content is chunked and embedded with local-hash-embedding-v1.',
+      'Calling Agents provide reusable persona and knowledge settings for live calls and test chat. Knowledge ingestion is local-friendly: text/PDF content is chunked and embedded with local-hash-embedding-v1.',
     ],
     sections: [
       {
@@ -843,14 +843,14 @@ export const DOC_PAGES: DocPage[] = [
         capabilities: [
           { title: 'Auth & settings', text: 'JWT-like sessions, global route guarding, encrypted provider credentials, and provider test endpoints.' },
           { title: 'Contacts & templates', text: 'Audience records, directories, custom fields, email copy, attachments, reference PDFs, and AI generation.' },
-          { title: 'Campaigns', text: 'Email sends through SES, AI calling through Twilio and Gemini Live, scheduling, relaunch, stop, and history records.' },
+          { title: 'Campaigns', text: 'Email sends through SES, VoiceReach through Twilio and Gemini Live, scheduling, relaunch, stop, and history records.' },
           { title: 'Signals', text: 'Company watches, collectors, classification, deduplication, contact matching, playbooks, review queue, and triggered outreach attribution.' },
         ],
       },
       {
         heading: 'Data model',
         body: [
-          'MongoDB stores users, encrypted settings, contacts, directories, templates, email campaigns, recipient rows, AI calling bots, bot embeddings, calling campaigns, call history, company watches, signals, signal matches, playbooks, and triggered outreach records.',
+          'MongoDB stores users, encrypted settings, contacts, directories, templates, email campaigns, recipient rows, calling agents, bot embeddings, calling campaigns, call history, company watches, signals, signal matches, playbooks, and triggered outreach records.',
           'The backend accesses those collections through a global MongoService. Its delegates expose Prisma-like methods such as findMany, findUnique, create, update, delete, and selected include hydration while keeping MongoDB as the storage engine.',
         ],
       },
@@ -896,9 +896,9 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'The five-minute path',
         steps: [
           'Create your account and sign in — you land on the Outreach Dashboard.',
-          'Open Settings and connect at least one channel: AWS SES for email, or a Gemini Live key for AI calling.',
+          'Open Settings and connect at least one channel: AWS SES for email, or a Gemini Live key for VoiceReach.',
           'Go to Contacts and import a CSV/XLSX, mapping columns to name, email, company, and job title.',
-          'Build a template under Email Campaigns (write it yourself or generate it with AI), then create a campaign and add contacts.',
+          'Build a template under Automated Email (write it yourself or generate it with AI), then create a campaign and add contacts.',
           'Hit Launch and watch deliveries, opens, and replies stream into the Dashboard in real time.',
         ],
       },
@@ -910,8 +910,8 @@ export const DOC_PAGES: DocPage[] = [
             text: 'Importing contacts automatically starts watching their companies. Create a Playbook so funding, hiring, and news events trigger outreach on their own.',
           },
           {
-            title: 'Configure AI calling',
-            text: 'Add a Gemini Live key and design an AI Bot persona to run automated voice campaigns through Twilio.',
+            title: 'Configure VoiceReach',
+            text: 'Add a Gemini Live key and design a Calling Agent persona to run automated voice campaigns through Twilio.',
           },
           {
             title: 'Personalize your workspace',
@@ -940,7 +940,7 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'End-to-end operator flow',
         steps: [
           'Start: complete profile and connect channels in Settings (AWS SES for email, Twilio and Gemini for calling).',
-          'Configure: import contacts, organize directories, and create templates or AI bots based on your outreach style.',
+          'Configure: import contacts, organize directories, and create templates or calling agents based on your outreach style.',
           'Launch: run email and calling campaigns manually or schedule them for future launch windows.',
           'Monitor: use History for record-level details and Dashboard for roll-up metrics across channels.',
           'Troubleshoot: if performance drops, check settings status, data quality in contacts, and message/script quality in templates or bots.',
@@ -967,7 +967,7 @@ export const DOC_PAGES: DocPage[] = [
     icon: 'layout-dashboard',
     category: 'Core features',
     intro: [
-      'The Dashboard is the first screen you see. It aggregates email deliverability, AI calling outcomes, template performance, and your most responsive company segments into a single live view that refreshes automatically.',
+      'The Dashboard is the first screen you see. It aggregates email deliverability, VoiceReach outcomes, template performance, and your most responsive company segments into a single live view that refreshes automatically.',
     ],
     sections: [
       {
@@ -1144,7 +1144,7 @@ export const DOC_PAGES: DocPage[] = [
     icon: 'mail',
     category: 'Core features',
     intro: [
-      'Email Campaigns sends personalized bulk email through AWS SES with per-recipient merge fields, delivery tracking, and optional attachments. Templates can be written by hand or generated by AI from a short brief.',
+      'Automated Email sends personalized bulk email through AWS SES with per-recipient merge fields, delivery tracking, and optional attachments. Templates can be written by hand or generated by AI from a short brief.',
     ],
     sections: [
       {
@@ -1199,11 +1199,11 @@ export const DOC_PAGES: DocPage[] = [
   {
     slug: 'scheduler',
     title: 'Scheduler',
-    tagline: 'One place to see and cancel future email and AI calling launches.',
+    tagline: 'One place to see and cancel future email and VoiceReach launches.',
     icon: 'calendar-clock',
     category: 'Core features',
     intro: [
-      'Scheduler shows every campaign queued for a future launch time. It combines scheduled email campaigns and scheduled AI calling campaigns into one chronological view.',
+      'Scheduler shows every campaign queued for a future launch time. It combines scheduled email campaigns and scheduled VoiceReach campaigns into one chronological view.',
       'The backend checks due campaigns once per minute. When a scheduled time arrives, the normal launch pipeline runs, so delivery, call history, alerts, and dashboard metrics behave the same as a manual launch.',
     ],
     sections: [
@@ -1221,13 +1221,13 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'What appears here',
         capabilities: [
           { title: 'Email campaigns', text: 'Campaigns with status SCHEDULED and a scheduledAt timestamp.' },
-          { title: 'AI calling campaigns', text: 'Calling campaigns with status SCHEDULED and a scheduledAt timestamp.' },
+          { title: 'VoiceReach campaigns', text: 'Calling campaigns with status SCHEDULED and a scheduledAt timestamp.' },
         ],
       },
       {
         heading: 'Scheduling flow',
         steps: [
-          'Open Email Campaigns or AI Calling and configure the campaign.',
+          'Open Automated Email or VoiceReach and configure the campaign.',
           'Choose Schedule instead of launching immediately.',
           'Pick a future date and time.',
           'Open Scheduler to verify the campaign is queued.',
@@ -1288,12 +1288,12 @@ export const DOC_PAGES: DocPage[] = [
   // ─────────────────────────────── AI outreach
   {
     slug: 'ai-calling',
-    title: 'AI calling campaigns',
+    title: 'VoiceReach campaigns',
     tagline: 'Autonomous voice agents that dial, qualify, and log calls.',
     icon: 'phone',
     category: 'AI outreach',
     intro: [
-      'AI Calling runs automated outbound voice campaigns. A Gemini Live agent places calls through Twilio, holds a natural conversation using the persona and script you define, and logs the transcript and outcome for every call.',
+      'VoiceReach runs automated outbound voice campaigns. A Gemini Live agent places calls through Twilio, holds a natural conversation using the persona and script you define, and logs the transcript and outcome for every call.',
     ],
     sections: [
       {
@@ -1311,7 +1311,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Add and verify a Gemini API key for Gemini Live in Settings, plus your Twilio credentials.',
           'Create a calling campaign: give it an objective, a prompt/script, and choose a voice and language.',
-          'Attach an AI Bot persona (or configure the agent inline) and add contacts.',
+          'Attach a Calling Agent persona (or configure the agent inline) and add contacts.',
           'Start the dialer — Twilio queues the calls and the agent begins conversations.',
         ],
       },
@@ -1338,12 +1338,12 @@ export const DOC_PAGES: DocPage[] = [
   },
   {
     slug: 'ai-bots',
-    title: 'AI calling bots',
+    title: 'Calling agents',
     tagline: 'Reusable voice personas with scripts and knowledge.',
     icon: 'bot',
     category: 'AI outreach',
     intro: [
-      'AI Bots are the reusable personas that power your calling campaigns. Design a bot once — its voice, personality, objectives, and knowledge — then deploy it across many campaigns for consistent conversations.',
+      'Calling Agents are the reusable personas that power your calling campaigns. Design a bot once — its voice, personality, objectives, and knowledge — then deploy it across many campaigns for consistent conversations.',
     ],
     sections: [
       {
@@ -1367,9 +1367,9 @@ export const DOC_PAGES: DocPage[] = [
       {
         heading: 'Creating and reusing bots',
         steps: [
-          'Open AI Bots and create a new bot with its persona and script.',
+          'Open Calling Agents and create a new bot with its persona and script.',
           'Add any knowledge or reference documents you want it to use.',
-          'Save it, then select it when configuring an AI Calling campaign.',
+          'Save it, then select it when configuring a VoiceReach campaign.',
           'Iterate: refine the script and every future campaign using that bot inherits the improvement.',
         ],
       },
@@ -1384,7 +1384,7 @@ export const DOC_PAGES: DocPage[] = [
     icon: 'message',
     category: 'AI outreach',
     intro: [
-      'AI Chat is a text playground for your AI bots. Use it to rehearse a bot’s conversation, pressure-test its answers, and draft or refine outreach copy without picking up the phone.',
+      'AI Chat is a text playground for your calling agents. Use it to rehearse a bot’s conversation, pressure-test its answers, and draft or refine outreach copy without picking up the phone.',
     ],
     sections: [
       {
@@ -1410,7 +1410,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Open AI Chat and select the bot you want to talk to.',
           'Send messages as the prospect would, and read the bot’s replies.',
-          'Refine the bot’s script under AI Bots based on what you learn, then re-test.',
+          'Refine the bot’s script under Calling Agents based on what you learn, then re-test.',
         ],
       },
     ],
@@ -1443,7 +1443,7 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'Integrations',
         capabilities: [
           { title: 'AWS SES', text: 'Powers email delivery. Add your access key, secret, region, and sender address, then Test SES.' },
-          { title: 'Gemini (Live)', text: 'Powers AI calling and signal classification. Add and verify your Gemini API key.' },
+          { title: 'Gemini (Live)', text: 'Powers VoiceReach and signal classification. Add and verify your Gemini API key.' },
           { title: 'Twilio', text: 'Places the actual phone calls. Add your account SID, auth token, and phone number.' },
           { title: 'Gemini (Text)', text: 'The same Gemini key backs AI text generation for templates. Pick a cheap text model such as gemini-2.5-flash-lite.' },
         ],
@@ -1453,7 +1453,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Enter credentials for a service.',
           'Click its Test button — a live check confirms the keys work.',
-          'A connected status unlocks the related feature (e.g. Gemini “Connected” enables AI calling).',
+          'A connected status unlocks the related feature (e.g. Gemini “Connected” enables VoiceReach).',
         ],
       },
     ],

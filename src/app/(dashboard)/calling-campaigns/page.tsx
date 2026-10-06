@@ -576,7 +576,7 @@ export default function CallingCampaignsPage() {
     queryFn: api.callingCampaigns.list,
   });
 
-  // Fetch AI calling bots for bot picker
+  // Fetch calling agents for bot picker
   const { data: aiBots = [] } = useQuery<AiCallingBot[]>({
     queryKey: ["ai-calling-bots"],
     queryFn: () => api.aiCallingBots.list() as Promise<AiCallingBot[]>,
@@ -867,7 +867,7 @@ export default function CallingCampaignsPage() {
       setGenerationJobId(job.id);
       handledGenerationJobIdRef.current = null;
       showAlert(
-        "AI calling campaign generation started. Status will refresh automatically.",
+        "VoiceReach campaign generation started. Status will refresh automatically.",
         "info",
         "Generating campaign",
       );
@@ -915,7 +915,7 @@ export default function CallingCampaignsPage() {
         );
         setGenerationJobId(null);
         showAlert(
-          "AI calling campaign draft generated.",
+          "VoiceReach campaign draft generated.",
           "success",
           "Campaign generated",
         );
@@ -1477,8 +1477,8 @@ export default function CallingCampaignsPage() {
         }
         description={
           activeProvider === "plivo"
-            ? "To create and manage AI calling campaigns, you need to configure your Plivo Auth ID, Auth Token, and Phone Number in settings."
-            : "To create and manage AI calling campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
+            ? "To create and manage VoiceReach campaigns, you need to configure your Plivo Auth ID, Auth Token, and Phone Number in settings."
+            : "To create and manage VoiceReach campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
         }
       />
     );
@@ -1488,7 +1488,7 @@ export default function CallingCampaignsPage() {
     return (
       <MissingCredentials
         title="Gemini Live Key Required"
-        description="To create and launch AI calling campaigns, add and verify your Gemini API key for Gemini Live in settings."
+        description="To create and launch VoiceReach campaigns, add and verify your Gemini API key for Gemini Live in settings."
       />
     );
   }
@@ -1511,7 +1511,7 @@ export default function CallingCampaignsPage() {
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <PhoneCall className="h-8 w-8 text-indigo-400" />
-            AI calling Campaigns
+            VoiceReach Campaigns
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
             Configure automated calling schedules with Gemini Live agents and
@@ -2213,7 +2213,7 @@ export default function CallingCampaignsPage() {
               <div className="flex items-center justify-between border-b border-zinc-850 pb-2 mb-2">
                 <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                  2. Select AI Bot
+                  2. Select Calling Agent
                 </h4>
                 {aiCallingBotId && (
                   <button
@@ -2227,12 +2227,12 @@ export default function CallingCampaignsPage() {
               </div>
               {aiBots.length === 0 ? (
                 <p className="text-xs text-zinc-500 italic py-2">
-                  No AI bots found. Create a bot in the{" "}
+                  No calling agents found. Create one in the{" "}
                   <a
                     href="/ai-calling-bots"
                     className="text-indigo-400 underline underline-offset-2 hover:text-indigo-300"
                   >
-                    AI Calling Bots
+                    Calling Agents
                   </a>{" "}
                   section first.
                 </p>
