@@ -46,7 +46,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile drawer */}
       <div
         className={`fixed inset-0 z-50 lg:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}
-        aria-hidden={!drawerOpen}
+        // inert also takes the off-screen links out of the tab order.
+        inert={!drawerOpen}
       >
         <div
           onClick={() => setDrawerOpen(false)}

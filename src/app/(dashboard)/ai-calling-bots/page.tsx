@@ -96,7 +96,11 @@ export default function AiCallingBotsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
-  const { data: bots = [], isLoading: isBotsLoading } = useQuery<
+  const {
+    data: bots = [],
+    isLoading: isBotsLoading,
+    isFetching: isBotsFetching,
+  } = useQuery<
     AiCallingBot[]
   >({
     queryKey: ["ai-calling-bots"],
@@ -130,6 +134,8 @@ export default function AiCallingBotsPage() {
   };
 
   const selectBot = (bot: AiCallingBot) => {
+    // Results belong to the agent they were searched against.
+    if (bot.id !== selectedBot?.id) setSearchResults([]);
     setSelectedBotId(bot.id);
     setMode("search");
   };
@@ -300,7 +306,20 @@ export default function AiCallingBotsPage() {
                 Reusable calling agent profiles
               </p>
             </div>
-            <RefreshCw className="h-4 w-4 text-zinc-500" />
+            <button
+              type="button"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["ai-calling-bots"] })
+              }
+              disabled={isBotsFetching}
+              aria-label="Refresh agents"
+              title="Refresh agents"
+              className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isBotsFetching ? "animate-spin" : ""}`}
+              />
+            </button>
           </div>
           <div className="max-h-[720px] divide-y divide-zinc-850 overflow-y-auto">
             {isBotsLoading ? (
@@ -495,9 +514,16 @@ export default function AiCallingBotsPage() {
                 <SelectedBotHeader
                   bot={selectedBot}
                   onEdit={() => selectedBot && startEdit(selectedBot)}
-                  onDelete={() =>
-                    selectedBot && deleteBotMutation.mutate(selectedBot.id)
-                  }
+                  onDelete={() => {
+                    if (
+                      selectedBot &&
+                      confirm(
+                        `Delete "${selectedBot.name || "this agent"}" and its knowledge base embeddings?`,
+                      )
+                    ) {
+                      deleteBotMutation.mutate(selectedBot.id);
+                    }
+                  }}
                   deleting={deleteBotMutation.isPending}
                 />
                 <form

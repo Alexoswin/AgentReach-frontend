@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { LoaderOverlay } from '@/components/Loader';
+import { useEscapeKey } from '@/lib/useEscapeKey';
 import {
   Radar,
   RefreshCw,
@@ -24,9 +25,11 @@ import {
   Pause,
   Play,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 
 type Tab = 'feed' | 'review' | 'watches';
+type TabQuery = { data?: LooseApiResponse; isLoading: boolean; isError: boolean };
 
 const TYPE_STYLES: Record<string, string> = {
   funding: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -152,15 +155,17 @@ export default function SignalsPage() {
           </p>
           <p className="mt-2 text-2xl font-black tracking-tight text-white">
             {stats ? `${stats.triggered?.replyRate ?? 0}%` : '—'}
-            <span className="ml-2 text-sm font-semibold text-zinc-500">
-              vs {stats?.manual?.replyRate ?? 0}% manual
-            </span>
+            {stats && (
+              <span className="ml-2 text-sm font-semibold text-zinc-500">
+                vs {stats.manual?.replyRate ?? 0}% manual
+              </span>
+            )}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-900">
+      <div className="flex flex-wrap items-center gap-1 border-b border-zinc-900">
         <TabButton active={tab === 'feed'} onClick={() => setTab('feed')} icon={Rss} label="Signal feed" />
         <TabButton
           active={tab === 'review'}
@@ -282,7 +287,18 @@ function EmptyState({ icon: Icon, title, body }: { icon: React.ElementType; titl
   );
 }
 
-function FeedTab({ query }: { query: { data?: LooseApiResponse; isLoading: boolean } }) {
+function LoadError({ what }: { what: string }) {
+  return (
+    <EmptyState
+      icon={AlertTriangle}
+      title={`Could not load ${what}`}
+      body="Something went wrong while fetching this list. Please try again in a moment."
+    />
+  );
+}
+
+function FeedTab({ query }: { query: TabQuery }) {
+  if (query.isError) return <LoadError what="signals" />;
   if (query.isLoading) {
     return (
       <div className="space-y-3">
@@ -362,10 +378,11 @@ function ReviewTab({
   onReview,
   pending,
 }: {
-  query: { data?: LooseApiResponse; isLoading: boolean };
+  query: TabQuery;
   onReview: (matchId: string, action: 'approve' | 'reject') => void;
   pending: boolean;
 }) {
+  if (query.isError) return <LoadError what="the review queue" />;
   if (query.isLoading) {
     return (
       <div className="space-y-3">
@@ -440,7 +457,7 @@ function WatchesTab({
   query,
   onChanged,
 }: {
-  query: { data?: LooseApiResponse; isLoading: boolean };
+  query: TabQuery;
   onChanged: () => void;
 }) {
   const { showAlert } = useOutreachStore();
@@ -455,6 +472,7 @@ function WatchesTab({
     onError: (e: Error) => showAlert(e.message, 'error'),
   });
 
+  if (query.isError) return <LoadError what="watched companies" />;
   if (query.isLoading) {
     return <div className="h-40 animate-pulse rounded-2xl border border-zinc-850 bg-zinc-900/40" />;
   }
@@ -469,8 +487,8 @@ function WatchesTab({
     );
   }
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-850 bg-zinc-900/40 shadow-xl">
-      <table className="w-full text-left text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-zinc-850 bg-zinc-900/40 shadow-xl">
+      <table className="w-full min-w-[560px] text-left text-sm">
         <thead className="border-b border-zinc-850 text-xs uppercase text-zinc-500">
           <tr>
             <th className="px-5 py-3 font-semibold">Company</th>
@@ -551,14 +569,21 @@ function ManualSignalModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
   const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
+  useEscapeKey(true, onClose);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a manual signal"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
+      >
         <div className="mb-5 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-bold text-white">
             <Sparkles className="h-5 w-5 text-indigo-400" /> Add a manual signal
           </h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} aria-label="Close" className="text-zinc-500 hover:text-zinc-300">
             <X className="h-5 w-5" />
           </button>
         </div>

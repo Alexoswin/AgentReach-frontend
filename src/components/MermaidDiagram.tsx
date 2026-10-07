@@ -2,6 +2,49 @@
 
 import { useEffect, useId, useState } from 'react';
 import { AlertTriangle, ListChecks } from 'lucide-react';
+import { isLightTheme, onThemeChange } from '@/lib/themeColors';
+
+const DARK_THEME_VARIABLES = {
+  background: '#071014',
+  mainBkg: '#102128',
+  primaryColor: '#102128',
+  primaryTextColor: '#f5fafb',
+  primaryBorderColor: '#55d7ff',
+  lineColor: '#c2d8df',
+  secondaryColor: '#17313a',
+  tertiaryColor: '#0d1b21',
+  clusterBkg: '#0b171c',
+  clusterBorder: '#3a5963',
+  edgeLabelBackground: '#0f2027',
+  actorBkg: '#17313a',
+  actorBorder: '#55d7ff',
+  actorTextColor: '#f5fafb',
+  labelTextColor: '#f5fafb',
+  noteBkgColor: '#182e24',
+  noteTextColor: '#f5fafb',
+  noteBorderColor: '#37e8a6',
+};
+
+const LIGHT_THEME_VARIABLES = {
+  background: '#ffffff',
+  mainBkg: '#eef4f6',
+  primaryColor: '#eef4f6',
+  primaryTextColor: '#10151b',
+  primaryBorderColor: '#0886b3',
+  lineColor: '#4a545f',
+  secondaryColor: '#e7ebef',
+  tertiaryColor: '#f3f5f7',
+  clusterBkg: '#f3f5f7',
+  clusterBorder: '#c1cad4',
+  edgeLabelBackground: '#ffffff',
+  actorBkg: '#eef4f6',
+  actorBorder: '#0886b3',
+  actorTextColor: '#10151b',
+  labelTextColor: '#10151b',
+  noteBkgColor: '#e9fbf3',
+  noteTextColor: '#10151b',
+  noteBorderColor: '#0b7d55',
+};
 
 interface MermaidDiagramProps {
   chart: string;
@@ -13,8 +56,17 @@ export default function MermaidDiagram({ chart, caption }: MermaidDiagramProps) 
   const diagramId = `reachconvert-doc-diagram-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const [svg, setSvg] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [light, setLight] = useState<boolean | null>(null);
+
+  // Mermaid bakes colors into the SVG, so re-render when the theme family flips.
+  useEffect(() => {
+    const update = () => setLight(isLightTheme());
+    update();
+    return onThemeChange(update);
+  }, []);
 
   useEffect(() => {
+    if (light === null) return;
     let cancelled = false;
 
     async function renderDiagram() {
@@ -27,7 +79,8 @@ export default function MermaidDiagram({ chart, caption }: MermaidDiagramProps) 
           startOnLoad: false,
           maxTextSize: 90000,
           securityLevel: 'strict',
-          theme: 'dark',
+          // Only the base theme fully honors custom themeVariables.
+          theme: light ? 'base' : 'dark',
           flowchart: {
             curve: 'basis',
             htmlLabels: true,
@@ -43,24 +96,7 @@ export default function MermaidDiagram({ chart, caption }: MermaidDiagramProps) 
             messageMargin: 48,
           },
           themeVariables: {
-            background: '#071014',
-            mainBkg: '#102128',
-            primaryColor: '#102128',
-            primaryTextColor: '#f5fafb',
-            primaryBorderColor: '#55d7ff',
-            lineColor: '#c2d8df',
-            secondaryColor: '#17313a',
-            tertiaryColor: '#0d1b21',
-            clusterBkg: '#0b171c',
-            clusterBorder: '#3a5963',
-            edgeLabelBackground: '#0f2027',
-            actorBkg: '#17313a',
-            actorBorder: '#55d7ff',
-            actorTextColor: '#f5fafb',
-            labelTextColor: '#f5fafb',
-            noteBkgColor: '#182e24',
-            noteTextColor: '#f5fafb',
-            noteBorderColor: '#37e8a6',
+            ...(light ? LIGHT_THEME_VARIABLES : DARK_THEME_VARIABLES),
             fontSize: '16px',
             fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
           },
@@ -80,7 +116,7 @@ export default function MermaidDiagram({ chart, caption }: MermaidDiagramProps) 
     return () => {
       cancelled = true;
     };
-  }, [chart, diagramId]);
+  }, [chart, diagramId, light]);
 
   return (
     <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl shadow-black/20">

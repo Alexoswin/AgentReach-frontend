@@ -73,6 +73,7 @@ export default function SchedulerPage() {
   });
 
   const isLoading = emailQuery.isLoading || callingQuery.isLoading;
+  const isError = emailQuery.isError || callingQuery.isError;
 
   return (
     <div className="space-y-8">
@@ -96,6 +97,15 @@ export default function SchedulerPage() {
               className="h-20 animate-pulse rounded-2xl border border-zinc-850 bg-zinc-900/40"
             />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="rounded-2xl border border-rose-500/20 bg-zinc-900/20 py-16 text-center">
+          <p className="text-sm font-semibold text-zinc-300">
+            Could not load scheduled campaigns.
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Please try again in a moment.
+          </p>
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-zinc-850 bg-zinc-900/20 py-16 text-center text-zinc-500">
@@ -153,8 +163,8 @@ export default function SchedulerPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                  <div className="sm:text-right">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-zinc-200">
                       <CalendarClock className="h-4 w-4 text-amber-400" />
                       {when.toLocaleString()}

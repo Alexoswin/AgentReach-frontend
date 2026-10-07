@@ -240,7 +240,7 @@ export default function HistoryPage() {
                       ? `${item.contact.firstName || ''} ${item.contact.lastName || ''}`.trim() || 'Unnamed Contact'
                       : 'Removed Contact';
                     const deliveryColors: Record<string, string> = {
-                      PENDING: 'bg-zinc-850 text-zinc-400',
+                      PENDING: 'bg-zinc-850 text-zinc-400 border-zinc-800',
                       SENT: 'bg-blue-500/10 text-blue-400 border-blue-500/10',
                       DELIVERED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10',
                       FAILED: 'bg-rose-500/10 text-rose-400 border-rose-500/10',
@@ -320,7 +320,7 @@ export default function HistoryPage() {
                       ? `${item.contact.firstName || ''} ${item.contact.lastName || ''}`.trim() || 'Unnamed Contact'
                       : 'Removed Contact';
                     const outcomeColors: Record<string, string> = {
-                      PENDING: 'bg-zinc-850 text-zinc-400',
+                      PENDING: 'bg-zinc-850 text-zinc-400 border-zinc-800',
                       ANSWERED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10',
                       NO_ANSWER: 'bg-zinc-800 text-zinc-500 border-zinc-800',
                       BUSY: 'bg-amber-500/10 text-amber-400 border-amber-500/10',
@@ -338,8 +338,10 @@ export default function HistoryPage() {
                             getDialedNetworkRange(item.contact?.phoneNumber)}
                         </td>
                         <td className="px-6 py-4 text-zinc-400">{item.campaign?.name || 'N/A'}</td>
-                        <td className="px-6 py-4 text-zinc-400 flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-zinc-500" /> {item.duration}s
+                        <td className="px-6 py-4 text-zinc-400">
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-zinc-500" /> {item.duration}s
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${outcomeColors[item.outcome]}`}>

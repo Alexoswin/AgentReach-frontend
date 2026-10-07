@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Settings,
   Server,
@@ -28,6 +28,15 @@ function StatusPill({ status }: { status?: string }) {
       }`}
     >
       {status || "DISCONNECTED"}
+    </span>
+  );
+}
+
+/** The SES/Twilio/Plivo test endpoints read stored settings, not the form. */
+function SavedCredentialsHint() {
+  return (
+    <span className="self-center text-[11px] text-zinc-600">
+      Tests your saved credentials — save changes first.
     </span>
   );
 }
@@ -63,9 +72,13 @@ export default function SettingsPage() {
     queryFn: api.settings.get,
   });
 
-  // Hydrate form from saved settings
+  // Hydrate the form on first load and after a save only. The connection
+  // tests also refetch settings (for status pills), and re-hydrating then
+  // would wipe whatever the user has typed but not saved yet.
+  const shouldHydrateRef = useRef(true);
   useEffect(() => {
-    if (settings) {
+    if (settings && shouldHydrateRef.current) {
+      shouldHydrateRef.current = false;
       queueMicrotask(() => {
         setAwsAccessKeyId(settings.awsAccessKeyId || "");
         setAwsSecretAccessKey(settings.awsSecretAccessKey || "");
@@ -100,6 +113,7 @@ export default function SettingsPage() {
   const updateSettingsMutation = useMutation({
     mutationFn: api.settings.update,
     onSuccess: () => {
+      shouldHydrateRef.current = true;
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       showAlert("Your settings have been saved.", "success", "Settings saved");
     },
@@ -324,7 +338,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-start gap-3 pt-3">
+          <div className="flex flex-wrap justify-start gap-3 pt-3">
             <button
               type="button"
               disabled={testSesMutation.isPending}
@@ -338,19 +352,20 @@ export default function SettingsPage() {
               )}
               Test SES Connection
             </button>
+            <SavedCredentialsHint />
           </div>
         </div>
 
         {/* Telephony Panel (Twilio / Plivo) */}
         <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/60">
             <div className="flex items-center gap-2">
               <Server className="h-5 w-5 text-indigo-400" />
               <h3 className="text-base font-bold text-white">
                 Telephony Configuration
               </h3>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <StatusPill
                 status={
                   callProvider === "plivo"
@@ -373,7 +388,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
               Active Provider
             </span>
@@ -439,7 +454,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-start gap-3 pt-3">
+              <div className="flex flex-wrap justify-start gap-3 pt-3">
                 <button
                   type="button"
                   disabled={testTwilioMutation.isPending}
@@ -453,6 +468,7 @@ export default function SettingsPage() {
                   )}
                   Test Twilio Connection
                 </button>
+                <SavedCredentialsHint />
               </div>
             </>
           ) : (
@@ -496,7 +512,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-start gap-3 pt-3">
+              <div className="flex flex-wrap justify-start gap-3 pt-3">
                 <button
                   type="button"
                   disabled={testPlivoMutation.isPending}
@@ -510,6 +526,7 @@ export default function SettingsPage() {
                   )}
                   Test Plivo Connection
                 </button>
+                <SavedCredentialsHint />
               </div>
             </>
           )}
@@ -517,14 +534,14 @@ export default function SettingsPage() {
 
         {/* Gemini Live API Key Panel */}
         <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/60">
             <div className="flex items-center gap-2">
               <Key className="h-5 w-5 text-purple-400" />
               <h3 className="text-base font-bold text-white">
                 Gemini Live API Key
               </h3>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                   settings?.geminiStatus === "CONNECTED"
@@ -582,7 +599,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-start gap-3 pt-3">
+          <div className="flex flex-wrap justify-start gap-3 pt-3">
             <button
               type="button"
               disabled={testGeminiMutation.isPending}

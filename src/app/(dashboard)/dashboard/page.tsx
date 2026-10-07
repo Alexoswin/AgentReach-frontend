@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
+import { onThemeChange, resolveCssColors } from '@/lib/themeColors';
 import { TiltCard } from '@/components/fx';
 import {
   Mail,
@@ -26,42 +27,30 @@ import {
   Legend,
 } from 'recharts';
 
+const CHART_TOKENS = {
+  accent: '--a-400',
+  accent2: '--a2-400',
+  accent3: '--a3-400',
+  grid: '--z-800',
+  muted: '--z-500',
+  surface: '--z-900',
+  border: '--z-700',
+  ink: '--z-100',
+};
+
 /**
  * Resolves theme CSS variables (including light-dark() values) into
  * concrete colors recharts can consume, re-resolving whenever the
  * user's theme or accent changes.
  */
 function useChartPalette() {
-  const resolve = useCallback(() => {
-    const probe = document.createElement('div');
-    probe.style.display = 'none';
-    document.body.appendChild(probe);
-    const read = (variable: string) => {
-      probe.style.color = `var(${variable})`;
-      return getComputedStyle(probe).color;
-    };
-    const palette = {
-      accent: read('--a-400'),
-      accent2: read('--a2-400'),
-      accent3: read('--a3-400'),
-      grid: read('--z-800'),
-      muted: read('--z-500'),
-      surface: read('--z-900'),
-      border: read('--z-700'),
-      ink: read('--z-100'),
-    };
-    probe.remove();
-    return palette;
-  }, []);
-
-  const [palette, setPalette] = useState<ReturnType<typeof resolve> | null>(null);
+  const [palette, setPalette] = useState<Record<keyof typeof CHART_TOKENS, string> | null>(null);
 
   useEffect(() => {
-    const update = () => setPalette(resolve());
+    const update = () => setPalette(resolveCssColors(CHART_TOKENS));
     update();
-    window.addEventListener('reachconvert:user-updated', update);
-    return () => window.removeEventListener('reachconvert:user-updated', update);
-  }, [resolve]);
+    return onThemeChange(update);
+  }, []);
 
   return palette;
 }

@@ -105,7 +105,8 @@ export function useWebPilotSocket(runId: string | null) {
         } else if (msg.type === "run_status") {
           setStatus(msg.payload.state);
         } else {
-          setEvents((prev) => [...prev, msg]);
+          // Stamp arrival time so the log shows when each line came in.
+          setEvents((prev) => [...prev, { ...msg, receivedAt: Date.now() }]);
         }
       } catch (e) {
         console.error("Failed to parse WS msg", e);

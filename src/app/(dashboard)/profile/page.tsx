@@ -13,13 +13,22 @@ import {
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { PageLoader } from '@/components/Loader';
 import { Check, Mail, Moon, Palette, Save, Sun, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export default function ProfilePage() {
   const { showAlert } = useOutreachStore();
   const [profile, setProfile] = useState<LocalUserProfile | null>(() => getStoredUser());
   const [password, setPassword] = useState('');
+
+  // Theme picks preview live but only persist on Save; leaving the page
+  // drops an unsaved preview so the app matches the stored preference.
+  useEffect(() => {
+    return () => {
+      const stored = getStoredUser();
+      applyTheme(stored.theme, stored.accentColor);
+    };
+  }, []);
 
   const updateProfile = <K extends keyof LocalUserProfile>(key: K, value: LocalUserProfile[K]) => {
     setProfile((current) => {
@@ -42,11 +51,16 @@ export default function ProfilePage() {
       return;
     }
 
+    const name = profile.name.trim();
+    const initialsFromName = name
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join('');
     const nextProfile = {
       ...profile,
       email: profile.email.trim(),
-      name: profile.name.trim(),
-      initials: profile.initials.trim().slice(0, 3).toUpperCase() || 'OA',
+      name,
+      initials: (profile.initials.trim() || initialsFromName).slice(0, 3).toUpperCase(),
     };
 
     api.auth.updateProfile({

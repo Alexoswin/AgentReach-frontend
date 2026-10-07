@@ -36,11 +36,18 @@ const defaultTitles = {
   info: 'Update',
 };
 
+/**
+ * Swaps raw backend error text for plain-language copy. Only errors are
+ * rewritten, and only on whole words: success/info copy is already written
+ * for users, and substring matches misfired (e.g. "addresses" hit "ses",
+ * "auth token" read as an expired session).
+ */
 function makeFriendlyMessage(message: string, type: 'success' | 'error' | 'info') {
   const text = message || '';
+  if (type !== 'error') return text;
   const lower = text.toLowerCase();
 
-  if (lower.includes('cannot connect') || lower.includes('backend') || lower.includes('nestjs') || lower.includes('failed to fetch')) {
+  if (lower.includes('cannot connect') || /\b(backend|nestjs)\b/.test(lower) || lower.includes('failed to fetch')) {
     return 'We could not reach the app server. Please try again in a moment.';
   }
 
@@ -48,11 +55,11 @@ function makeFriendlyMessage(message: string, type: 'success' | 'error' | 'info'
     return 'This is taking longer than expected. Please try again.';
   }
 
-  if (lower.includes('unauthorized') || lower.includes('token') || lower.includes('session')) {
+  if (/\b(unauthori[sz]ed|jwt)\b/.test(lower) || /\b(session|token) (has )?expired\b/.test(lower)) {
     return 'Your session has expired. Please log in again.';
   }
 
-  if (lower.includes('network') || lower.includes('socket') || lower.includes('operation not permitted')) {
+  if (/\b(network|socket)\b/.test(lower) || lower.includes('operation not permitted')) {
     return 'There was a connection problem. Please check your internet and try again.';
   }
 
@@ -60,20 +67,23 @@ function makeFriendlyMessage(message: string, type: 'success' | 'error' | 'info'
     return 'Some information looks incorrect. Please review the form and try again.';
   }
 
-  if (lower.includes('aws') || lower.includes('ses')) {
+  if (/\b(aws|ses)\b/.test(lower)) {
     return 'Email sending is not ready yet. Please check your email settings and try again.';
   }
 
-  if (lower.includes('gemini') || lower.includes('ai generation')) {
+  if (lower.includes('ai generation')) {
     return 'AI template generation could not finish. Please check your AI settings or try again.';
   }
 
   if (lower.startsWith('failed to ') || lower.startsWith('error ')) {
-    return type === 'error' ? 'Something went wrong. Please try again.' : text;
+    return 'Something went wrong. Please try again.';
   }
 
   return text;
 }
+
+// Auto-dismiss timer for the visible alert; replaced whenever a new one shows.
+let alertTimer: ReturnType<typeof setTimeout> | undefined;
 
 export const useOutreachStore = create<OutreachState>((set) => ({
   selectedContactIds: [],
@@ -114,9 +124,13 @@ export const useOutreachStore = create<OutreachState>((set) => ({
         type,
       },
     });
-    setTimeout(() => {
+    clearTimeout(alertTimer);
+    alertTimer = setTimeout(() => {
       set({ alert: null });
     }, type === 'error' ? 6500 : 4500);
   },
-  clearAlert: () => set({ alert: null }),
+  clearAlert: () => {
+    clearTimeout(alertTimer);
+    set({ alert: null });
+  },
 }));

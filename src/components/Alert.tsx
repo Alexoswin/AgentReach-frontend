@@ -21,7 +21,9 @@ export default function Alert() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300 sm:w-full">
+    // The toast is always a dark surface, so resolve light-dark() tokens
+    // (the icon colors) for a dark scheme even under light themes.
+    <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300 [color-scheme:dark] sm:w-full">
       <div
         className={`flex items-start gap-3 rounded-2xl border px-4 py-4 backdrop-blur-md shadow-2xl ${
           borderColors[alert.type]
@@ -35,7 +37,7 @@ export default function Alert() {
         <button
           onClick={clearAlert}
           aria-label="Close notification"
-          className="shrink-0 rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          className="shrink-0 rounded-lg p-1 opacity-60 transition hover:bg-black/20 hover:opacity-100"
         >
           <X className="h-4 w-4" />
         </button>

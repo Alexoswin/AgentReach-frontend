@@ -14,8 +14,10 @@ import {
   Download,
 } from "lucide-react";
 import { webpilotApi, useWebPilotSocket } from "@/lib/webpilot-api";
+import { useOutreachStore } from "@/store/useOutreachStore";
 
 export default function WebPilotPage() {
+  const { showAlert } = useOutreachStore();
   const [prompt, setPrompt] = useState("");
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +66,7 @@ export default function WebPilotPage() {
       setPrompt("");
       loadHistory();
     } catch (e: any) {
-      alert(e.message || "Failed to start task");
+      showAlert(e.message || "Could not start the task.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +79,7 @@ export default function WebPilotPage() {
       if (action === 'pause') await webpilotApi.pauseTask(activeRunId);
       if (action === 'resume') await webpilotApi.resumeTask(activeRunId);
     } catch (e: any) {
-      alert(e.message || `Failed to ${action} task`);
+      showAlert(e.message || `Could not ${action} the task.`, "error");
     }
   };
 
@@ -101,7 +103,9 @@ export default function WebPilotPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-2rem)] flex-col gap-6 p-6 overflow-hidden max-w-7xl mx-auto">
+    // Fills the viewport on desktop (minus the shell's 2rem top/bottom
+    // padding); on smaller screens the columns stack and the page scrolls.
+    <div className="flex flex-col gap-6 lg:h-[calc(100vh-4rem)]">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
           <Globe className="h-5 w-5 text-indigo-400" />
@@ -115,7 +119,7 @@ export default function WebPilotPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0 flex-1">
         
         {/* Left Column: Input & History */}
-        <div className="flex flex-col gap-6 overflow-hidden">
+        <div className="flex flex-col gap-6 lg:overflow-hidden">
           
           {/* Input Panel */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xl backdrop-blur-xl shrink-0 transition-all">
@@ -180,10 +184,10 @@ export default function WebPilotPage() {
         </div>
 
         {/* Right Column: Live View & Terminal */}
-        <div className="lg:col-span-2 flex flex-col gap-6 overflow-hidden">
-          
+        <div className="lg:col-span-2 flex flex-col gap-6 lg:overflow-hidden">
+
           {/* Browser Live View */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 shadow-xl backdrop-blur-xl flex flex-col overflow-hidden h-[50%]">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 shadow-xl backdrop-blur-xl flex flex-col overflow-hidden h-80 sm:h-96 lg:h-[50%]">
             <div className="p-3 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/50">
               <div className="flex items-center gap-3">
                 <div className="flex gap-1.5">
@@ -204,6 +208,8 @@ export default function WebPilotPage() {
                 <button
                   onClick={() => handleControl('pause')}
                   disabled={status !== "running"}
+                  aria-label="Pause task"
+                  title="Pause task"
                   className="p-1.5 text-zinc-400 hover:text-amber-400 disabled:opacity-30 transition-colors"
                 >
                   <Pause className="w-4 h-4" />
@@ -211,6 +217,8 @@ export default function WebPilotPage() {
                 <button
                   onClick={() => handleControl('resume')}
                   disabled={status !== "paused"}
+                  aria-label="Resume task"
+                  title="Resume task"
                   className="p-1.5 text-zinc-400 hover:text-emerald-400 disabled:opacity-30 transition-colors"
                 >
                   <Play className="w-4 h-4" />
@@ -218,6 +226,8 @@ export default function WebPilotPage() {
                 <button
                   onClick={() => handleControl('stop')}
                   disabled={!['running', 'paused'].includes(status)}
+                  aria-label="Stop task"
+                  title="Stop task"
                   className="p-1.5 text-zinc-400 hover:text-rose-400 disabled:opacity-30 transition-colors"
                 >
                   <Square className="w-4 h-4 fill-current" />
@@ -238,13 +248,13 @@ export default function WebPilotPage() {
           </div>
 
           {/* Terminal Stream */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl flex-1 flex flex-col min-h-0 relative group">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-1 shadow-xl h-80 lg:h-auto lg:flex-1 flex flex-col min-h-0 relative group">
             <div className="absolute top-0 left-0 w-full h-10 bg-gradient-to-b from-zinc-950 to-transparent z-10 rounded-t-2xl pointer-events-none" />
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-2 font-mono text-xs custom-scrollbar">
               {events.map((ev, i) => (
                 <div key={i} className="flex gap-3">
                   <span className="text-zinc-600 shrink-0">
-                    {new Date().toLocaleTimeString(undefined, {hour12:false})}
+                    {new Date(ev.receivedAt).toLocaleTimeString(undefined, {hour12:false})}
                   </span>
                   <span className={`
                     ${ev.type === 'log' && ev.payload.level === 'agent' ? 'text-indigo-300' : ''}

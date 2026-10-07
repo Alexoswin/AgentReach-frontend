@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { MissingCredentials } from "@/components/MissingCredentials";
 import { LoaderOverlay } from "@/components/Loader";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 type TemplateFormat = "HTML" | "TEXT";
 type TemplateBuilderMode = "AI" | "MANUAL";
@@ -370,21 +371,34 @@ export default function EmailCampaignsPage() {
       cc?: string[];
       bcc?: string[];
     }) => api.emailCampaigns.create(data) as Promise<EmailCampaign>,
-    onSuccess: (newCampaign) => {
-      // Associate selected contacts
+    onSuccess: async (newCampaign) => {
+      // Associate selected contacts before reporting success, so a failure
+      // here is not hidden behind the "Campaign ready" toast.
+      let contactsAdded = true;
       if (selectedContactIds.length > 0) {
-        api.emailCampaigns
-          .addContacts(newCampaign.id, selectedContactIds)
-          .then(() => {
-            queryClient.invalidateQueries({ queryKey: ["email-campaigns"] });
-          });
+        try {
+          await api.emailCampaigns.addContacts(
+            newCampaign.id,
+            selectedContactIds,
+          );
+        } catch {
+          contactsAdded = false;
+        }
       }
       queryClient.invalidateQueries({ queryKey: ["email-campaigns"] });
-      showAlert(
-        "Your campaign is saved. You can open it anytime to add contacts or start sending.",
-        "success",
-        "Campaign ready",
-      );
+      if (contactsAdded) {
+        showAlert(
+          "Your campaign is saved. You can open it anytime to add contacts or start sending.",
+          "success",
+          "Campaign ready",
+        );
+      } else {
+        showAlert(
+          "The campaign was saved, but its contacts could not be added. Open it and use Add Contacts.",
+          "error",
+          "Contacts not added",
+        );
+      }
       resetWizard();
       setActiveTab("list");
     },
@@ -903,6 +917,26 @@ export default function EmailCampaignsPage() {
   const handleLaunchCampaign = (id: string) => {
     launchCampaignMutation.mutate(id);
   };
+
+  // Edit panels hold per-campaign drafts; close them whenever another
+  // campaign opens so one campaign's draft can't be saved onto the next.
+  const openCampaignDetail = (id: string) => {
+    setSelectedCampaignId(id);
+    setIsEditingCampaign(false);
+    setIsEditingCopyLists(false);
+    setScheduleOpen(false);
+    setScheduleValue("");
+    setActiveTab("detail");
+  };
+
+  const closeAddContactsModal = () => {
+    setIsAddContactsOpen(false);
+    setAddContactsSearch("");
+    setAddContactsDirectoryId("all");
+    setAddSelectedContactIds([]);
+  };
+
+  useEscapeKey(isAddContactsOpen, closeAddContactsModal);
 
   const handleCreateCampaignSubmit = () => {
     if (!campaignName.trim()) {
@@ -1555,7 +1589,7 @@ export default function EmailCampaignsPage() {
   }
 
   return (
-    <div className="space-y-">
+    <div className="space-y-6">
       <LoaderOverlay
         show={launchCampaignMutation.isPending}
         label="Launching campaign"
@@ -1628,18 +1662,17 @@ export default function EmailCampaignsPage() {
                       >
                         {camp.status}
                       </span>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                         {camp.status !== "RUNNING" && (
                           <button
                             title="Edit campaign"
                             onClick={() => {
-                              setSelectedCampaignId(camp.id);
+                              openCampaignDetail(camp.id);
                               setEditCampaignName(camp.name);
                               setEditCampaignTemplateId(
                                 camp.template?.id || "",
                               );
                               setIsEditingCampaign(true);
-                              setActiveTab("detail");
                             }}
                             className="p-1 hover:bg-indigo-950/20 text-zinc-500 hover:text-indigo-400 rounded transition-colors"
                           >
@@ -1672,10 +1705,7 @@ export default function EmailCampaignsPage() {
 
                   <div className="flex justify-between items-center border-t border-zinc-850/65 pt-4 mt-6">
                     <button
-                      onClick={() => {
-                        setSelectedCampaignId(camp.id);
-                        setActiveTab("detail");
-                      }}
+                      onClick={() => openCampaignDetail(camp.id)}
                       className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 font-semibold"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -1748,6 +1778,7 @@ export default function EmailCampaignsPage() {
                           }
                           className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
                         >
+                          <option value="">Select a template…</option>
                           {templates.map((tpl) => (
                             <option key={tpl.id} value={tpl.id}>
                               {tpl.name}
@@ -1853,7 +1884,7 @@ export default function EmailCampaignsPage() {
                     </>
                   )}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => {
                       setAddContactsDirectoryId("all");
@@ -2989,7 +3020,7 @@ export default function EmailCampaignsPage() {
                 </div>
 
                 {previewTemplate ? (
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-850 bg-white">
+                  <div className="mail-canvas mt-4 overflow-hidden rounded-2xl border border-zinc-850 bg-white">
                     <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
                       <div className="flex flex-col gap-1 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
                         <span>
@@ -3290,17 +3321,19 @@ export default function EmailCampaignsPage() {
       {/* Add Contacts Modal in Campaign Details */}
       {isAddContactsOpen && selectedCampaignId && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add Contacts to Campaign"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-white">
                 Add Contacts to Campaign
               </h3>
               <button
-                onClick={() => {
-                  setIsAddContactsOpen(false);
-                  setAddContactsDirectoryId("all");
-                  setAddSelectedContactIds([]);
-                }}
+                onClick={closeAddContactsModal}
+                aria-label="Close"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -3386,18 +3419,17 @@ export default function EmailCampaignsPage() {
               <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800/60">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsAddContactsOpen(false);
-                    setAddContactsDirectoryId("all");
-                    setAddSelectedContactIds([]);
-                  }}
+                  onClick={closeAddContactsModal}
                   className="px-4 py-2.5 bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-400 hover:text-zinc-200 rounded-xl transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  disabled={addSelectedContactIds.length === 0}
+                  disabled={
+                    addSelectedContactIds.length === 0 ||
+                    addContactsMutation.isPending
+                  }
                   onClick={() =>
                     addContactsMutation.mutate({
                       id: selectedCampaignId,

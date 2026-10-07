@@ -1,81 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
-import { Zap } from "lucide-react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import AuraRing from "@/components/AuraRing";
 
-const CUBE_FACES = ["front", "back", "right", "left", "top", "bottom"] as const;
+/** One ring size everywhere, so the loader looks the same wherever it shows. */
+const RING_SIZE = 168;
 
-interface Loader3DProps {
-  /** Overall scene size in pixels. */
-  size?: number;
-  className?: string;
+const subscribeNever = () => () => {};
+
+/** False during SSR and hydration, true once mounted in the browser. */
+function useIsClient() {
+  return useSyncExternalStore(subscribeNever, () => true, () => false);
 }
 
-/**
- * Core 3D visual: a glass gradient cube spinning inside three gyroscope
- * rings with orbiting particles and the ReachConvert bolt at its core.
- * All motion lives in globals.css (`l3d-*`) and respects reduced motion.
- */
-export function Loader3D({ size = 120, className = "" }: Loader3DProps) {
-  const cube = Math.round(size * 0.42);
-  const core = Math.max(Math.round(size * 0.26), 24);
+interface ScreenLayerProps {
+  /** Announced to screen readers; the loader itself shows no text. */
+  label: string;
+  sublabel?: string;
+  className?: string;
+  /**
+   * Render into <body> so `position: fixed` stays relative to the viewport.
+   * Needed inside the app shell: .sig-page keeps a transform after its
+   * entrance animation and the sidebar has a backdrop filter, and either
+   * would otherwise become the containing block.
+   */
+  portal?: boolean;
+  children: ReactNode;
+}
 
-  return (
+/** Fixed full-viewport layer that keeps its content dead center on screen. */
+function ScreenLayer({ label, sublabel, className = "", portal = true, children }: ScreenLayerProps) {
+  const isClient = useIsClient();
+  const layer = (
     <div
-      className={`l3d-scene ${className}`}
-      style={{
-        width: size,
-        height: size,
-        ["--l3d-cube" as string]: `${cube}px`,
-      }}
-      aria-hidden="true"
+      className={`fixed inset-0 flex items-center justify-center ${className}`}
+      role="status"
+      aria-live="polite"
     >
-      <div className="l3d-ring l3d-ring-a" />
-      <div className="l3d-ring l3d-ring-b" />
-      <div className="l3d-ring l3d-ring-c" />
-
-      <div className="l3d-orbit">
-        <span className="l3d-dot" />
-      </div>
-      <div className="l3d-orbit l3d-orbit-2">
-        <span className="l3d-dot l3d-dot-pink" />
-      </div>
-
-      <div className="l3d-cube">
-        {CUBE_FACES.map((face) => (
-          <div key={face} className={`l3d-face l3d-face-${face}`} />
-        ))}
-      </div>
-
-      <div className="l3d-core">
-        <div
-          className="animate-pulse-glow flex items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-500/30"
-          style={{ width: core, height: core }}
-        >
-          <Zap
-            className="text-white"
-            style={{ width: core * 0.55, height: core * 0.55 }}
-          />
-        </div>
-      </div>
+      <span className="sr-only">{sublabel ? `${label}. ${sublabel}` : label}</span>
+      {children}
     </div>
   );
-}
-
-function TickDots() {
-  return (
-    <span className="inline-flex">
-      {[0, 200, 400].map((delay) => (
-        <span
-          key={delay}
-          className="l3d-tick"
-          style={{ animationDelay: `${delay}ms` }}
-        >
-          .
-        </span>
-      ))}
-    </span>
-  );
+  if (!portal) return layer;
+  return isClient ? createPortal(layer, document.body) : null;
 }
 
 interface LoaderOverlayProps {
@@ -102,32 +70,13 @@ export function LoaderOverlay({ show, label, sublabel }: LoaderOverlayProps) {
   if (!show) return null;
 
   return (
-    <div
-      className="l3d-overlay fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 backdrop-blur-md"
-      role="status"
-      aria-live="polite"
-      aria-label={label}
+    <ScreenLayer
+      label={label}
+      sublabel={sublabel}
+      className="l3d-overlay z-[100] bg-zinc-950/80 backdrop-blur-md"
     >
-      <div className="l3d-panel relative mx-4 flex w-full max-w-sm flex-col items-center overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/70 px-10 py-9 shadow-2xl">
-        <div className="pointer-events-none absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
-
-        <Loader3D size={130} />
-
-        <p className="mt-6 text-base font-bold tracking-tight text-white">
-          {label}
-          <TickDots />
-        </p>
-        {sublabel && (
-          <p className="mt-1.5 text-center text-xs leading-5 text-zinc-400">
-            {sublabel}
-          </p>
-        )}
-
-        <div className="l3d-progress-track mt-6">
-          <div className="l3d-progress-bar" />
-        </div>
-      </div>
-    </div>
+      <AuraRing size={RING_SIZE} />
+    </ScreenLayer>
   );
 }
 
@@ -137,24 +86,33 @@ interface PageLoaderProps {
 }
 
 /**
- * In-content loader for page renders that have no skeleton state.
+ * Loader for page renders that have no skeleton state. Floats at the
+ * center of the screen without blocking the surrounding chrome.
  */
 export function PageLoader({ label = "Loading", sublabel }: PageLoaderProps) {
   return (
-    <div
-      className="flex min-h-[60vh] flex-col items-center justify-center"
-      role="status"
-      aria-live="polite"
-      aria-label={label}
-    >
-      <Loader3D size={110} />
-      <p className="mt-5 text-sm font-bold tracking-tight text-white">
-        {label}
-        <TickDots />
-      </p>
-      {sublabel && <p className="mt-1 text-xs text-zinc-500">{sublabel}</p>}
-    </div>
+    <ScreenLayer label={label} sublabel={sublabel} className="pointer-events-none z-40">
+      <AuraRing size={RING_SIZE} />
+    </ScreenLayer>
   );
 }
 
-export default Loader3D;
+interface LoadingScreenProps {
+  label?: string;
+  sublabel?: string;
+}
+
+/**
+ * Full-viewport boot screen, e.g. the session check. Rendered in place
+ * (not portaled) so the ring is already in the server HTML; use it outside
+ * the app shell, where no transformed ancestor can trap `position: fixed`.
+ */
+export function LoadingScreen({ label = "Loading", sublabel }: LoadingScreenProps) {
+  return (
+    <ScreenLayer label={label} sublabel={sublabel} className="bg-zinc-950" portal={false}>
+      <AuraRing size={RING_SIZE} />
+    </ScreenLayer>
+  );
+}
+
+export default AuraRing;

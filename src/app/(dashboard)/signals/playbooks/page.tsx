@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
 import { useOutreachStore } from '@/store/useOutreachStore';
+import { useEscapeKey } from '@/lib/useEscapeKey';
 import {
   Sparkles,
   ArrowLeft,
@@ -81,7 +82,12 @@ export default function PlaybooksPage() {
         </button>
       </div>
 
-      {playbooksQuery.isLoading ? (
+      {playbooksQuery.isError ? (
+        <div className="rounded-2xl border border-rose-500/20 bg-zinc-900/20 px-4 py-16 text-center">
+          <h3 className="text-base font-bold text-zinc-200">Could not load playbooks</h3>
+          <p className="mt-1 text-sm text-zinc-500">Please try again in a moment.</p>
+        </div>
+      ) : playbooksQuery.isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {[1, 2].map((i) => (
             <div key={i} className="h-40 animate-pulse rounded-2xl border border-zinc-850 bg-zinc-900/40" />
@@ -156,6 +162,8 @@ export default function PlaybooksPage() {
                   </button>
                   <button
                     onClick={() => remove.mutate(p.id)}
+                    aria-label="Delete playbook"
+                    title="Delete playbook"
                     className="rounded-lg border border-zinc-800 p-1.5 text-zinc-400 hover:text-rose-400"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -226,14 +234,21 @@ function PlaybookWizard({ onClose, onCreated }: { onClose: () => void; onCreated
     (step === 2) ||
     (step === 3 && templateId);
 
+  useEscapeKey(true, onClose);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="New playbook"
+        className="w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-zinc-850 px-6 py-4">
           <h3 className="flex items-center gap-2 text-lg font-bold text-white">
             <Sparkles className="h-5 w-5 text-indigo-400" /> New playbook
           </h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} aria-label="Close" className="text-zinc-500 hover:text-zinc-300">
             <X className="h-5 w-5" />
           </button>
         </div>

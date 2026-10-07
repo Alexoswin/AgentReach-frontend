@@ -35,6 +35,7 @@ import {
   Download,
 } from "lucide-react";
 import { MissingCredentials } from "@/components/MissingCredentials";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 type DirectoryFilter = "all" | "uncategorized" | string;
 
@@ -365,6 +366,11 @@ function HDVoiceSelector({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Stop any voice preview when the selector unmounts (e.g. leaving the form).
+  useEffect(() => {
+    return () => audioRef.current?.pause();
   }, []);
 
   const togglePlay = async (e: React.MouseEvent, val: string) => {
@@ -1230,6 +1236,14 @@ export default function CallingCampaignsPage() {
   const handleLaunchCampaign = (campaign: LooseApiResponse) => {
     if (isCampaignActive(campaign.status)) return;
     const isRelaunch = campaign.status !== "DRAFT";
+    if (
+      isRelaunch &&
+      !confirm(
+        `Relaunch "${campaign.name}"? Every contact in this campaign will be called again.`,
+      )
+    ) {
+      return;
+    }
     console.debug("[VoiceReach] Launch requested", {
       campaignId: campaign.id,
       status: campaign.status,
@@ -1238,6 +1252,15 @@ export default function CallingCampaignsPage() {
     });
     launchCampaignMutation.mutate({ id: campaign.id, isRelaunch });
   };
+
+  const closeAddContactsModal = () => {
+    setIsAddContactsOpen(false);
+    setAddContactSearch("");
+    setAddContactsDirectoryId("all");
+    setAddSelectedContactIds([]);
+  };
+
+  useEscapeKey(isAddContactsOpen, closeAddContactsModal);
 
   const handleStopCampaign = (campaign: LooseApiResponse) => {
     if (!isCampaignActive(campaign.status)) return;
@@ -2578,19 +2601,20 @@ export default function CallingCampaignsPage() {
 
       {isAddContactsOpen && selectedCampaignId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add Contacts to Calling Campaign"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+          >
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-white">
                 Add Contacts to Calling Campaign
               </h3>
               <button
                 type="button"
-                onClick={() => {
-                  setIsAddContactsOpen(false);
-                  setAddContactSearch("");
-                  setAddContactsDirectoryId("all");
-                  setAddSelectedContactIds([]);
-                }}
+                onClick={closeAddContactsModal}
+                aria-label="Close"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -2705,12 +2729,7 @@ export default function CallingCampaignsPage() {
               <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800/60">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsAddContactsOpen(false);
-                    setAddContactSearch("");
-                    setAddContactsDirectoryId("all");
-                    setAddSelectedContactIds([]);
-                  }}
+                  onClick={closeAddContactsModal}
                   className="px-4 py-2.5 bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-400 hover:text-zinc-200 rounded-xl transition-all"
                 >
                   Cancel

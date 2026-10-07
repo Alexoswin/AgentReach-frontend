@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
 import { useOutreachStore } from '@/store/useOutreachStore';
+import { useEscapeKey } from '@/lib/useEscapeKey';
 import { useState } from 'react';
 import {
   Users,
@@ -95,7 +96,7 @@ export default function ContactsPage() {
   const [importResult, setImportResult] = useState<LooseApiResponse | null>(null);
 
   // Fetch Contacts
-  const { data: contacts = [], isLoading } = useQuery({
+  const { data: contacts = [], isLoading, isError } = useQuery({
     queryKey: ['contacts'],
     queryFn: api.contacts.list,
   });
@@ -250,6 +251,18 @@ export default function ContactsPage() {
     setDirectoryDescription('');
   };
 
+  const closeUploadModal = () => {
+    setIsUploadModalOpen(false);
+    setUploadStep(1);
+    setUploadFile(null);
+    setImportDirectoryId('');
+    setImportResult(null);
+  };
+
+  useEscapeKey(isDirectoryModalOpen, closeDirectoryModal);
+  useEscapeKey(isManualModalOpen, closeManualModal);
+  useEscapeKey(isUploadModalOpen, closeUploadModal);
+
   const openDirectoryModal = (directory?: LooseApiResponse) => {
     setEditingDirectoryId(directory?.id || null);
     setDirectoryName(directory?.name || '');
@@ -332,6 +345,8 @@ export default function ContactsPage() {
       setUploadFile(file);
       parseFileMutation.mutate(file);
     }
+    // Reset so picking the same file again (e.g. after a parse error) re-fires onChange.
+    e.target.value = '';
   };
 
   const handleImportRun = () => {
@@ -548,6 +563,12 @@ export default function ContactsPage() {
                         <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-12 ml-auto"></div></td>
                       </tr>
                     ))
+                  ) : isError ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-rose-400">
+                        We could not load your contacts. Please try again in a moment.
+                      </td>
+                    </tr>
                   ) : filteredContacts.length > 0 ? (
                     filteredContacts.map((contact: LooseApiResponse) => (
                       <tr key={contact.id} className="hover:bg-zinc-900/40 transition-colors">
@@ -584,6 +605,8 @@ export default function ContactsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleEditClick(contact)}
+                              aria-label="Edit contact"
+                              title="Edit contact"
                               className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -594,6 +617,8 @@ export default function ContactsPage() {
                                   deleteContactMutation.mutate(contact.id);
                                 }
                               }}
+                              aria-label="Delete contact"
+                              title="Delete contact"
                               className="p-1.5 hover:bg-rose-950/30 text-zinc-400 hover:text-rose-400 rounded-lg transition-colors"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -619,13 +644,19 @@ export default function ContactsPage() {
       {/* Directory Creation/Edit Modal */}
       {isDirectoryModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingDirectoryId ? 'Edit Contact Directory' : 'Create Contact Directory'}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-white">
                 {editingDirectoryId ? 'Edit Contact Directory' : 'Create Contact Directory'}
               </h3>
               <button
                 onClick={closeDirectoryModal}
+                aria-label="Close"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -678,13 +709,19 @@ export default function ContactsPage() {
       {/* Manual Contact Creation Modal */}
       {isManualModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingId ? 'Edit Contact Details' : 'Create Contact Manually'}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-white">
                 {editingId ? 'Edit Contact Details' : 'Create Contact Manually'}
               </h3>
               <button
                 onClick={closeManualModal}
+                aria-label="Close"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -862,7 +899,7 @@ export default function ContactsPage() {
                 <button
                   type="submit"
                   disabled={createContactMutation.isPending || updateContactMutation.isPending}
-                  className="px-4 py-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 text-xs font-semibold text-white rounded-xl shadow-md transition-all hover:brightness-110"
+                  className="px-4 py-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 text-xs font-semibold text-white rounded-xl shadow-md transition-all hover:brightness-110 disabled:opacity-50"
                 >
                   {editingId ? 'Update Contact' : 'Save Contact'}
                 </button>
@@ -875,12 +912,17 @@ export default function ContactsPage() {
       {/* Bulk Upload Wizard Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Import Contacts from Spreadsheet"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200"
+          >
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
+            <div className="flex justify-between items-start gap-4 px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <div>
                 <h3 className="text-lg font-bold text-white">Import Contacts from Spreadsheet</h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${uploadStep >= 1 ? 'bg-indigo-500/10 text-indigo-400' : 'bg-zinc-800 text-zinc-500'}`}>1. Select File</span>
                   <ChevronRight className="h-3 w-3 text-zinc-600" />
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${uploadStep >= 2 ? 'bg-indigo-500/10 text-indigo-400' : 'bg-zinc-800 text-zinc-500'}`}>2. Map Columns</span>
@@ -891,13 +933,8 @@ export default function ContactsPage() {
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setIsUploadModalOpen(false);
-                  setUploadStep(1);
-                  setUploadFile(null);
-                  setImportDirectoryId('');
-                  setImportResult(null);
-                }}
+                onClick={closeUploadModal}
+                aria-label="Close"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -1133,13 +1170,7 @@ export default function ContactsPage() {
 
                   <div className="w-full border-t border-zinc-850 mt-6 pt-4 flex justify-end">
                     <button
-                      onClick={() => {
-                        setIsUploadModalOpen(false);
-                        setUploadStep(1);
-                        setUploadFile(null);
-                        setImportDirectoryId('');
-                        setImportResult(null);
-                      }}
+                      onClick={closeUploadModal}
                       className="px-6 py-2.5 bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-400 hover:text-zinc-200 rounded-xl"
                     >
                       Close Summary

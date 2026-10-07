@@ -185,6 +185,13 @@ function Navbar() {
                 {link.label}
               </a>
             ))}
+            <Link
+              href="/documentation"
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-900"
+            >
+              Docs
+            </Link>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Link
                 href="/login"
@@ -226,67 +233,70 @@ function HeroVisual() {
         }}
       />
 
-      <TiltCard strength={5}>
-        <div className="tilt-body sig-card sig-ticks sig-ticks-on animate-float relative rounded-2xl p-4 shadow-2xl">
-          <div className="tilt-glare" />
-          {/* Console chrome */}
-          <div className="flex items-center gap-2 pb-4">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-            <div className="sig-label ml-3 flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-400">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-400" />
-              </span>
-              LIVE SYNC
-            </div>
-          </div>
-
-          {/* Stat chips */}
-          <div className="grid grid-cols-3 gap-3" style={{ transform: 'translateZ(22px)' }}>
-            {[
-              { label: 'SENT', value: '18,204', tint: 'text-indigo-400' },
-              { label: 'OPEN', value: '61%', tint: 'text-purple-400' },
-              { label: 'REPLIES', value: '2,940', tint: 'text-emerald-400' },
-            ].map((s) => (
-              <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
-                <p className="sig-label text-zinc-600">{s.label}</p>
-                <p className={`mt-1 font-mono text-lg font-bold tracking-tight ${s.tint}`}>{s.value}</p>
+      {/* Float on a wrapper: the animation's transform would override .tilt-body's */}
+      <div className="animate-float">
+        <TiltCard strength={5}>
+          <div className="tilt-body sig-card sig-ticks sig-ticks-on relative rounded-2xl p-4 shadow-2xl">
+            <div className="tilt-glare" />
+            {/* Console chrome */}
+            <div className="flex items-center gap-2 pb-4">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+              <div className="sig-label ml-3 flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-400" />
+                </span>
+                LIVE SYNC
               </div>
-            ))}
-          </div>
-
-          {/* Animated chart */}
-          <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-xs font-bold text-white">
-                <TrendingUp className="h-4 w-4 text-indigo-400" />
-                Campaign performance
-              </p>
-              <span className="sig-label rounded-full bg-indigo-500/10 px-2 py-0.5 text-indigo-400">
-                +18% WK
-              </span>
             </div>
-            <div className="flex h-28 items-end gap-2">
-              {bars.map((h, i) => (
-                <div key={i} className="flex h-full flex-1 flex-col justify-end">
-                  <div
-                    className="animate-bar rounded-sm"
-                    style={{
-                      height: `${h}%`,
-                      animationDelay: `${i * 90}ms`,
-                      background:
-                        'linear-gradient(to top, color-mix(in oklab, var(--a-500) 45%, transparent), var(--a-400))',
-                      boxShadow: '0 0 14px -4px var(--a-400)',
-                    }}
-                  />
+
+            {/* Stat chips */}
+            <div className="grid grid-cols-3 gap-3" style={{ transform: 'translateZ(22px)' }}>
+              {[
+                { label: 'SENT', value: '18,204', tint: 'text-indigo-400' },
+                { label: 'OPEN', value: '61%', tint: 'text-purple-400' },
+                { label: 'REPLIES', value: '2,940', tint: 'text-emerald-400' },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
+                  <p className="sig-label text-zinc-600">{s.label}</p>
+                  <p className={`mt-1 font-mono text-lg font-bold tracking-tight ${s.tint}`}>{s.value}</p>
                 </div>
               ))}
             </div>
+
+            {/* Animated chart */}
+            <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="flex items-center gap-1.5 text-xs font-bold text-white">
+                  <TrendingUp className="h-4 w-4 text-indigo-400" />
+                  Campaign performance
+                </p>
+                <span className="sig-label rounded-full bg-indigo-500/10 px-2 py-0.5 text-indigo-400">
+                  +18% WK
+                </span>
+              </div>
+              <div className="flex h-28 items-end gap-2">
+                {bars.map((h, i) => (
+                  <div key={i} className="flex h-full flex-1 flex-col justify-end">
+                    <div
+                      className="animate-bar rounded-sm"
+                      style={{
+                        height: `${h}%`,
+                        animationDelay: `${i * 90}ms`,
+                        background:
+                          'linear-gradient(to top, color-mix(in oklab, var(--a-500) 45%, transparent), var(--a-400))',
+                        boxShadow: '0 0 14px -4px var(--a-400)',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </TiltCard>
+        </TiltCard>
+      </div>
 
       {/* Floating badge cards */}
       <div className="animate-float-slow sig-glass absolute -left-6 top-24 hidden rounded-xl p-3 shadow-xl sm:block">
@@ -441,7 +451,7 @@ export default function Home() {
               const tone = TONE_STYLES[feature.tone];
               return (
                 <Reveal key={feature.title} delay={(i % 3) * 90} className="h-full">
-                  <TiltCard className="h-full">
+                  <TiltCard className="group h-full">
                     <div className="tilt-body sig-card sig-ticks relative h-full overflow-hidden rounded-2xl p-6">
                       <div className="tilt-glare" />
                       <div

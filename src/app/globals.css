@@ -625,6 +625,20 @@ body[data-accent="violet"] {
   backdrop-filter: blur(14px);
 }
 
+/* Mail-client mock (email preview): pins the neutral ramp to its default
+   values so the white canvas and dark ink look the same in every theme. */
+.mail-canvas {
+  --z-50: #f0f6f7;
+  --z-100: #e4edf0;
+  --z-200: #cedce0;
+  --z-500: #6e848c;
+  --z-600: #51666e;
+  --z-700: #24363d;
+  --z-800: #172429;
+  --z-900: #0b1316;
+  --ink-max: #f5fafb;
+}
+
 /* Accent-glow text (hero numerals, brand) */
 .sig-glow {
   text-shadow:
@@ -713,11 +727,6 @@ body[data-accent="violet"] {
   from { transform: scaleY(0.12); }
   to { transform: scaleY(1); }
 }
-@keyframes lp-tick {
-  0%, 20% { opacity: 0.2; }
-  40% { opacity: 1; }
-  100% { opacity: 0.2; }
-}
 @keyframes sig-enter {
   from { opacity: 0; transform: translateY(18px) scale(0.985); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -769,11 +778,13 @@ body[data-accent="violet"] {
 .marquee-track { animation: lp-marquee 32s linear infinite; }
 .marquee-track:hover { animation-play-state: paused; }
 
-/* Route-change entrance for dashboard pages */
-.sig-page { animation: sig-page 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* Route-change entrance for dashboard pages. Fill backwards only: keeping
+   the end frame's transform/filter would make the page the containing
+   block for every position: fixed modal inside it. */
+.sig-page { animation: sig-page 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 
 /* Staggered child entrances */
-.sig-stagger > * { animation: sig-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.sig-stagger > * { animation: sig-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 .sig-stagger > *:nth-child(1) { animation-delay: 40ms; }
 .sig-stagger > *:nth-child(2) { animation-delay: 85ms; }
 .sig-stagger > *:nth-child(3) { animation-delay: 130ms; }
@@ -938,167 +949,108 @@ body[data-accent="violet"] {
   box-shadow: 0 0 12px 2px color-mix(in oklab, var(--a2-400) 70%, transparent);
 }
 
-/* --- 3D loader (Loader3D / LoaderOverlay / PageLoader) --- */
-@keyframes l3d-cube-spin {
-  from { transform: rotateX(-22deg) rotateY(0deg); }
-  to { transform: rotateX(-22deg) rotateY(360deg); }
-}
-@keyframes l3d-ring-a {
-  from { transform: rotateX(74deg) rotateZ(0deg); }
-  to { transform: rotateX(74deg) rotateZ(360deg); }
-}
-@keyframes l3d-ring-b {
-  from { transform: rotateY(74deg) rotateX(12deg) rotateZ(360deg); }
-  to { transform: rotateY(74deg) rotateX(12deg) rotateZ(0deg); }
-}
-@keyframes l3d-ring-c {
-  from { transform: rotateX(40deg) rotateY(-32deg) rotateZ(0deg); }
-  to { transform: rotateX(40deg) rotateY(-32deg) rotateZ(360deg); }
-}
-@keyframes l3d-orbit {
-  from { transform: rotateX(66deg) rotateZ(0deg); }
-  to { transform: rotateX(66deg) rotateZ(360deg); }
-}
-@keyframes l3d-orbit-rev {
-  from { transform: rotateY(60deg) rotateZ(360deg); }
-  to { transform: rotateY(60deg) rotateZ(0deg); }
-}
-@keyframes l3d-core-bob {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -52%) scale(1.06); }
-}
+/* --- Loader overlay fade-in (LoaderOverlay) --- */
 @keyframes l3d-overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes l3d-panel-in {
-  from { opacity: 0; transform: scale(0.9) translateY(14px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes l3d-progress {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(360%); }
-}
-
-.l3d-scene {
-  position: relative;
-  perspective: 900px;
-}
-
-.l3d-ring {
-  position: absolute;
-  inset: 4%;
-  border-radius: 9999px;
-  border: 2px solid transparent;
-}
-.l3d-ring-a {
-  border-top-color: var(--a-400);
-  border-right-color: color-mix(in oklab, var(--a-400) 25%, transparent);
-  animation: l3d-ring-a 2.6s linear infinite;
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--a-400) 55%, transparent));
-}
-.l3d-ring-b {
-  inset: 10%;
-  border-top-color: var(--a2-400);
-  border-left-color: color-mix(in oklab, var(--a2-400) 25%, transparent);
-  animation: l3d-ring-b 3.4s linear infinite;
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--a2-400) 50%, transparent));
-}
-.l3d-ring-c {
-  inset: 0;
-  border-bottom-color: var(--a3-400);
-  border-right-color: color-mix(in oklab, var(--a3-400) 20%, transparent);
-  animation: l3d-ring-c 4.4s linear infinite;
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--a3-400) 45%, transparent));
-}
-
-.l3d-orbit {
-  position: absolute;
-  inset: -4%;
-  border-radius: 9999px;
-  animation: l3d-orbit 3s linear infinite;
-}
-.l3d-orbit-2 {
-  inset: 6%;
-  animation: l3d-orbit-rev 4.2s linear infinite;
-}
-.l3d-dot {
-  position: absolute;
-  left: 50%;
-  top: -3px;
-  height: 7px;
-  width: 7px;
-  margin-left: -3.5px;
-  border-radius: 9999px;
-  background: var(--a-400);
-  box-shadow: 0 0 10px 2px color-mix(in oklab, var(--a-400) 70%, transparent);
-}
-.l3d-dot-pink {
-  background: var(--a3-400);
-  box-shadow: 0 0 10px 2px color-mix(in oklab, var(--a3-400) 70%, transparent);
-}
-
-.l3d-cube {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--l3d-cube);
-  height: var(--l3d-cube);
-  margin-left: calc(var(--l3d-cube) / -2);
-  margin-top: calc(var(--l3d-cube) / -2);
-  transform-style: preserve-3d;
-  animation: l3d-cube-spin 7s linear infinite;
-}
-.l3d-face {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  border: 1px solid color-mix(in oklab, var(--a-400) 45%, transparent);
-  background: linear-gradient(
-    135deg,
-    color-mix(in oklab, var(--a-500) 16%, transparent),
-    color-mix(in oklab, var(--a2-500) 10%, transparent),
-    color-mix(in oklab, var(--a3-500) 14%, transparent)
-  );
-  box-shadow: inset 0 0 18px color-mix(in oklab, var(--a-500) 12%, transparent);
-}
-.l3d-face-front { transform: translateZ(calc(var(--l3d-cube) / 2)); }
-.l3d-face-back { transform: rotateY(180deg) translateZ(calc(var(--l3d-cube) / 2)); }
-.l3d-face-right { transform: rotateY(90deg) translateZ(calc(var(--l3d-cube) / 2)); }
-.l3d-face-left { transform: rotateY(-90deg) translateZ(calc(var(--l3d-cube) / 2)); }
-.l3d-face-top { transform: rotateX(90deg) translateZ(calc(var(--l3d-cube) / 2)); }
-.l3d-face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--l3d-cube) / 2)); }
-
-.l3d-core {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  animation: l3d-core-bob 2.6s ease-in-out infinite;
-}
 
 .l3d-overlay { animation: l3d-overlay-in 0.25s ease-out both; }
-.l3d-panel { animation: l3d-panel-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-.l3d-progress-track {
+/* --- Aura ring (AuraRing.tsx) ---
+   Every layer overflows the size×size layout box by 20% per side (BLEED)
+   so the bloom is never clipped; --aura-size is set inline. */
+@keyframes aura-enter {
+  from { opacity: 0; transform: scale(0.86); }
+}
+/* Same 3.6s period as the ring's breathing (BREATH_S), starting on the rise */
+@keyframes aura-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  25% { opacity: 1; transform: scale(1.05); }
+  75% { opacity: 0.7; transform: scale(0.96); }
+}
+
+.aura-scene {
   position: relative;
-  overflow: hidden;
-  height: 4px;
-  width: 100%;
-  border-radius: 9999px;
-  background: color-mix(in oklab, var(--z-700) 60%, transparent);
+  flex: none;
+  animation: aura-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
-.l3d-progress-bar {
+/* Ambient light pooling around the ring */
+.aura-scene::before {
+  content: "";
   position: absolute;
-  inset-block: 0;
-  left: 0;
-  width: 38%;
+  inset: -50%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, var(--a-500), var(--a2-500), var(--a3-500));
-  animation: l3d-progress 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--a2-500) 20%, transparent),
+    color-mix(in oklab, var(--a3-500) 7%, transparent) 55%,
+    transparent
+  );
+  animation: aura-breathe 3.6s ease-in-out infinite;
 }
+body.theme-light .aura-scene::before {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--a2-500) 9%, transparent),
+    color-mix(in oklab, var(--a3-500) 3%, transparent) 55%,
+    transparent
+  );
+}
+.aura-layer {
+  position: absolute;
+  left: -20%;
+  top: -20%;
+  width: 140%;
+  height: 140%;
+  pointer-events: none;
+}
+.aura-live {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+.aura-live canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Bloom: blurred copies of the main canvas, so the glow takes each thread's color */
+.aura-bloom-near {
+  opacity: 0.95;
+  filter: blur(calc(var(--aura-size) * 0.022)) brightness(1.3) saturate(1.6);
+}
+.aura-bloom-far {
+  opacity: 0.9;
+  filter: blur(calc(var(--aura-size) * 0.09)) brightness(1.7) saturate(1.8);
+}
+body.theme-light .aura-bloom-near { opacity: 0.4; }
+body.theme-light .aura-bloom-far { opacity: 0.28; }
 
-.l3d-tick { animation: lp-tick 1.4s ease-in-out infinite; }
+/* Static server-rendered frame, shown until the canvas has drawn */
+.aura-poster {
+  transition: opacity 0.3s ease-out;
+  filter: drop-shadow(0 0 calc(var(--aura-size) * 0.04) color-mix(in oklab, var(--a2-500) 55%, transparent));
+}
+.aura-poster path {
+  fill: none;
+  stroke-width: 0.6px;
+  stroke-opacity: 0.4;
+  vector-effect: non-scaling-stroke;
+}
+.aura-poster .aura-poster-band {
+  fill: inherit;
+  fill-rule: evenodd;
+  fill-opacity: 0.22;
+  stroke-width: 1.1px;
+  stroke-opacity: 0.62;
+}
+body.theme-light .aura-poster path { stroke-opacity: 0.5; }
+body.theme-light .aura-poster .aura-poster-band { fill-opacity: 0.16; stroke-opacity: 0.8; }
+
+.aura-scene[data-live] .aura-live { opacity: 1; }
+.aura-scene[data-live] .aura-poster { opacity: 0; }
 
 /* =============================================================
    8 · REDUCED MOTION
@@ -1109,10 +1061,13 @@ body[data-accent="violet"] {
   .marquee-track, .shimmer::after, .animate-in,
   .sig-page, .sig-stagger > *, .sig-radar, .sig-beacon::before,
   .sig-beacon::after, .sig-caret::after, .sig-flicker,
-  .rig-orbit, .rig-orbit-2,
-  .l3d-ring, .l3d-orbit, .l3d-cube, .l3d-core,
-  .l3d-overlay, .l3d-panel, .l3d-progress-bar, .l3d-tick {
+  .rig-orbit, .rig-orbit-2, .l3d-overlay,
+  .aura-scene, .aura-scene::before {
     animation: none !important;
+  }
+  .aura-live,
+  .aura-poster {
+    transition: none !important;
   }
   .reveal {
     opacity: 1 !important;
