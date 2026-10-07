@@ -9,6 +9,10 @@ export const CONTACT_PHONE_HREF = `tel:${CONTACT_PHONE.replace(/\s+/g, '')}`;
 
 export const GITHUB_PROFILE_URL = 'https://github.com/Alexoswin';
 
+export const LINKEDIN_URL = 'https://www.linkedin.com/in/oswin-alex-727773260/';
+
+export const PORTFOLIO_URL = 'https://www.oswinalex.site/';
+
 export const REPOS = {
   frontend: {
     name: 'AgentReach-frontend',
