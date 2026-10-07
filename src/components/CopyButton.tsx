@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 
 /** Copies a value to the clipboard — e.g. an email address or UPI ID on the public pages. */
-export default function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
+export default function CopyButton({
+  value,
+  label = 'Copy',
+  className = 'sig-btn-ghost justify-center',
+}: {
+  value: string;
+  label?: string;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -23,7 +31,7 @@ export default function CopyButton({ value, label = 'Copy' }: { value: string; l
   };
 
   return (
-    <button type="button" onClick={copy} className="sig-btn-ghost justify-center" aria-live="polite">
+    <button type="button" onClick={copy} className={className} aria-live="polite">
       {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
       {copied ? 'Copied' : label}
     </button>

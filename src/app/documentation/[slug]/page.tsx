@@ -7,12 +7,16 @@ import {
   type DocPage,
   getDocBySlug,
   getDocBySlugRelated,
+  getDocNavigation,
   getDocTrack,
 } from '@/lib/docs';
 import { DOC_ICON_MAP } from '../docIcons';
-import { ArrowRight, Check, Lightbulb, ListChecks } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Lightbulb, ListChecks } from 'lucide-react';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import SystemArchitectureDoc from '@/components/docs/SystemArchitectureDoc';
+import DocCallout from '@/components/docs/DocCallout';
+import DocTableOfContents, { type DocTocItem } from '@/components/docs/DocTableOfContents';
+import CopyButton from '@/components/CopyButton';
 
 /**
  * Pages whose body is hand-written instead of generated from DocPage data.
@@ -22,6 +26,14 @@ import SystemArchitectureDoc from '@/components/docs/SystemArchitectureDoc';
 const CUSTOM_BODIES: Record<string, ComponentType> = {
   architecture: SystemArchitectureDoc,
 };
+
+function sectionId(heading: string, index: number) {
+  const slug = heading
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `doc-section-${index + 1}-${slug || 'section'}`;
+}
 
 export function generateStaticParams() {
   return DOC_PAGES.map((doc) => ({ slug: doc.slug }));
@@ -53,16 +65,24 @@ export default async function DocPageView({
 
   const Icon = DOC_ICON_MAP[doc.icon];
   const related = getDocBySlugRelated(slug);
+  const navigation = getDocNavigation(slug);
   const CustomBody = CUSTOM_BODIES[doc.slug];
+  const tocItems: DocTocItem[] = doc.sections.map((section, index) => ({
+    id: sectionId(section.heading, index),
+    label: section.heading,
+  }));
 
   return (
-    <article className={`mx-auto ${CustomBody ? 'max-w-5xl' : 'max-w-3xl'}`}>
+    <article className="mx-auto max-w-5xl">
       {/* Header */}
       <div className="border-b border-zinc-900 pb-8">
-        <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-indigo-400">{track}</p>
-          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-zinc-500">{doc.category}</p>
-        </div>
+        <nav className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600" aria-label="Breadcrumb">
+          <Link href="/documentation" className="transition-colors hover:text-zinc-300">Docs</Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-indigo-400">{track}</span>
+          <span aria-hidden="true">/</span>
+          <span>{doc.category}</span>
+        </nav>
         <div className="mt-4 flex items-start gap-4">
           <div className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-500/20">
             <Icon className="h-7 w-7 text-white" />
@@ -72,11 +92,26 @@ export default async function DocPageView({
               {doc.title.split(' — ')[0]}
             </h1>
             <p className="mt-2 text-base text-zinc-400">{doc.tagline}</p>
+            {(doc.audience || doc.prerequisites?.length || doc.lastReviewed) && (
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-500">
+                {doc.audience && <span><strong className="font-semibold text-zinc-400">Audience:</strong> {doc.audience}</span>}
+                {doc.lastReviewed && <span><strong className="font-semibold text-zinc-400">Reviewed:</strong> {doc.lastReviewed}</span>}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {CustomBody ? <CustomBody /> : <DataBody doc={doc} />}
+      {CustomBody ? (
+        <CustomBody />
+      ) : (
+        <div className="mt-8 grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_12rem]">
+          <div className="min-w-0">
+            <DataBody doc={doc} />
+          </div>
+          <DocTableOfContents items={tocItems} />
+        </div>
+      )}
 
       {/* Related */}
       {related.length > 0 && (
@@ -102,6 +137,37 @@ export default async function DocPageView({
           </div>
         </div>
       )}
+
+      {(navigation.previous || navigation.next) && (
+        <nav className="mt-10 grid grid-cols-1 gap-3 border-t border-zinc-900 pt-8 sm:grid-cols-2" aria-label="Documentation pagination">
+          {navigation.previous ? (
+            <Link
+              href={`/documentation/${navigation.previous.slug}`}
+              className="group rounded-xl border border-zinc-850 bg-zinc-900/30 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
+            >
+              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
+                <ChevronLeft className="h-3.5 w-3.5" /> Previous
+              </span>
+              <span className="mt-2 block truncate text-sm font-semibold text-zinc-200 group-hover:text-white">
+                {navigation.previous.title.split(' — ')[0]}
+              </span>
+            </Link>
+          ) : <div />}
+          {navigation.next && (
+            <Link
+              href={`/documentation/${navigation.next.slug}`}
+              className="group rounded-xl border border-zinc-850 bg-zinc-900/30 p-4 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/70 sm:text-right"
+            >
+              <span className="flex items-center justify-end gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
+                Next <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+              <span className="mt-2 block truncate text-sm font-semibold text-zinc-200 group-hover:text-white">
+                {navigation.next.title.split(' — ')[0]}
+              </span>
+            </Link>
+          )}
+        </nav>
+      )}
     </article>
   );
 }
@@ -111,7 +177,7 @@ function DataBody({ doc }: { doc: DocPage }) {
   return (
     <>
       {/* Intro */}
-      <div className="mt-8 space-y-4">
+      <div className="space-y-4">
         {doc.intro.map((p, i) => (
           <p key={i} className="text-base leading-7 text-zinc-300">
             {p}
@@ -119,10 +185,24 @@ function DataBody({ doc }: { doc: DocPage }) {
         ))}
       </div>
 
+      {doc.prerequisites && doc.prerequisites.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-zinc-850 bg-zinc-900/40 p-5">
+          <h2 className="text-sm font-bold text-white">Before you begin</h2>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-zinc-400">
+            {doc.prerequisites.map((prerequisite) => (
+              <li key={prerequisite} className="flex gap-2.5">
+                <Check className="mt-1 h-3.5 w-3.5 flex-none text-emerald-400" />
+                <span>{prerequisite}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Sections */}
       <div className="mt-10 space-y-12">
-        {doc.sections.map((section) => (
-          <section key={section.heading}>
+        {doc.sections.map((section, index) => (
+          <section key={section.heading} id={sectionId(section.heading, index)} className="scroll-mt-24">
             <h2 className="text-xl font-bold tracking-tight text-white">{section.heading}</h2>
 
             {section.body?.map((p, i) => (
@@ -160,16 +240,23 @@ function DataBody({ doc }: { doc: DocPage }) {
 
             {section.code && (
               <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-850 bg-zinc-950">
-                {section.code.caption && (
-                  <div className="flex items-center gap-2 border-b border-zinc-850 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-                    <ListChecks className="h-3.5 w-3.5" /> {section.code.caption}
+                <div className="flex items-center justify-between gap-3 border-b border-zinc-850 px-4 py-2">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                    <ListChecks className="h-3.5 w-3.5" /> {section.code.caption ?? 'Example'}
                   </div>
-                )}
-                <pre className="overflow-x-auto px-4 py-4 text-xs leading-6 text-zinc-300">
-                  <code>{section.code.lines.join('\n')}</code>
-                </pre>
+                  <CopyButton
+                    value={section.code.lines.join('\n')}
+                    label="Copy"
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+                  />
+                </div>
+                <pre className="overflow-x-auto px-4 py-4 text-xs leading-6 text-zinc-300"><code>{section.code.lines.join('\n')}</code></pre>
               </div>
             )}
+
+            {section.callouts?.map((callout) => (
+              <DocCallout key={`${section.heading}-${callout.title}`} callout={callout} />
+            ))}
 
             {section.diagram && (
               <MermaidDiagram

@@ -130,6 +130,12 @@ track (`User Documentation`, `Technical Documentation`) and category.
 Each page is rendered uniformly by `documentation/[slug]/page.tsx` with a shared
 sidebar (`DocSidebar.tsx`).
 
+The overview page includes client-side search and filters for track/category. Individual
+pages support breadcrumbs, prerequisite checklists, section anchors, a sticky table of
+contents, copyable examples, callouts, related pages, and previous/next navigation.
+Richer page metadata such as `audience`, `prerequisites`, and `lastReviewed` belongs on
+the `DocPage`; reusable section callouts belong on `DocSection`.
+
 Technical pages include rendered Mermaid diagrams for system topology, REST/auth flow,
 NestJS module boundaries, MongoDB relationships, provider boundaries, and feature-level
 architecture flows.
