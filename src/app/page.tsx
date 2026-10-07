@@ -20,6 +20,8 @@ import {
   Upload,
   Wand2,
   Rocket,
+  GitPullRequest,
+  MessageSquare,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import SiteFooter from '@/components/SiteFooter';
@@ -29,6 +31,12 @@ const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how' },
   { label: 'Analytics', href: '#analytics' },
+];
+
+// Routes rather than in-page anchors, so they render as <Link>.
+const PAGE_LINKS = [
+  { label: 'Contribute', href: '/contribute' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 const FEATURES = [
@@ -130,7 +138,7 @@ function Navbar() {
           <Brand />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -140,9 +148,18 @@ function Navbar() {
               {link.label}
             </a>
           ))}
+          {PAGE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="sig-label rounded-lg px-4 py-2 text-zinc-500 transition-colors hover:text-indigo-300"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Link
             href="/documentation"
             className="rounded-lg px-4 py-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-white"
@@ -166,15 +183,16 @@ function Navbar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 text-zinc-300 md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 text-zinc-300 lg:hidden"
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-zinc-850 bg-zinc-950/95 px-5 py-4 backdrop-blur-xl md:hidden">
+        <div className="border-t border-zinc-850 bg-zinc-950/95 px-5 py-4 backdrop-blur-xl lg:hidden">
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <a
@@ -193,6 +211,16 @@ function Navbar() {
             >
               Docs
             </Link>
+            {PAGE_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-900"
+              >
+                {link.label}
+              </Link>
+            ))}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Link
                 href="/login"
@@ -642,6 +670,22 @@ export default function Home() {
                 <Link href="/login" className="sig-btn-ghost justify-center">
                   Sign in
                 </Link>
+              </div>
+
+              <div className="mx-auto mt-10 max-w-md border-t border-zinc-800/80 pt-6">
+                <p className="sig-label text-zinc-500">OPEN SOURCE · BUILT IN THE OPEN</p>
+                <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row">
+                  <Link href="/contribute" className="sig-btn-ghost group justify-center">
+                    <GitPullRequest className="h-4 w-4 text-indigo-400" />
+                    Contribute
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                  <Link href="/contact" className="sig-btn-ghost group justify-center">
+                    <MessageSquare className="h-4 w-4 text-indigo-400" />
+                    Contact us
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

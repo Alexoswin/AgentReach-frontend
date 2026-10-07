@@ -34,11 +34,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             >
               <ArrowLeft className="h-4 w-4" /> Home
             </Link>
-            <span className="sig-btn-wrap ml-2 hidden sm:inline-flex">
-              <Link href="/login" className="sig-btn !px-5 !py-2.5">
-                Sign in
-              </Link>
-            </span>
+            {/* .sig-btn-wrap sets its own display, so visibility is toggled on a wrapper */}
+            <div className="ml-2 hidden sm:block">
+              <span className="sig-btn-wrap">
+                <Link href="/login" className="sig-btn !px-5 !py-2.5">
+                  Sign in
+                </Link>
+              </span>
+            </div>
           </nav>
         </div>
       </header>

@@ -1,8 +1,10 @@
+import type { ComponentType } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   DOC_PAGES,
+  type DocPage,
   getDocBySlug,
   getDocBySlugRelated,
   getDocTrack,
@@ -10,6 +12,16 @@ import {
 import { DOC_ICON_MAP } from '../docIcons';
 import { ArrowRight, Check, Lightbulb, ListChecks } from 'lucide-react';
 import MermaidDiagram from '@/components/MermaidDiagram';
+import SystemArchitectureDoc from '@/components/docs/SystemArchitectureDoc';
+
+/**
+ * Pages whose body is hand-written instead of generated from DocPage data.
+ * They keep the shared header and related links, and get a wider column for
+ * their diagrams.
+ */
+const CUSTOM_BODIES: Record<string, ComponentType> = {
+  architecture: SystemArchitectureDoc,
+};
 
 export function generateStaticParams() {
   return DOC_PAGES.map((doc) => ({ slug: doc.slug }));
@@ -41,9 +53,10 @@ export default async function DocPageView({
 
   const Icon = DOC_ICON_MAP[doc.icon];
   const related = getDocBySlugRelated(slug);
+  const CustomBody = CUSTOM_BODIES[doc.slug];
 
   return (
-    <article className="mx-auto max-w-3xl">
+    <article className={`mx-auto ${CustomBody ? 'max-w-5xl' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="border-b border-zinc-900 pb-8">
         <div className="space-y-2">
@@ -63,6 +76,40 @@ export default async function DocPageView({
         </div>
       </div>
 
+      {CustomBody ? <CustomBody /> : <DataBody doc={doc} />}
+
+      {/* Related */}
+      {related.length > 0 && (
+        <div className="mt-12 border-t border-zinc-900 pt-8">
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-zinc-500">Related</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {related.map((r) => {
+              const RIcon = DOC_ICON_MAP[r.icon];
+              return (
+                <Link
+                  key={r.slug}
+                  href={`/documentation/${r.slug}`}
+                  className="group flex items-center gap-3 rounded-xl border border-zinc-850 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
+                >
+                  <RIcon className="h-4 w-4 flex-none text-indigo-400" />
+                  <span className="flex-1 truncate text-sm font-semibold text-zinc-200">
+                    {r.title.split(' — ')[0]}
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-zinc-600 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-400" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+/** Intro, sections and tips generated from a DocPage entry in src/lib/docs.ts. */
+function DataBody({ doc }: { doc: DocPage }) {
+  return (
+    <>
       {/* Intro */}
       <div className="mt-8 space-y-4">
         {doc.intro.map((p, i) => (
@@ -150,31 +197,6 @@ export default async function DocPageView({
           </ul>
         </div>
       )}
-
-      {/* Related */}
-      {related.length > 0 && (
-        <div className="mt-12 border-t border-zinc-900 pt-8">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-zinc-500">Related</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {related.map((r) => {
-              const RIcon = DOC_ICON_MAP[r.icon];
-              return (
-                <Link
-                  key={r.slug}
-                  href={`/documentation/${r.slug}`}
-                  className="group flex items-center gap-3 rounded-xl border border-zinc-850 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700 hover:bg-zinc-900/70"
-                >
-                  <RIcon className="h-4 w-4 flex-none text-indigo-400" />
-                  <span className="flex-1 truncate text-sm font-semibold text-zinc-200">
-                    {r.title.split(' — ')[0]}
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-zinc-600 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-400" />
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </article>
+    </>
   );
 }

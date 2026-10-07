@@ -1080,3 +1080,290 @@ body.theme-light .aura-poster .aura-poster-band { fill-opacity: 0.16; stroke-opa
     transform: none !important;
   }
 }
+
+/* =============================================================
+   9 · ARCHITECTURE DOCS  (src/components/docs/*)
+   Hand-drawn SVG diagrams and reference tables for the System
+   architecture page. Diagram kinds use fixed semantic hues, not
+   the user's accent, so a color always means the same thing;
+   light-dark() picks the shade for the active theme family.
+   ============================================================= */
+.arch {
+  --k-ink: var(--z-100);
+  --k-muted: var(--z-400);
+  --k-faint: var(--z-500);
+  --k-stroke: var(--z-700);
+  --k-line: var(--z-800);
+  --k-surface: var(--z-900);
+  --k-client: light-dark(#0369a1, #7dd3fc);
+  --k-model: light-dark(#6d28d9, #c4b5fd);
+  --k-provider: light-dark(#b45309, #fbbf24);
+  --k-cron: light-dark(#0f766e, #5eead4);
+  --k-tool: light-dark(#be185d, #f9a8d4);
+  --k-ok: light-dark(#047857, #6ee7b7);
+  --k-bad: light-dark(#be123c, #fda4af);
+  color: var(--k-ink);
+}
+
+.arch code {
+  background: var(--z-850);
+  border: 1px solid var(--z-800);
+  border-radius: 5px;
+  color: var(--z-200);
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  padding: 1px 5px;
+  overflow-wrap: anywhere;
+}
+
+.arch-lead {
+  color: var(--z-300);
+  font-size: 16px;
+  line-height: 1.75;
+  margin: 28px 0 0;
+  max-width: 74ch;
+}
+
+.arch-section {
+  border-top: 1px solid var(--k-line);
+  margin-top: 44px;
+  padding-top: 40px;
+  scroll-margin-top: 80px;
+}
+.arch-section h2 {
+  color: var(--ink-max);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+}
+.arch-section h2 a { color: inherit; text-decoration: none; }
+.arch-section h2 a::after {
+  color: var(--a-400);
+  content: "#";
+  margin-left: 0.4em;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.arch-section h2 a:hover::after,
+.arch-section h2 a:focus-visible::after { opacity: 1; }
+.arch-section > p {
+  color: var(--z-300);
+  font-size: 15px;
+  line-height: 1.75;
+  margin: 0 0 20px;
+  max-width: 74ch;
+}
+
+/* Figure frame around a diagram */
+.arch-figure {
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: 16px;
+  margin: 22px 0 16px;
+  padding: 20px;
+}
+.arch-figure-scroll { overflow-x: auto; }
+.arch-figure svg { display: block; height: auto; min-width: 820px; width: 100%; }
+.arch-figure figcaption {
+  border-top: 1px solid var(--k-line);
+  color: var(--k-muted);
+  font-size: 13px;
+  line-height: 1.65;
+  margin-top: 16px;
+  max-width: 84ch;
+  padding-top: 14px;
+}
+
+/* SVG diagram */
+.arch-svg { font-family: var(--font-sans); }
+.arch-svg text { fill: var(--k-ink); font-size: 12.5px; white-space: pre; }
+.arch-svg .title { fill: var(--ink-max); font-size: 14px; font-weight: 600; }
+.arch-svg .body-s { font-size: 12px; }
+.arch-svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+.arch-svg .small { fill: var(--k-muted); font-size: 11.5px; }
+.arch-svg .strong { font-size: 11.5px; font-weight: 600; }
+.arch-svg .note { fill: var(--k-muted); font-size: 11px; }
+.arch-svg .muted { fill: var(--k-muted); }
+.arch-svg .key-label { font-size: 11.5px; }
+.arch-svg .mod { font-weight: 600; }
+.arch-svg .tool-name { fill: var(--k-tool); font-size: 13.5px; font-weight: 600; }
+.arch-svg .cap {
+  fill: var(--k-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.arch-svg .box {
+  fill: color-mix(in srgb, var(--z-850) 45%, var(--k-surface));
+  stroke: var(--k-stroke);
+  stroke-width: 1.2;
+}
+.arch-svg .box-client { fill: color-mix(in srgb, var(--k-client) 9%, var(--k-surface)); stroke: var(--k-client); }
+.arch-svg .box-model { fill: color-mix(in srgb, var(--k-model) 10%, var(--k-surface)); stroke: var(--k-model); }
+.arch-svg .box-provider { fill: color-mix(in srgb, var(--k-provider) 9%, var(--k-surface)); stroke: var(--k-provider); }
+.arch-svg .box-cron { fill: color-mix(in srgb, var(--k-cron) 9%, var(--k-surface)); stroke: var(--k-cron); }
+.arch-svg .box-tool { fill: color-mix(in srgb, var(--k-tool) 9%, var(--k-surface)); stroke: var(--k-tool); }
+.arch-svg .box-ok { fill: color-mix(in srgb, var(--k-ok) 10%, var(--k-surface)); stroke: var(--k-ok); }
+.arch-svg .box-bad { fill: color-mix(in srgb, var(--k-bad) 10%, var(--k-surface)); stroke: var(--k-bad); }
+.arch-svg .box-store { fill: var(--k-surface); stroke: var(--k-muted); stroke-dasharray: 5 4; }
+.arch-svg .group { fill: none; stroke: var(--z-650); stroke-dasharray: 2 5; }
+.arch-svg .rule { stroke: var(--k-line); }
+
+.arch-svg .edge { fill: none; stroke: var(--k-muted); stroke-width: 1.4; }
+.arch-svg .edge-live {
+  stroke: var(--k-model);
+  stroke-dasharray: 1 5;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+.arch-svg .edge-hook { stroke: var(--k-provider); stroke-dasharray: 6 4; }
+.arch-svg .mk-req { fill: var(--k-muted); }
+.arch-svg .mk-live { fill: var(--k-model); }
+.arch-svg .mk-hook { fill: var(--k-provider); }
+
+/* Callout under a figure or table */
+.arch-note {
+  background: color-mix(in srgb, var(--a-500) 6%, var(--k-surface));
+  border: 1px solid color-mix(in srgb, var(--a-500) 18%, var(--k-line));
+  border-radius: 12px;
+  color: var(--z-300);
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin-top: 18px;
+  max-width: 84ch;
+  padding: 14px 16px;
+}
+.arch-note strong { color: var(--ink-max); }
+
+/* Kind pills */
+.arch-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.arch-kind {
+  --pill: var(--k-muted);
+  background: color-mix(in srgb, var(--pill) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pill) 30%, transparent);
+  border-radius: 999px;
+  color: var(--pill);
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.arch-kind-rest { --pill: var(--k-client); }
+.arch-kind-webhook,
+.arch-kind-provider { --pill: var(--k-provider); }
+.arch-kind-realtime,
+.arch-kind-model { --pill: var(--k-model); }
+.arch-kind-cron { --pill: var(--k-cron); }
+.arch-kind-tool { --pill: var(--k-tool); }
+
+/* Reference tables */
+.arch-table-wrap { margin-top: 8px; overflow-x: auto; }
+.arch-table { border-collapse: collapse; font-size: 13.5px; width: 100%; }
+.arch-table th {
+  border-bottom: 1px solid var(--k-line);
+  color: var(--k-faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 0 14px 10px 0;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.arch-table td {
+  border-bottom: 1px solid var(--z-850);
+  color: var(--z-300);
+  line-height: 1.55;
+  padding: 12px 14px 12px 0;
+  vertical-align: top;
+}
+.arch-table td:first-child { color: var(--ink-max); font-weight: 600; white-space: nowrap; }
+.arch-table td.mono { color: var(--k-muted); font-family: var(--font-mono); font-size: 12px; }
+.arch-table tbody tr:hover td { background: color-mix(in srgb, var(--z-850) 40%, transparent); }
+.arch-file {
+  color: var(--k-faint);
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+.arch-steps tr.sub td:first-child { font-family: var(--font-mono); font-size: 12.5px; padding-left: 22px; position: relative; }
+.arch-steps tr.sub td:first-child::before {
+  color: var(--k-faint);
+  content: "↳";
+  font-weight: 400;
+  left: 4px;
+  position: absolute;
+}
+.arch-files td:first-child { color: var(--z-200); font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; }
+.arch-files tr.group-row td {
+  border-bottom-color: var(--k-line);
+  color: var(--a-400);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding-top: 22px;
+  text-transform: uppercase;
+}
+.arch-files tr.group-row:first-child td { padding-top: 8px; }
+.arch-files tr.group-row:hover td { background: none; }
+
+/* Outcome cards */
+.arch-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
+.arch-card {
+  --card: var(--z-650);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-left: 3px solid var(--card);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.arch-card h4 { color: var(--card); font-size: 13.5px; font-weight: 700; margin: 0 0 10px; }
+.arch-card ul { color: var(--z-300); font-size: 13.5px; line-height: 1.65; list-style: disc; margin: 0; padding-left: 18px; }
+.arch-card li + li { margin-top: 4px; }
+.arch-card li::marker { color: var(--z-600); }
+.arch-card-ok { --card: var(--k-ok); }
+.arch-card-warn { --card: var(--k-provider); }
+.arch-card-lock { --card: var(--a-400); }
+
+/* Design notes */
+.arch-notes {
+  display: grid;
+  gap: 26px 32px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.arch-notes li { align-content: start; border-top: 2px solid var(--k-line); display: grid; gap: 6px; min-width: 0; padding-top: 12px; }
+.arch-notes strong { color: var(--ink-max); font-size: 14px; }
+.arch-notes p { color: var(--k-muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+
+.arch-code {
+  background: var(--z-950);
+  border: 1px solid var(--k-line);
+  border-radius: 12px;
+  color: var(--z-300);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  margin: 8px 0 0;
+  overflow-x: auto;
+  padding: 18px 20px;
+  white-space: pre;
+}
+
+@media (max-width: 700px) {
+  .arch-grid { grid-template-columns: 1fr; }
+  .arch-figure { padding: 12px; }
+  .arch-section { margin-top: 32px; padding-top: 28px; }
+}
