@@ -256,11 +256,12 @@ export default function AiCallingBotsPage() {
     searchMutation.mutate();
   };
 
-  if (settings && settings.geminiStatus !== "CONNECTED") {
+  // A saved key is enough; the Test button in Settings is optional.
+  if (settings && !settings.geminiApiKey) {
     return (
       <MissingCredentials
         title="Gemini Live Key Required"
-        description="To create and train calling agents, add and verify your Gemini API key for Gemini Live in Settings."
+        description="To create and train calling agents, add your Gemini API key for Gemini Live in Settings."
       />
     );
   }

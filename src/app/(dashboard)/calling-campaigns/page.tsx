@@ -1507,11 +1507,12 @@ export default function CallingCampaignsPage() {
     );
   }
 
-  if (settings && settings.geminiStatus !== "CONNECTED") {
+  // A saved key is enough; the Test button in Settings is optional.
+  if (settings && !settings.geminiApiKey) {
     return (
       <MissingCredentials
         title="Gemini Live Key Required"
-        description="To create and launch VoiceReach campaigns, add and verify your Gemini API key for Gemini Live in settings."
+        description="To create and launch VoiceReach campaigns, add your Gemini API key for Gemini Live in settings."
       />
     );
   }
