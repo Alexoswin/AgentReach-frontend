@@ -189,6 +189,21 @@ async function request<T = LooseApiResponse>(
   return requestWithAuth<T>(path, init, timeoutMs, true);
 }
 
+/** The backend base URL, including the /api prefix. */
+export const API_BASE_URL = BASE_URL;
+
+/**
+ * Authenticated JSON request for clients outside `api` (e.g. WebPilot): adds
+ * the access token, refreshes it once on a 401 and returns friendly errors.
+ */
+export function apiRequest<T = LooseApiResponse>(
+  path: string,
+  init?: RequestInit,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+) {
+  return request<T>(path, init, timeoutMs);
+}
+
 async function requestBlob(
   path: string,
   init?: RequestInit,

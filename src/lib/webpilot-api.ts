@@ -2,69 +2,53 @@
 
 import { useEffect, useState } from "react";
 import { getAccessToken } from "./localAuth";
+import { API_BASE_URL, apiRequest, type LooseApiResponse } from "./api";
 
-const API_BASE = "/api/webpilot";
+// Every WebPilot call goes through the backend, which checks the access token
+// before proxying to the WebPilot service. Never point the browser at the
+// service directly: that would skip the token check.
+const WEBPILOT_PATH = "/webpilot";
 
-function authHeaders(extra: Record<string, string> = {}): HeadersInit {
-  const token = getAccessToken();
-  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+// Starting or steering a browser run can take longer than an ordinary call.
+const WEBPILOT_TIMEOUT_MS = 45000;
+
+function webpilotRequest<T = LooseApiResponse>(path: string, init?: RequestInit) {
+  return apiRequest<T>(`${WEBPILOT_PATH}${path}`, init, WEBPILOT_TIMEOUT_MS);
+}
+
+/** ws(s)://<backend host>/ws/webpilot/<runId>?token=… — main.ts checks the token. */
+function webpilotSocketUrl(runId: string, token: string | null) {
+  const url = new URL(API_BASE_URL, window.location.origin);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = `/ws/webpilot/${encodeURIComponent(runId)}`;
+  url.search = "";
+  // Browsers cannot set headers on a WebSocket, so the token goes in the query.
+  if (token) url.searchParams.set("token", token);
+  return url.toString();
 }
 
 export const webpilotApi = {
-  startTask: async (prompt: string, modelTier: string = "auto") => {
-    const res = await fetch(`${API_BASE}/runs`, {
+  startTask: (prompt: string, modelTier: string = "auto") =>
+    webpilotRequest("/runs", {
       method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, modelTier }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+    }),
 
-  listTasks: async (limit: number = 20) => {
-    const res = await fetch(`${API_BASE}/runs?limit=${limit}`, { headers: authHeaders() });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  listTasks: (limit: number = 20) => webpilotRequest(`/runs?limit=${limit}`),
 
-  getActiveTask: async () => {
-    const res = await fetch(`${API_BASE}/runs/active`, { headers: authHeaders() });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  getActiveTask: () => webpilotRequest("/runs/active"),
 
-  getTask: async (runId: string) => {
-    const res = await fetch(`${API_BASE}/runs/${runId}`, { headers: authHeaders() });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  getTask: (runId: string) => webpilotRequest(`/runs/${encodeURIComponent(runId)}`),
 
-  stopTask: async (runId: string) => {
-    const res = await fetch(`${API_BASE}/runs/${runId}/stop`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  stopTask: (runId: string) =>
+    webpilotRequest(`/runs/${encodeURIComponent(runId)}/stop`, { method: "POST" }),
 
-  pauseTask: async (runId: string) => {
-    const res = await fetch(`${API_BASE}/runs/${runId}/pause`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  pauseTask: (runId: string) =>
+    webpilotRequest(`/runs/${encodeURIComponent(runId)}/pause`, { method: "POST" }),
 
-  resumeTask: async (runId: string) => {
-    const res = await fetch(`${API_BASE}/runs/${runId}/resume`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  },
+  resumeTask: (runId: string) =>
+    webpilotRequest(`/runs/${encodeURIComponent(runId)}/resume`, { method: "POST" }),
 };
 
 export function useWebPilotSocket(runId: string | null) {
@@ -81,17 +65,7 @@ export function useWebPilotSocket(runId: string | null) {
     setScreenshot(null);
     setStatus("unknown");
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // WebSocket goes directly to the Python microservice (Next.js rewrites don't proxy WS)
-    const webpilotHost =
-      process.env.NEXT_PUBLIC_WEBPILOT_WS_URL || "localhost:8001";
-    // Browsers cannot set headers on a WebSocket, so the token goes in the query.
-    const token = getAccessToken();
-    const ws = new WebSocket(
-      `${protocol}//${webpilotHost}/ws/webpilot/${runId}${
-        token ? `?token=${encodeURIComponent(token)}` : ""
-      }`,
-    );
+    const ws = new WebSocket(webpilotSocketUrl(runId, getAccessToken()));
 
     ws.onopen = () => setConnected(true);
     ws.onclose = () => setConnected(false);

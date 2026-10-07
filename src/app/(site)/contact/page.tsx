@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Bug, GitFork, Mail, MessageSquareText } from 'lucide-react';
+import { ArrowRight, Bug, GitFork, Mail, MessageSquareText, Phone } from 'lucide-react';
 import Reveal from '@/components/Reveal';
-import { CONTACT_EMAIL, GITHUB_PROFILE_URL, REPOS } from '@/lib/site';
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_HREF, GITHUB_PROFILE_URL, REPOS } from '@/lib/site';
 import CopyEmailButton from './CopyEmailButton';
 
 export const metadata: Metadata = {
@@ -27,9 +27,9 @@ export default function ContactPage() {
             Contact me
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-zinc-400 sm:text-lg">
-            Have a question about ReachConvert, feedback, or an idea to work on together? Email me
-            directly. For bugs and feature requests, a GitHub issue is the fastest way to get it
-            tracked.
+            Have a question about ReachConvert, feedback, or an idea to work on together? Email or
+            call me directly. For bugs and feature requests, a GitHub issue is the fastest way to get
+            it tracked.
           </p>
         </Reveal>
       </section>
@@ -47,6 +47,14 @@ export default function ContactPage() {
               className="sig-display mt-2 break-all text-2xl font-bold text-white transition-colors hover:text-indigo-300 sm:text-3xl"
             >
               {CONTACT_EMAIL}
+            </a>
+            <p className="sig-label mt-6 text-zinc-500">Phone</p>
+            <a
+              href={CONTACT_PHONE_HREF}
+              className="group mt-2 inline-flex items-center gap-2.5 self-start text-xl font-bold text-white transition-colors hover:text-indigo-300 sm:text-2xl"
+            >
+              <Phone className="h-5 w-5 flex-none text-indigo-400" />
+              <span className="sig-display">{CONTACT_PHONE}</span>
             </a>
             <ul className="mt-6 space-y-3">
               {TOPICS.map((topic) => (

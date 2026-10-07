@@ -2,6 +2,11 @@
 
 export const CONTACT_EMAIL = 'oswinalex1@gmail.com';
 
+export const CONTACT_PHONE = '+91 9324498843';
+
+/** CONTACT_PHONE without spaces, as a tel: link. */
+export const CONTACT_PHONE_HREF = `tel:${CONTACT_PHONE.replace(/\s+/g, '')}`;
+
 export const GITHUB_PROFILE_URL = 'https://github.com/Alexoswin';
 
 export const REPOS = {

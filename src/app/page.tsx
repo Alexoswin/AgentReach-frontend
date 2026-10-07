@@ -138,7 +138,7 @@ function Navbar() {
           <Brand />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -159,7 +159,7 @@ function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <Link
             href="/documentation"
             className="rounded-lg px-4 py-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-white"
@@ -183,7 +183,7 @@ function Navbar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 text-zinc-300 lg:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 text-zinc-300 xl:hidden"
           aria-label="Toggle menu"
           aria-expanded={open}
         >
@@ -192,7 +192,7 @@ function Navbar() {
       </div>
 
       {open && (
-        <div className="border-t border-zinc-850 bg-zinc-950/95 px-5 py-4 backdrop-blur-xl lg:hidden">
+        <div className="border-t border-zinc-850 bg-zinc-950/95 px-5 py-4 backdrop-blur-xl xl:hidden">
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <a
