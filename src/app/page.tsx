@@ -22,6 +22,7 @@ import {
   Rocket,
   GitPullRequest,
   MessageSquare,
+  HeartHandshake,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import SiteFooter from '@/components/SiteFooter';
@@ -37,6 +38,7 @@ const NAV_LINKS = [
 const PAGE_LINKS = [
   { label: 'Contribute', href: '/contribute' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Support', href: '/support' },
 ];
 
 const FEATURES = [
@@ -672,7 +674,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="mx-auto mt-10 max-w-md border-t border-zinc-800/80 pt-6">
+              <div className="mx-auto mt-10 max-w-2xl border-t border-zinc-800/80 pt-6">
                 <p className="sig-label text-zinc-500">OPEN SOURCE · BUILT IN THE OPEN</p>
                 <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row">
                   <Link href="/contribute" className="sig-btn-ghost group justify-center">
@@ -683,6 +685,11 @@ export default function Home() {
                   <Link href="/contact" className="sig-btn-ghost group justify-center">
                     <MessageSquare className="h-4 w-4 text-indigo-400" />
                     Contact us
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                  <Link href="/support" className="sig-btn-ghost group justify-center">
+                    <HeartHandshake className="h-4 w-4 text-indigo-400" />
+                    Support
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>

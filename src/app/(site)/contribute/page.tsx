@@ -317,6 +317,16 @@ export default function ContributePage() {
           </div>
         </Reveal>
       </section>
+
+      <Reveal>
+        <p className="mx-auto mt-14 max-w-xl text-center text-sm text-zinc-500">
+          Can&apos;t contribute code right now?{' '}
+          <Link href="/support" className="font-semibold text-indigo-300 transition-colors hover:text-white">
+            Support the project
+          </Link>{' '}
+          instead.
+        </p>
+      </Reveal>
     </div>
   );
 }

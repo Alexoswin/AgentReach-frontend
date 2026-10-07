@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Bug, GitFork, Mail, MessageSquareText, Phone } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_HREF, GITHUB_PROFILE_URL, REPOS } from '@/lib/site';
-import CopyEmailButton from './CopyEmailButton';
+import CopyButton from '@/components/CopyButton';
 
 export const metadata: Metadata = {
   title: 'Contact — ReachConvert',
@@ -71,7 +71,7 @@ export default function ContactPage() {
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               </span>
-              <CopyEmailButton email={CONTACT_EMAIL} />
+              <CopyButton value={CONTACT_EMAIL} label="Copy address" />
             </div>
           </div>
         </Reveal>

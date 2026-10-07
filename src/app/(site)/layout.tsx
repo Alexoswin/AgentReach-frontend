@@ -7,9 +7,10 @@ const HEADER_LINKS = [
   { label: 'Docs', href: '/documentation' },
   { label: 'Contribute', href: '/contribute' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Support', href: '/support' },
 ];
 
-/** Shared chrome for public, non-landing pages (contribute, contact). */
+/** Shared chrome for public, non-landing pages (contribute, contact, support). */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden text-zinc-100">
