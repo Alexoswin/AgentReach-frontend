@@ -4,9 +4,6 @@ import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import AuraRing from "@/components/AuraRing";
 
-/** One ring size everywhere, so the loader looks the same wherever it shows. */
-const RING_SIZE = 168;
-
 const subscribeNever = () => () => {};
 
 /** False during SSR and hydration, true once mounted in the browser. */
@@ -75,7 +72,7 @@ export function LoaderOverlay({ show, label, sublabel }: LoaderOverlayProps) {
       sublabel={sublabel}
       className="l3d-overlay z-[100] bg-zinc-950/80 backdrop-blur-md"
     >
-      <AuraRing size={RING_SIZE} />
+      <AuraRing />
     </ScreenLayer>
   );
 }
@@ -92,7 +89,7 @@ interface PageLoaderProps {
 export function PageLoader({ label = "Loading", sublabel }: PageLoaderProps) {
   return (
     <ScreenLayer label={label} sublabel={sublabel} className="pointer-events-none z-40">
-      <AuraRing size={RING_SIZE} />
+      <AuraRing />
     </ScreenLayer>
   );
 }
@@ -110,7 +107,7 @@ interface LoadingScreenProps {
 export function LoadingScreen({ label = "Loading", sublabel }: LoadingScreenProps) {
   return (
     <ScreenLayer label={label} sublabel={sublabel} className="bg-zinc-950" portal={false}>
-      <AuraRing size={RING_SIZE} />
+      <AuraRing />
     </ScreenLayer>
   );
 }

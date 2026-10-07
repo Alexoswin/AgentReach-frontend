@@ -973,6 +973,8 @@ body[data-accent="violet"] {
 .aura-scene {
   position: relative;
   flex: none;
+  width: var(--aura-size);
+  height: var(--aura-size);
   animation: aura-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 /* Ambient light pooling around the ring */
