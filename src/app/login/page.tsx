@@ -142,7 +142,10 @@ function LoginScreen() {
       .then((session) => {
         saveAuthSession(session);
         applyTheme(session.user.theme, session.user.accentColor);
-        router.replace("/dashboard");
+        // Verification sets the HttpOnly session cookies on the response.
+        // Reload the protected route so AuthGuard reads those cookies on a
+        // fresh request instead of racing the client-side navigation.
+        window.location.assign("/dashboard");
       })
       .catch((error: Error) => {
         setPendingAction(null);
