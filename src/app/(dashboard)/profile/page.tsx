@@ -12,9 +12,16 @@ import {
 } from '@/lib/localAuth';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { PageLoader } from '@/components/Loader';
-import { Check, Mail, Moon, Palette, Save, Sun, UserRound } from 'lucide-react';
+import { Check, Mail, Monitor, Moon, Palette, Save, Sun, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+
+// Swatches pair the default dark (Void) and light (Porcelain) backgrounds it switches between.
+const SYSTEM_THEME_OPTION = {
+  id: 'system' as const,
+  name: 'Match system',
+  swatches: ['#060b0d', '#f3f5f7', '#3fd0ff'],
+};
 
 export default function ProfilePage() {
   const { showAlert } = useOutreachStore();
@@ -129,6 +136,13 @@ export default function ProfilePage() {
 
         <section className="rounded-2xl border border-zinc-850 bg-zinc-900/40 p-6 shadow-xl">
           <div className="mb-6 space-y-5 border-b border-zinc-850 pb-6">
+            <ThemeGroup
+              title="Automatic"
+              icon={<Monitor className="h-4 w-4 text-indigo-400" />}
+              themes={[SYSTEM_THEME_OPTION]}
+              selectedTheme={profile.theme}
+              onSelect={(theme) => updateProfile('theme', theme)}
+            />
             <ThemeGroup
               title="Dark themes"
               icon={<Moon className="h-4 w-4 text-indigo-400" />}

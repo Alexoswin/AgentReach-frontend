@@ -30,19 +30,25 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#060b0d",
+  // Browser chrome follows the OS, matching the default 'system' theme.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f5f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#060b0d" },
+  ],
 };
 
 /**
  * Applies the stored theme before first paint so there is no flash
- * of the wrong theme. Must stay in sync with lib/localAuth.applyTheme.
+ * of the wrong theme. 'system', unknown themes, and signed-out visitors
+ * follow prefers-color-scheme. Must stay in sync with lib/localAuth
+ * (normalizeUser, resolveTheme, applyTheme).
  */
 const themeBootScript = `(function(){try{
 var themes=["dark-midnight","dark-slate","dark-graphite","dark-violet","light-cloud","light-paper","light-mint","light-rose"];
 var accents=["volt","emerald","sky","rose","amber","violet"];
 var u=JSON.parse(localStorage.getItem("reachconvert_user")||"{}")||{};
 var t=u.theme==="dark"?"dark-midnight":u.theme==="light"?"light-cloud":u.theme;
-if(themes.indexOf(t)<0)t="dark-midnight";
+if(!u.email||themes.indexOf(t)<0)t=matchMedia("(prefers-color-scheme: light)").matches?"light-cloud":"dark-midnight";
 var a=u.accentColor==="indigo"?"sky":accents.indexOf(u.accentColor)<0?"sky":u.accentColor;
 var light=t.indexOf("light-")===0;
 var d=document;

@@ -1,4 +1,6 @@
+/** 'system' follows the OS light/dark setting (see resolveTheme). */
 export type ThemeMode =
+  | 'system'
   | 'dark-midnight'
   | 'dark-slate'
   | 'dark-graphite'
@@ -53,14 +55,24 @@ export const DEFAULT_USER: LocalUserProfile = {
   title: '',
   company: '',
   phone: '',
-  theme: 'dark-midnight',
+  theme: 'system',
   accentColor: 'sky',
 };
+
+const PREFERS_LIGHT_QUERY = '(prefers-color-scheme: light)';
 
 function normalizeTheme(theme?: string): ThemeMode {
   if (theme === 'dark') return 'dark-midnight';
   if (theme === 'light') return 'light-cloud';
+  if (theme === 'system') return 'system';
   return THEME_OPTIONS.some((option) => option.id === theme) ? (theme as ThemeMode) : DEFAULT_USER.theme;
+}
+
+/** Maps 'system' to the default dark or light theme for the current OS setting. */
+export function resolveTheme(theme: ThemeMode): ThemeMode {
+  if (theme !== 'system') return theme;
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia(PREFERS_LIGHT_QUERY).matches;
+  return prefersLight ? 'light-cloud' : 'dark-midnight';
 }
 
 function normalizeAccent(accent?: string): AccentColor {
@@ -73,13 +85,16 @@ function normalizeUser(user: Partial<LocalUserProfile>): LocalUserProfile {
   return {
     ...DEFAULT_USER,
     ...user,
-    theme: normalizeTheme(user.theme),
+    // Signed-out visitors have no way to pick a theme, so a stored theme without an
+    // account email is a leftover default (formerly dark) — follow the system instead.
+    theme: user.email ? normalizeTheme(user.theme) : 'system',
     accentColor: normalizeAccent(user.accentColor),
   };
 }
 
 export function getThemeFamily(theme: ThemeMode) {
-  return THEME_OPTIONS.find((option) => option.id === theme)?.mode || 'dark';
+  const resolved = resolveTheme(theme);
+  return THEME_OPTIONS.find((option) => option.id === resolved)?.mode || 'dark';
 }
 
 export function getStoredUser(): LocalUserProfile {
@@ -136,14 +151,27 @@ export function saveTokens(accessToken: string, refreshToken: string) {
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 }
 
+// The last applied preference, so an OS light/dark switch can re-apply a 'system' theme.
+let appliedPreference: { theme: ThemeMode; accentColor: AccentColor } | null = null;
+
 export function applyTheme(theme: ThemeMode, accentColor: AccentColor = DEFAULT_USER.accentColor) {
   const normalizedTheme = normalizeTheme(theme);
   const normalizedAccent = normalizeAccent(accentColor);
-  const family = getThemeFamily(normalizedTheme);
+  const resolvedTheme = resolveTheme(normalizedTheme);
+  const family = getThemeFamily(resolvedTheme);
 
   document.documentElement.classList.toggle('dark', family === 'dark');
   document.documentElement.classList.toggle('light', family === 'light');
   document.body.classList.toggle('theme-light', family === 'light');
-  document.body.dataset.theme = normalizedTheme;
+  document.body.dataset.theme = resolvedTheme;
   document.body.dataset.accent = normalizedAccent;
+
+  if (!appliedPreference) {
+    window.matchMedia(PREFERS_LIGHT_QUERY).addEventListener('change', () => {
+      if (appliedPreference?.theme === 'system') {
+        applyTheme(appliedPreference.theme, appliedPreference.accentColor);
+      }
+    });
+  }
+  appliedPreference = { theme: normalizedTheme, accentColor: normalizedAccent };
 }

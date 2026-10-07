@@ -30,6 +30,7 @@ import {
   signOut,
 } from "@/lib/localAuth";
 import { api } from "@/lib/api";
+import { onThemeChange } from "@/lib/themeColors";
 import { LoaderOverlay } from "@/components/Loader";
 import { Brand } from "@/components/fx";
 
@@ -85,8 +86,12 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
     const refreshUser = () => setUser(getStoredUser());
     refreshUser();
     window.addEventListener("reachconvert:user-updated", refreshUser);
-    return () =>
+    // A 'system' theme can flip with the OS; re-render so the toggle label follows.
+    const stopWatchingTheme = onThemeChange(refreshUser);
+    return () => {
       window.removeEventListener("reachconvert:user-updated", refreshUser);
+      stopWatchingTheme();
+    };
   }, []);
 
   const toggleTheme = () => {

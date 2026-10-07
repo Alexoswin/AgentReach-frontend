@@ -1120,7 +1120,7 @@ export const DOC_PAGES: DocPage[] = [
       {
         heading: 'Themes & accents',
         capabilities: [
-          { title: 'Theme families', text: 'Four dark themes (Midnight, Slate, Graphite, Violet) and four light themes (Cloud, Paper, Mint, Rose).' },
+          { title: 'Theme families', text: 'Match system (the default) follows your device’s light or dark setting. Or pick one of four dark themes (Void, Deepwater, Carbon, Nebula) or four light themes (Porcelain, Parchment, Greenhouse, Blush).' },
           { title: 'Accent colors', text: 'Indigo, Emerald, Sky, Rose, Amber, or Violet — recolors buttons, highlights, and charts.' },
           { title: 'Instant apply', text: 'Selections take effect immediately and persist to your profile.' },
         ],
