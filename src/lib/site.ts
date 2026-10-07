@@ -35,7 +35,7 @@ export const SITE_LINKS = [
 ];
 
 /** UPI ID shown on /support. Leave empty to show a "coming soon" placeholder. */
-export const UPI_ID = '';
+export const UPI_ID = 'oswinalex1@okhdfcbank';
 
 /** UPI QR image in /public (e.g. '/upi-qr.png'). Leave empty to show a blank QR placeholder. */
-export const UPI_QR_SRC = '';
+export const UPI_QR_SRC = '/upi-qr.png';
