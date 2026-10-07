@@ -307,6 +307,10 @@ function LoginScreen() {
   };
 
   const openEmailVerification = (targetEmail: string, notice?: string) => {
+    // Registration has finished and the user must be able to interact with
+    // the verification form. Leaving this set keeps LoaderOverlay mounted
+    // over the OTP input indefinitely.
+    setPendingAction(null);
     setVerificationEmail(targetEmail.trim().toLowerCase());
     setVerificationCode("");
     setMode("verify");
