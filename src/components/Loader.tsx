@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import AuraRing from "@/components/AuraRing";
+import { lockBodyScroll } from "@/lib/scrollLock";
 
 const subscribeNever = () => () => {};
 
@@ -57,11 +58,7 @@ interface LoaderOverlayProps {
 export function LoaderOverlay({ show, label, sublabel }: LoaderOverlayProps) {
   useEffect(() => {
     if (!show) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockBodyScroll();
   }, [show]);
 
   if (!show) return null;

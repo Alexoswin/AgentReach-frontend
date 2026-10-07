@@ -12,6 +12,7 @@ import { applyTheme, getStoredUser, saveAuthSession } from "@/lib/localAuth";
 import { LoaderOverlay } from "@/components/Loader";
 import { Brand } from "@/components/fx";
 import { GoogleIcon } from "@/components/GoogleIcon";
+import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -322,7 +323,9 @@ function LoginScreen() {
       <div className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 lg:grid-cols-[1fr_460px]">
         {/* Showcase panel */}
         <section className="hidden flex-col justify-between px-8 py-10 lg:flex">
-          <Brand />
+          <Link href="/" className="self-start">
+            <Brand />
+          </Link>
 
           <div className="max-w-2xl py-16">
             <p className="sig-label text-indigo-400">[ SECURE WORKSPACE ]</p>
@@ -370,9 +373,9 @@ function LoginScreen() {
         {/* Auth panel */}
         <section className="flex items-center px-5 py-8 sm:px-6 lg:py-10">
           <div className="sig-card sig-ticks sig-ticks-on w-full rounded-2xl p-6 sm:p-8">
-            <div className="mb-8 lg:hidden">
+            <Link href="/" className="mb-8 inline-block lg:hidden">
               <Brand />
-            </div>
+            </Link>
 
             {mode === "login" ? (
               <form onSubmit={handleLogin} className="space-y-5">

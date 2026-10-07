@@ -18,7 +18,7 @@ export default function DocumentationLayout({
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[88rem] items-center justify-between px-5 sm:px-8">
-          <Link href="/documentation" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-500/20">
               <Zap className="h-5 w-5 text-white" />
             </div>

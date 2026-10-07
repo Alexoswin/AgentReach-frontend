@@ -7,6 +7,7 @@ import { Menu, X } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import Alert from '@/components/Alert';
 import { BrandMark } from '@/components/fx';
+import { lockBodyScroll } from '@/lib/scrollLock';
 
 /**
  * Responsive dashboard chrome: a sticky sidebar rail on desktop and a
@@ -24,14 +25,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!drawerOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockScroll = lockBodyScroll();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setDrawerOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = previous;
+      unlockScroll();
       window.removeEventListener('keydown', onKey);
     };
   }, [drawerOpen]);
@@ -76,7 +76,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-zinc-850 bg-zinc-950/80 px-4 backdrop-blur-xl lg:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <BrandMark size={30} />
             <span className="sig-display text-base font-bold tracking-tight text-white">
               ReachConvert

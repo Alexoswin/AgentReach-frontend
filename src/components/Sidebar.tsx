@@ -129,7 +129,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Brand */}
         <div className="border-b border-zinc-850 px-5 py-5">
-          <Link href="/dashboard" onClick={onNavigate} className="block">
+          <Link href="/" onClick={onNavigate} className="block">
             <Brand />
           </Link>
         </div>
