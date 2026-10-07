@@ -18,7 +18,6 @@ import {
   Radar,
   BookOpen,
   CalendarClock,
-  Globe,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -58,7 +57,6 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { name: "VoiceReach", href: "/calling-campaigns", icon: PhoneCall },
       { name: "Scheduler", href: "/scheduler", icon: CalendarClock },
       { name: "Calling Agents", href: "/ai-calling-bots", icon: Bot },
-      { name: "WebPilot", href: "/web-pilot", icon: Globe },
     ],
   },
   {

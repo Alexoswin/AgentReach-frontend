@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
-      // Everything under /api goes to the NestJS backend, including
-      // /api/webpilot/*: the backend checks the access token before proxying
-      // to the WebPilot service, so the service is never reached directly.
+      // Everything under /api goes to the NestJS backend.
       {
         source: "/api/:path*",
         destination: `${BACKEND_URL}/api/:path*`,

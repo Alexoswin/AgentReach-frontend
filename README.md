@@ -4,7 +4,7 @@ Next.js dashboard for **ReachConvert** — an outreach platform that unifies
 personalized bulk email, autonomous AI voice calling, and signal-based automation in
 one workspace for exploring job opportunities and driving conversions.
 
-**Live app:** [agentreach-frontend-rho.vercel.app](https://agentreach-frontend-rho.vercel.app)  
+**Live app:** [www.reachconvert.site](https://www.reachconvert.site) · [Docs](https://www.reachconvert.site/documentation) · Vercel URL: [agentreach-frontend-rho.vercel.app](https://agentreach-frontend-rho.vercel.app)  
 This app is the operator UI. It talks to the [ReachConvert backend](../AgentReach-backend)
 over REST (`NEXT_PUBLIC_API_URL`) and ships a full in-app **Documentation portal** at
 `/documentation` with two explicit tracks:

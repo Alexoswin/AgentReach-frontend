@@ -8,7 +8,7 @@ import SystemTopologyDiagram from './SystemTopologyDiagram';
  * reference tables, all styled by the `.arch` rules in globals.css.
  */
 
-type Kind = 'rest' | 'webhook' | 'realtime' | 'cron' | 'proxy' | 'code' | 'model' | 'provider' | 'tool';
+type Kind = 'rest' | 'webhook' | 'realtime' | 'cron' | 'code' | 'model' | 'provider' | 'tool';
 
 function Pill({ kind, children }: { kind: Kind; children?: ReactNode }) {
   return <span className={`arch-kind arch-kind-${kind}`}>{children ?? kind}</span>;
@@ -56,7 +56,6 @@ const MODULES: readonly {
   { name: 'scheduler', file: 'scheduler/', kinds: ['cron'], owns: 'Launches campaigns whose scheduled time has passed', calls: 'none, it calls the campaign services', stores: 'EmailCampaign, CallingCampaign' },
   { name: 'history', file: 'history/', kinds: ['rest'], owns: 'Sent email and past calls', calls: 'none', stores: 'reads only' },
   { name: 'analytics', file: 'analytics/', kinds: ['rest'], owns: 'Dashboard metrics', calls: 'none', stores: 'reads only' },
-  { name: 'webpilot', file: 'webpilot/', kinds: ['proxy'], owns: 'Forwards /api/webpilot/* and /ws/webpilot', calls: 'WebPilot service', stores: 'none' },
 ];
 
 const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNode])[] }[] = [
@@ -80,7 +79,6 @@ const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNo
       ['signals/trigger.service.ts', 'Guardrails and the one-contact email campaign.'],
       ['signals/scheduler.service.ts', 'The six-hourly collector poll.'],
       ['scheduler/campaign-scheduler.service.ts', 'The every-minute campaign launcher.'],
-      ['webpilot/webpilot.module.ts', <>Token check and proxy for <code>/api/webpilot/*</code>.</>],
     ],
   },
   {
@@ -88,7 +86,6 @@ const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNo
     rows: [
       ['src/lib/api.ts', 'The REST client: access token, refresh and retry, friendly errors.'],
       ['src/lib/localAuth.ts', 'Tokens, profile and theme in localStorage.'],
-      ['src/lib/webpilot-api.ts', 'WebPilot REST calls and the live-events socket, both through the backend.'],
       ['next.config.ts', <>Rewrites <code>/api/*</code> to the backend.</>],
       ['src/components/docs/', 'This page and its two diagrams.'],
       ['src/lib/docs.ts', 'Content for every other documentation page.'],
@@ -109,9 +106,9 @@ export default function SystemArchitectureDoc() {
       <Section id="whole-system" title="The whole system">
         <p>
           Product pages reach the backend through one client, <code>src/lib/api.ts</code>, which attaches the access
-          token. On the backend, <code>main.ts</code> sets the <code>/api</code> prefix and hands WebSocket upgrades to
-          the realtime gateway or the WebPilot proxy. Every other request passes the global <code>AuthGuard</code> into
-          a feature module, and every module stores data through <code>MongoService</code>.
+          token. On the backend, <code>main.ts</code> sets the <code>/api</code> prefix and hands the phone
+          provider&apos;s WebSocket upgrades to the realtime gateway. Every other request passes the global{' '}
+          <code>AuthGuard</code> into a feature module, and every module stores data through <code>MongoService</code>.
         </p>
 
         <figure className="arch-figure">
@@ -121,9 +118,8 @@ export default function SystemArchitectureDoc() {
           <figcaption>
             Schedulers call the same services the REST routes use, so a scheduled launch and a button click run the
             same code. The phone provider meets the backend three ways: the backend dials it over REST, it calls back
-            on signed webhooks, and it streams the call&apos;s audio into the gateway. WebPilot runs as a separate
-            service that the browser never calls directly: its REST calls and live-events socket both go to the
-            backend, which checks the access token before proxying them.
+            on signed webhooks, and it streams the call&apos;s audio into the gateway. Any other WebSocket upgrade is
+            dropped, so those media streams are the only sockets the backend accepts.
           </figcaption>
         </figure>
 
@@ -148,14 +144,7 @@ export default function SystemArchitectureDoc() {
             <h4>Needs a Bearer access token</h4>
             <ul>
               <li>Every route by default. The guard verifies the token, then loads the user, so a deleted account is refused.</li>
-              <li>
-                <code>/api/webpilot/*</code> on the backend checks the token in its own middleware, because Nest
-                middleware runs before guards.
-              </li>
-              <li>
-                <code>/ws/webpilot</code> takes the token as <code>?token=</code>, since a browser cannot set headers on
-                a WebSocket.
-              </li>
+              <li>Settings, where the provider keys live. Responses always return those keys masked.</li>
               <li>Call recordings, which the backend proxies from the provider instead of linking to them.</li>
             </ul>
           </div>
@@ -186,7 +175,7 @@ export default function SystemArchitectureDoc() {
       <Section id="modules" title="Which module does what">
         <p>
           Each feature is a NestJS module under <code>AgentReach-backend/src</code>. The kind says how work reaches
-          it: a REST route, a provider webhook, a media socket, a cron job or the WebPilot proxy.
+          it: a REST route, a provider webhook, a media socket or a cron job.
         </p>
         <div className="arch-table-wrap">
           <table className="arch-table arch-steps">

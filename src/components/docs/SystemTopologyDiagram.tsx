@@ -1,4 +1,4 @@
-import { Arrow, Box, Group, Key, Lines, Markers, PathArrow, Title, type KeyItem } from './diagram';
+import { Arrow, Box, Group, Key, Lines, Markers, Title, type KeyItem } from './diagram';
 
 const ID = 'topo';
 
@@ -28,12 +28,11 @@ const MODULES: readonly (readonly [string, string])[] = [
   ['analytics', 'dashboard metrics'],
 ];
 
-/** The four browser-side pieces, left to right. */
-const FRONTEND: readonly { x: number; title: string; mono?: string; lines: string[] }[] = [
-  { x: 34, title: 'Product pages', mono: 'app/(dashboard)/*', lines: ['AuthGuard + AppShell', 'wrap every route'] },
-  { x: 205, title: 'api.ts', lines: ['Adds the access token', 'On a 401: refresh,', 'then retry once'] },
-  { x: 376, title: 'localAuth.ts', lines: ['Tokens, profile and', 'theme in localStorage'] },
-  { x: 547, title: 'webpilot-api.ts', lines: ['Starts WebPilot runs', 'and streams events'] },
+/** The browser-side pieces, left to right, on the same columns as the backend row below. */
+const FRONTEND: readonly { x: number; w: number; title: string; mono?: string; lines: string[] }[] = [
+  { x: 34, w: 210, title: 'Product pages', mono: 'app/(dashboard)/*', lines: ['AuthGuard + AppShell', 'wrap every route'] },
+  { x: 256, w: 210, title: 'api.ts', lines: ['Adds the access token;', 'on a 401, refreshes it', 'and retries once'] },
+  { x: 490, w: 216, title: 'localAuth.ts', lines: ['Access and refresh tokens,', 'profile and theme in', 'localStorage'] },
 ];
 
 export default function SystemTopologyDiagram() {
@@ -42,7 +41,7 @@ export default function SystemTopologyDiagram() {
       className="arch-svg"
       viewBox="0 0 1040 876"
       role="img"
-      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; webpilot-api sends its REST calls and live-events socket to the backend's WebPilot proxy. In the NestJS backend, main.ts sets the /api prefix and dispatches WebSocket upgrades to the realtime gateway or the WebPilot proxy. REST requests pass the global AuthGuard into ten feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, and public signal sources, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
+      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; In the NestJS backend, main.ts sets the /api prefix and hands the phone provider's WebSocket upgrades to the realtime gateway. REST requests pass the global AuthGuard into ten feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, and public signal sources, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
     >
       <Markers id={ID} />
 
@@ -50,36 +49,30 @@ export default function SystemTopologyDiagram() {
       <Group x={20} y={20} w={700} h={132} label="BROWSER · AGENTREACH-FRONTEND (NEXT.JS)" />
       {FRONTEND.map((box) => (
         <g key={box.title}>
-          <Box x={box.x} y={50} w={159} h={86} kind="client" />
-          <text x={box.x + 14} y={72} className="title">
+          <Box x={box.x} y={50} w={box.w} h={86} kind="client" />
+          <text x={box.x + 16} y={72} className="title">
             {box.title}
           </text>
           {box.mono && (
-            <text x={box.x + 14} y={93} className="mono">
+            <text x={box.x + 16} y={93} className="mono">
               {box.mono}
             </text>
           )}
-          <Lines x={box.x + 14} y={box.mono ? 110 : 93} step={17} className="body-s" lines={box.lines} />
+          <Lines x={box.x + 16} y={box.mono ? 110 : 93} step={17} className="body-s" lines={box.lines} />
         </g>
       ))}
 
-      {/* WebPilot service, reached only through the backend's proxy */}
-      <Box x={790} y={50} w={230} h={86} kind="provider" />
-      <text x={806} y={72} className="title">WebPilot service</text>
-      <text x={806} y={93} className="mono">WEBPILOT_URL · :8001</text>
-      <Lines x={806} y={110} step={17} className="body-s" lines={['Runs browser tasks from', 'a prompt, streams frames']} />
+      <Key id={ID} x={790} y={56} items={KEY} rows={5} colWidth={125} />
 
       {/* Browser → backend */}
-      <Arrow id={ID} x1={284.5} y1={136} x2={284.5} y2={211} />
-      <text x={293} y={170} className="strong">REST /api · Bearer token</text>
-      <Arrow id={ID} x1={633} y1={136} x2={633} y2={211} />
-      <text x={641} y={170} className="small">REST + WS, token</text>
+      <Arrow id={ID} x1={361} y1={136} x2={361} y2={211} />
+      <text x={369} y={170} className="strong">REST /api · Bearer token</text>
 
       {/* ── Backend ─────────────────────────────────────────────── */}
       <Group x={20} y={180} w={700} h={586} label="AGENTREACH-BACKEND · NESTJS 11" />
 
-      <Box x={34} y={212} w={506} h={90} />
-      <Title x={34} y={234} w={506} text="main.ts" note="createApp()" />
+      <Box x={34} y={212} w={672} h={90} />
+      <Title x={34} y={234} w={672} text="main.ts" note="createApp()" />
       <Lines
         x={50}
         y={256}
@@ -87,23 +80,15 @@ export default function SystemTopologyDiagram() {
         lines={[
           '/api prefix · CORS_ORIGINS allow-list · 50 MB request bodies',
           'Swagger at /docs, off in production unless ENABLE_SWAGGER',
-          'Upgrades /twilio/stream, /plivo/stream, /ws/webpilot; drops the rest',
+          'Upgrades /twilio/stream and /plivo/stream for live calls; drops any other socket',
         ]}
       />
-
-      <Box x={560} y={212} w={146} h={90} />
-      <text x={574} y={234} className="title">WebPilot proxy</text>
-      <Lines x={574} y={256} step={17} className="body-s" lines={['Checks the token', 'itself, then', 'forwards it']} />
-      <Arrow id={ID} x1={540} y1={257} x2={559} y2={257} />
-      <PathArrow id={ID} d="M706,257 H905 V137" />
-      <text x={913} y={204} className="mono note">/api/webpilot/*</text>
-      <text x={913} y={220} className="mono note">/ws/webpilot</text>
 
       {/* main.ts fans out */}
       <Arrow id={ID} x1={139} y1={302} x2={139} y2={333} />
       <text x={147} y={322} className="small">REST</text>
-      <Arrow id={ID} x1={515} y1={302} x2={515} y2={333} />
-      <text x={523} y={322} className="small">upgrade</text>
+      <Arrow id={ID} x1={598} y1={302} x2={598} y2={333} />
+      <text x={606} y={322} className="small">upgrade</text>
 
       <Box x={34} y={334} w={210} h={86} />
       <Title x={34} y={356} w={210} text="Global AuthGuard" />
@@ -205,7 +190,6 @@ export default function SystemTopologyDiagram() {
       <Arrow id={ID} x1={706} y1={642} x2={789} y2={642} />
       <text x={748} y={635} textAnchor="middle" className="small">poll</text>
 
-      <Key id={ID} x={790} y={712} items={KEY} rows={5} colWidth={125} />
     </svg>
   );
 }

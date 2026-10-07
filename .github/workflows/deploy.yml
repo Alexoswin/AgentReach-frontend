@@ -10,8 +10,6 @@ name: Vercel Deploy
 #   vars.VERCEL_PROJECT_ID - "projectId" from .vercel/project.json
 #   vars.BACKEND_URL       - Cloud Run URL of agentreach-backend, no trailing
 #                            slash, e.g. https://agentreach-backend-xxxx.asia-south1.run.app
-# Optional:
-#   vars.WEBPILOT_URL, vars.NEXT_PUBLIC_WEBPILOT_WS_URL
 on:
   push:
     branches: [main]
@@ -29,8 +27,6 @@ env:
   # NEXT_PUBLIC_* values and next.config.ts rewrites are baked in at build
   # time, so they must point at the Cloud Run backend before `vercel build`.
   NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}/api
-  WEBPILOT_URL: ${{ vars.WEBPILOT_URL }}
-  NEXT_PUBLIC_WEBPILOT_WS_URL: ${{ vars.NEXT_PUBLIC_WEBPILOT_WS_URL }}
 
 jobs:
   deploy:
@@ -73,7 +69,7 @@ jobs:
           # stored in the Vercel dashboard for this environment.
           env_file=".vercel/.env.$target.local"
           touch "$env_file"
-          for key in NEXT_PUBLIC_API_URL WEBPILOT_URL NEXT_PUBLIC_WEBPILOT_WS_URL; do
+          for key in NEXT_PUBLIC_API_URL; do
             [ -n "${!key}" ] || continue
             sed -i "/^$key=/d" "$env_file"
             echo "$key=\"${!key}\"" >> "$env_file"
