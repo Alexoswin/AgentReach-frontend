@@ -102,6 +102,8 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt ${{ env.TARGET == 'production' && '--prod' || '' }} --token="${{ secrets.VERCEL_TOKEN }}")
+          # Archive the prebuilt output so Vercel does not count every file
+          # as an individual free-tier upload request.
+          url=$(vercel deploy --prebuilt --archive=tgz ${{ env.TARGET == 'production' && '--prod' || '' }} --token="${{ secrets.VERCEL_TOKEN }}")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
