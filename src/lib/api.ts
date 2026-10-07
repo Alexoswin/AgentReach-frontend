@@ -1,8 +1,5 @@
 import {
-  getAccessToken,
-  getRefreshToken,
   saveAuthSession,
-  saveTokens,
   signOut,
 } from "./localAuth";
 
@@ -10,6 +7,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 const REQUEST_TIMEOUT_MS = 8000;
 const AI_REQUEST_TIMEOUT_MS = 45000;
 const IMPORT_REQUEST_TIMEOUT_MS = 60000;
+let csrfToken: string | null = null;
+const AUTH_PATHS_WITHOUT_REFRESH = new Set([
+  "/auth/login",
+  "/auth/register",
+  "/auth/identity-platform",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+]);
 
 type ApiPayload = { [key: string]: unknown };
 export type LooseApiResponse = ReturnType<typeof JSON.parse>;
@@ -208,19 +213,26 @@ async function requestWithAuth<T = LooseApiResponse>(
 
   try {
     const headers = new Headers(init?.headers);
-    const accessToken = getAccessToken();
-
-    if (accessToken && !headers.has("Authorization")) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+    const method = (init?.method || "GET").toUpperCase();
+    if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+      headers.set("X-CSRF-Token", csrfToken);
     }
 
     const response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
+      credentials: "include",
       signal: controller.signal,
     });
 
-    if (response.status === 401 && allowRefresh && path !== "/auth/refresh") {
+    csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
+
+    if (
+      response.status === 401 &&
+      allowRefresh &&
+      path !== "/auth/refresh" &&
+      !AUTH_PATHS_WITHOUT_REFRESH.has(path)
+    ) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return requestWithAuth<T>(path, init, timeoutMs, false);
@@ -256,17 +268,19 @@ async function requestBlobWithAuth(
 
   try {
     const headers = new Headers(init?.headers);
-    const accessToken = getAccessToken();
-
-    if (accessToken && !headers.has("Authorization")) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+    const method = (init?.method || "GET").toUpperCase();
+    if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+      headers.set("X-CSRF-Token", csrfToken);
     }
 
     const response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
+      credentials: "include",
       signal: controller.signal,
     });
+
+    csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
 
     if (response.status === 401 && allowRefresh && path !== "/auth/refresh") {
       const refreshed = await refreshAccessToken();
@@ -301,15 +315,14 @@ async function requestBlobWithAuth(
 }
 
 async function refreshAccessToken() {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return false;
-
   try {
     const response = await fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      headers: csrfToken ? { "X-CSRF-Token": csrfToken } : undefined,
+      credentials: "include",
     });
+
+    csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
 
     if (!response.ok) {
       signOut();
@@ -318,7 +331,6 @@ async function refreshAccessToken() {
 
     const session = await response.json();
     saveAuthSession(session);
-    saveTokens(session.accessToken, session.refreshToken);
     return true;
   } catch {
     signOut();
@@ -350,11 +362,21 @@ export const api = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
-    refresh: (refreshToken: string) =>
+    refresh: () =>
       request("/auth/refresh", {
         method: "POST",
+      }),
+    identityPlatform: (idToken: string) =>
+      request("/auth/identity-platform", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({ idToken }),
+      }),
+    linkGoogle: (idToken: string) =>
+      request("/auth/link-google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
       }),
     me: () => request("/auth/me"),
     updateProfile: (data: AuthProfileUpdate) =>

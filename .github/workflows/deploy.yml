@@ -6,6 +6,7 @@ name: Vercel Deploy
 #
 # Required repo settings:
 #   secrets.VERCEL_TOKEN   - Vercel access token (vercel.com/account/tokens)
+#   secrets.NEXT_PUBLIC_FIREBASE_* - Identity Platform web-app configuration
 #   vars.VERCEL_ORG_ID     - "orgId" from .vercel/project.json
 #   vars.VERCEL_PROJECT_ID - "projectId" from .vercel/project.json
 #   vars.BACKEND_URL       - Cloud Run URL of agentreach-backend, no trailing
@@ -27,6 +28,11 @@ env:
   # NEXT_PUBLIC_* values and next.config.ts rewrites are baked in at build
   # time, so they must point at the Cloud Run backend before `vercel build`.
   NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}/api
+  NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+  NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
 
 jobs:
   deploy:
@@ -54,6 +60,14 @@ jobs:
           [ -n "${{ secrets.VERCEL_TOKEN }}" ] || { echo "::error::secrets.VERCEL_TOKEN is not set"; missing=1; }
           # Without this the build silently falls back to localhost.
           [ -n "${{ vars.BACKEND_URL }}" ] || { echo "::error::vars.BACKEND_URL (Cloud Run URL) is not set"; missing=1; }
+          for name in \
+            NEXT_PUBLIC_FIREBASE_API_KEY \
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID \
+            NEXT_PUBLIC_FIREBASE_APP_ID \
+            NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID; do
+            [ -n "${!name}" ] || { echo "::error::secrets.$name is not set"; missing=1; }
+          done
           exit $missing
 
       - name: Install Vercel CLI
@@ -69,7 +83,13 @@ jobs:
           # stored in the Vercel dashboard for this environment.
           env_file=".vercel/.env.$target.local"
           touch "$env_file"
-          for key in NEXT_PUBLIC_API_URL; do
+          for key in \
+            NEXT_PUBLIC_API_URL \
+            NEXT_PUBLIC_FIREBASE_API_KEY \
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID \
+            NEXT_PUBLIC_FIREBASE_APP_ID \
+            NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID; do
             [ -n "${!key}" ] || continue
             sed -i "/^$key=/d" "$env_file"
             echo "$key=\"${!key}\"" >> "$env_file"

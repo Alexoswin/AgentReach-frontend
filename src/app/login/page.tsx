@@ -1,18 +1,28 @@
 'use client';
 
 import { api } from '@/lib/api';
+import {
+  clearIdentityPlatformSession,
+  completeGoogleRedirect,
+  identityPlatformErrorMessage,
+  isIdentityPlatformConfigured,
+  signInWithGooglePopup,
+  startGoogleRedirect,
+} from '@/lib/identityPlatform';
 import { applyTheme, getStoredUser, saveAuthSession } from '@/lib/localAuth';
 import { LoaderOverlay } from '@/components/Loader';
 import { Brand } from '@/components/fx';
+import { GoogleIcon } from '@/components/GoogleIcon';
 import { ArrowLeft, ArrowRight, KeyRound, Mail, RefreshCw, User, Radio, ShieldCheck, BarChart3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 type AuthMode = 'login' | 'reset' | 'register';
-type PendingAction = 'login' | 'register' | 'reset' | null;
+type PendingAction = 'login' | 'register' | 'reset' | 'google' | null;
 
 const PENDING_COPY: Record<Exclude<PendingAction, null>, { label: string; sublabel: string }> = {
   login: { label: 'Signing you in', sublabel: 'Authenticating your workspace…' },
+  google: { label: 'Signing you in with Google', sublabel: 'Verifying your Google identity…' },
   register: { label: 'Creating your account', sublabel: 'Setting up your ReachConvert workspace…' },
   reset: { label: 'Resetting password', sublabel: 'Securing your account…' },
 };
@@ -47,10 +57,39 @@ function LoginScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const googleAvailable = isIdentityPlatformConfigured();
 
   useEffect(() => {
     applyTheme(storedUser.theme, storedUser.accentColor);
   }, [storedUser.accentColor, storedUser.theme]);
+
+  useEffect(() => {
+    if (!googleAvailable) return;
+
+    let active = true;
+    completeGoogleRedirect()
+      .then(async (idToken) => {
+        if (!idToken || !active) return;
+        setPendingAction('google');
+        const session = await api.auth.identityPlatform(idToken);
+        saveAuthSession(session);
+        applyTheme(session.user.theme, session.user.accentColor);
+        router.replace('/dashboard');
+      })
+      .catch((error: Error) => {
+        if (active) {
+          setPendingAction(null);
+          setMessage(identityPlatformErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        void clearIdentityPlatformSession().catch(() => undefined);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [googleAvailable, router]);
 
   // Drop the token from the address bar so it does not linger in history.
   useEffect(() => {
@@ -70,6 +109,32 @@ function LoginScreen() {
         setPendingAction(null);
         setMessage(error.message || 'Invalid email or password.');
       });
+  };
+
+  const handleGoogleLogin = async () => {
+    setPendingAction('google');
+    setMessage('');
+
+    const useRedirect = window.matchMedia('(max-width: 640px)').matches;
+    try {
+      if (useRedirect) {
+        await startGoogleRedirect();
+        return;
+      }
+
+      const idToken = await signInWithGooglePopup();
+      const session = await api.auth.identityPlatform(idToken);
+      saveAuthSession(session);
+      applyTheme(session.user.theme, session.user.accentColor);
+      router.replace('/dashboard');
+    } catch (error) {
+      setPendingAction(null);
+      setMessage(identityPlatformErrorMessage(error));
+    } finally {
+      if (!useRedirect) {
+        void clearIdentityPlatformSession().catch(() => undefined);
+      }
+    }
   };
 
   const handleRegister = (event: React.FormEvent) => {
@@ -279,6 +344,23 @@ function LoginScreen() {
                     Sign In <ArrowRight className="h-4 w-4" />
                   </button>
                 </span>
+                {googleAvailable && (
+                  <>
+                    <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-zinc-700">
+                      <span className="h-px flex-1 bg-zinc-800" />
+                      or
+                      <span className="h-px flex-1 bg-zinc-800" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={pendingAction !== null}
+                      className="sig-btn-ghost w-full disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <GoogleIcon className="h-4 w-4" /> Continue with Google
+                    </button>
+                  </>
+                )}
                 <div className="pt-2 text-center text-sm text-zinc-500">
                   Don&apos;t have an account?{' '}
                   <button

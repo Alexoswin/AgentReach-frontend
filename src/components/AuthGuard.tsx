@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@/lib/api';
-import { applyTheme, isAuthenticated, saveStoredUser, signOut } from '@/lib/localAuth';
+import { applyTheme, saveStoredUser, signOut } from '@/lib/localAuth';
 import { LoadingScreen } from '@/components/Loader';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,11 +11,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.replace('/login');
-      return;
-    }
-
     api.auth.me()
       .then((user) => {
         saveStoredUser(user);

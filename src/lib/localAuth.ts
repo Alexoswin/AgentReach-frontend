@@ -42,6 +42,8 @@ export interface LocalUserProfile {
   phone: string;
   theme: ThemeMode;
   accentColor: AccentColor;
+  authProvider?: string;
+  emailVerified?: boolean;
 }
 
 export const AUTH_USER_KEY = 'reachconvert_user';
@@ -124,13 +126,16 @@ export function saveStoredUser(user: LocalUserProfile) {
 }
 
 export function isAuthenticated() {
-  return typeof window !== 'undefined' && !!getAccessToken() && !!getRefreshToken();
+  // The real session is stored in HttpOnly cookies and cannot be inspected by
+  // JavaScript. AuthGuard verifies it with GET /auth/me instead.
+  return typeof window !== 'undefined' && !!getStoredUser().email;
 }
 
-export function saveAuthSession(tokens: { accessToken: string; refreshToken: string; user: LocalUserProfile }) {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
-  saveStoredUser(tokens.user);
+export function saveAuthSession(session: { user: LocalUserProfile }) {
+  // Remove tokens written by older builds. New sessions are HttpOnly cookies.
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  saveStoredUser(session.user);
 }
 
 export function signOut() {
@@ -139,16 +144,16 @@ export function signOut() {
 }
 
 export function getAccessToken() {
-  return typeof window === 'undefined' ? null : window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return null;
 }
 
 export function getRefreshToken() {
-  return typeof window === 'undefined' ? null : window.localStorage.getItem(REFRESH_TOKEN_KEY);
+  return null;
 }
 
 export function saveTokens(accessToken: string, refreshToken: string) {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  void accessToken;
+  void refreshToken;
 }
 
 // The last applied preference, so an OS light/dark switch can re-apply a 'system' theme.

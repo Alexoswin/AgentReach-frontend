@@ -2,6 +2,12 @@
 
 import { api } from '@/lib/api';
 import {
+  clearIdentityPlatformSession,
+  identityPlatformErrorMessage,
+  isIdentityPlatformConfigured,
+  signInWithGooglePopup,
+} from '@/lib/identityPlatform';
+import {
   ACCENT_OPTIONS,
   applyTheme,
   getStoredUser,
@@ -12,6 +18,7 @@ import {
 } from '@/lib/localAuth';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { PageLoader } from '@/components/Loader';
+import { GoogleIcon } from '@/components/GoogleIcon';
 import { Check, Mail, Monitor, Moon, Palette, Save, Sun, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -27,6 +34,7 @@ export default function ProfilePage() {
   const { showAlert } = useOutreachStore();
   const [profile, setProfile] = useState<LocalUserProfile | null>(() => getStoredUser());
   const [password, setPassword] = useState('');
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   // Theme picks preview live but only persist on Save; leaving the page
   // drops an unsaved preview so the app matches the stored preference.
@@ -84,6 +92,25 @@ export default function ProfilePage() {
       .catch((error: Error) => {
         showAlert(error.message || 'We could not update your profile. Please try again.', 'error');
       });
+  };
+
+  const handleLinkGoogle = async () => {
+    setLinkingGoogle(true);
+    try {
+      const idToken = await signInWithGooglePopup();
+      const updatedProfile = await api.auth.linkGoogle(idToken);
+      saveStoredUser(updatedProfile);
+      setProfile(updatedProfile);
+      showAlert('Google sign-in is now linked to this account.', 'success');
+    } catch (error) {
+      showAlert(
+        identityPlatformErrorMessage(error),
+        'error',
+      );
+    } finally {
+      await clearIdentityPlatformSession().catch(() => undefined);
+      setLinkingGoogle(false);
+    }
   };
 
   if (!profile) {
@@ -198,6 +225,33 @@ export default function ProfilePage() {
               placeholder="Leave blank to keep current password"
             />
           </div>
+
+          {isIdentityPlatformConfigured() && (
+            <div className="mt-6 flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-white">
+                  <GoogleIcon className="h-4 w-4" />
+                  Google sign-in
+                </div>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  {profile.authProvider?.includes('google')
+                    ? 'Google is linked to this account.'
+                    : 'Link the matching Google account so you can use SSO on the login page.'}
+                </p>
+              </div>
+              {!profile.authProvider?.includes('google') && (
+                <button
+                  type="button"
+                  onClick={handleLinkGoogle}
+                  disabled={linkingGoogle}
+                  className="sig-btn-ghost shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <GoogleIcon className="h-4 w-4" />
+                  {linkingGoogle ? 'Connecting…' : 'Connect Google'}
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="mt-6 flex justify-end border-t border-zinc-850 pt-5">
             <button

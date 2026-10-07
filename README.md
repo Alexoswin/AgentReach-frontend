@@ -107,12 +107,21 @@ src/
 ## Data & auth flow
 
 - [`src/lib/api.ts`](src/lib/api.ts) is a single typed client wrapping `fetch`. It
-  attaches the `Bearer` access token, **transparently refreshes** on `401` via
-  `/auth/refresh`, enforces request timeouts (8s default, 45s for AI calls), and maps
-  raw errors to friendly messages. Every backend resource has a typed method here
+  sends requests with `credentials: include`; the backend keeps access and refresh
+  tokens in `HttpOnly` cookies, and the client sends a separate CSRF header for
+  state-changing requests. Sessions are **transparently refreshed** on `401` via
+  `/auth/refresh`, with request timeouts (8s default, 45s for AI calls) and friendly
+  error mapping. Every backend resource has a typed method here
   (`api.auth`, `api.contacts`, `api.emailCampaigns`, `api.signals`, `api.aiCallingBots`,
   `api.callingCampaigns`, `api.history`, `api.analytics`, `api.settings`).
-- [`src/lib/localAuth.ts`](src/lib/localAuth.ts) persists the session and tokens.
+- [`src/lib/localAuth.ts`](src/lib/localAuth.ts) persists only the non-sensitive user
+  profile and preferences; it does not store authentication tokens.
+- Google SSO uses Google Identity Platform in the `gen-lang-client-0583390029` Cloud
+  project. [`src/lib/identityPlatform.ts`](src/lib/identityPlatform.ts) uses the
+  official Firebase web SDK as the browser client for Identity Platform; Firebase is
+  not a second backend or a second user database in this setup. The backend verifies
+  the resulting Identity Platform token with the Admin SDK before issuing the same
+  HttpOnly session cookies as password login.
 - [`src/components/AuthGuard.tsx`](src/components/AuthGuard.tsx) gates the dashboard
   group and redirects unauthenticated users to `/login`.
 - Server state is cached with **TanStack Query** (configured in
@@ -165,11 +174,38 @@ npm run dev            # http://localhost:3000
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=gen-lang-client-0583390029.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=gen-lang-client-0583390029
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=456474946024
 ```
 
 | Variable              | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_URL` | Base URL of the backend REST API. Defaults to `http://localhost:3001/api` when unset. |
+| `NEXT_PUBLIC_FIREBASE_*` | Public web-app configuration copied from the Identity Platform setup details. These values are browser configuration, not server secrets. |
+
+### Google SSO setup
+
+Identity Platform is a Google Cloud service, so a Firebase project is not required
+as a separate product. The Firebase web SDK is used only because it is Google's
+documented browser client for Identity Platform. A REST-only Google Cloud flow is
+possible, but it requires more OAuth callback and token-exchange code.
+
+The Cloud project must have Identity Platform initialized, Google enabled as an
+identity provider, and the app's domains registered. Add the Google OAuth web client
+ID and secret in Identity Platform; then copy the generated web-app setup values into
+the frontend environment. For local backend token verification, use Application
+Default Credentials:
+
+```bash
+gcloud config set project gen-lang-client-0583390029
+gcloud auth application-default login
+```
+
+Do not commit OAuth client secrets or service-account keys. Production should use the
+runtime's attached service account/workload identity instead of a downloaded key.
 
 ### Scripts
 
