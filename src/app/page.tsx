@@ -22,6 +22,7 @@ import {
   Rocket,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import SiteFooter from '@/components/SiteFooter';
 import { Brand, CountUp, TiltCard } from '@/components/fx';
 
 const NAV_LINKS = [
@@ -647,27 +648,7 @@ export default function Home() {
         </Reveal>
       </section>
 
-      {/* ---------------- Footer ---------------- */}
-      <footer className="border-t border-zinc-850 px-5 py-12 sm:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-6 sm:flex-row">
-          <Link href="/">
-            <Brand />
-          </Link>
-          <nav className="sig-label flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-zinc-500">
-            {NAV_LINKS.map((link) => (
-              <a key={link.href} href={link.href} className="transition-colors hover:text-indigo-300">
-                {link.label}
-              </a>
-            ))}
-            <Link href="/login" className="transition-colors hover:text-indigo-300">
-              Sign in
-            </Link>
-          </nav>
-          <p className="sig-label text-zinc-600">
-            © {new Date().getFullYear()} REACHCONVERT
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

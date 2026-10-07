@@ -193,3 +193,13 @@ src/lib/localAuth.ts                        # token/session storage
 src/lib/docs.ts                             # documentation content
 src/store/useOutreachStore.ts              # global client state
 ```
+
+---
+
+## Contributing & license
+
+Contributions are welcome — see the in-app [`/contribute`](src/app/(site)/contribute/page.tsx)
+page for local setup and the pull request workflow, or reach out via
+[`/contact`](src/app/(site)/contact/page.tsx).
+
+ReachConvert is licensed under the [GNU Affero General Public License v3.0](LICENSE).
