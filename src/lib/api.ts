@@ -1,7 +1,4 @@
-import {
-  saveAuthSession,
-  signOut,
-} from "./localAuth";
+import { saveAuthSession, signOut } from "./localAuth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -14,6 +11,8 @@ const AUTH_PATHS_WITHOUT_REFRESH = new Set([
   "/auth/identity-platform",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/resend-verification",
 ]);
 
 type ApiPayload = { [key: string]: unknown };
@@ -159,7 +158,10 @@ function toFriendlyApiError(message: unknown, status: number) {
   const lower = text.toLowerCase();
 
   if (status === 401) return "Your session has expired. Please log in again.";
-  if (status === 403) return "You do not have permission to do that.";
+  if (status === 403) {
+    if (lower.includes("verify your email")) return text;
+    return "You do not have permission to do that.";
+  }
   if (status === 404)
     return "We could not find that item. It may have been removed.";
   if (status >= 500)
@@ -292,7 +294,10 @@ async function requestBlobWithAuth(
     if (!response.ok) {
       const errorData = await response.json().catch((): ApiPayload => ({}));
       throw new Error(
-        toFriendlyApiError(errorData.message || response.statusText, response.status),
+        toFriendlyApiError(
+          errorData.message || response.statusText,
+          response.status,
+        ),
       );
     }
 
@@ -358,6 +363,18 @@ export const api = {
       }),
     register: (data: { name: string; email: string; password: string }) =>
       request("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    verifyEmail: (data: { email: string; code: string }) =>
+      request("/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    resendVerification: (data: { email: string }) =>
+      request("/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
