@@ -1,10 +1,13 @@
 import { saveAuthSession, signOut } from "./localAuth";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+// Same-origin path proxied to the backend by next.config.ts, so the session
+// cookies are first-party. NEXT_PUBLIC_API_URL only sets the proxy target.
+const BASE_URL = "/api";
 const REQUEST_TIMEOUT_MS = 8000;
 const AI_REQUEST_TIMEOUT_MS = 45000;
 const IMPORT_REQUEST_TIMEOUT_MS = 60000;
 let csrfToken: string | null = null;
+let refreshInFlight: Promise<boolean> | null = null;
 const AUTH_PATHS_WITHOUT_REFRESH = new Set([
   "/auth/login",
   "/auth/register",
@@ -141,21 +144,32 @@ type AiCallingBotCreatePayload = AiCallingBotPayload & {
 
 type HistoryParams = Record<string, string | undefined>;
 
-async function handleResponse<T = LooseApiResponse>(res: Response): Promise<T> {
+async function handleResponse<T = LooseApiResponse>(
+  res: Response,
+  path: string,
+): Promise<T> {
   if (!res.ok) {
     const errorData = await res.json().catch((): ApiPayload => ({}));
     throw new Error(
-      toFriendlyApiError(errorData.message || res.statusText, res.status),
+      toFriendlyApiError(errorData.message || res.statusText, res.status, path),
     );
   }
   return res.json() as Promise<T>;
 }
 
-function toFriendlyApiError(message: unknown, status: number) {
+function toFriendlyApiError(message: unknown, status: number, path = "") {
   const text = Array.isArray(message)
     ? message.join(" ")
     : String(message || "");
   const lower = text.toLowerCase();
+
+  // Sign-in, sign-up and SSO errors are written for the person signing in
+  // ("Invalid email or password", "Registration is disabled", ...). The
+  // generic mapping below turned them into "Your session has expired" or
+  // "This item already exists".
+  if (AUTH_PATHS_WITHOUT_REFRESH.has(path) && status < 500 && text) {
+    return text;
+  }
 
   if (status === 401) return "Your session has expired. Please log in again.";
   if (status === 403) {
@@ -241,7 +255,7 @@ async function requestWithAuth<T = LooseApiResponse>(
       }
     }
 
-    return handleResponse<T>(response);
+    return handleResponse<T>(response, path);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("This is taking longer than expected. Please try again.");
@@ -319,7 +333,19 @@ async function requestBlobWithAuth(
   }
 }
 
-async function refreshAccessToken() {
+// Pages fire several requests at once, so an expired access token produces
+// several 401s together. Share one refresh between them: the refresh token
+// rotates on every use, so parallel refreshes made all but one fail and
+// could leave the browser holding a refresh cookie the server had already
+// replaced, signing the user out.
+function refreshAccessToken() {
+  refreshInFlight ??= performRefresh().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function performRefresh() {
   try {
     const response = await fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",

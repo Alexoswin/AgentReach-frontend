@@ -3,11 +3,10 @@
 import { api } from "@/lib/api";
 import {
   clearIdentityPlatformSession,
-  completeGoogleRedirect,
   identityPlatformErrorMessage,
   isIdentityPlatformConfigured,
+  prepareGoogleSignIn,
   signInWithGooglePopup,
-  startGoogleRedirect,
 } from "@/lib/identityPlatform";
 import { applyTheme, getStoredUser, saveAuthSession } from "@/lib/localAuth";
 import { LoaderOverlay } from "@/components/Loader";
@@ -101,32 +100,8 @@ function LoginScreen() {
   }, [storedUser.accentColor, storedUser.theme]);
 
   useEffect(() => {
-    if (!googleAvailable) return;
-
-    let active = true;
-    completeGoogleRedirect()
-      .then(async (idToken) => {
-        if (!idToken || !active) return;
-        setPendingAction("google");
-        const session = await api.auth.identityPlatform(idToken);
-        saveAuthSession(session);
-        applyTheme(session.user.theme, session.user.accentColor);
-        router.replace("/dashboard");
-      })
-      .catch((error: Error) => {
-        if (active) {
-          setPendingAction(null);
-          setMessage(identityPlatformErrorMessage(error));
-        }
-      })
-      .finally(() => {
-        void clearIdentityPlatformSession().catch(() => undefined);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [googleAvailable, router]);
+    if (googleAvailable) prepareGoogleSignIn();
+  }, [googleAvailable]);
 
   // Drop the token from the address bar so it does not linger in history.
   useEffect(() => {
@@ -161,13 +136,7 @@ function LoginScreen() {
     setPendingAction("google");
     setMessage("");
 
-    const useRedirect = window.matchMedia("(max-width: 640px)").matches;
     try {
-      if (useRedirect) {
-        await startGoogleRedirect();
-        return;
-      }
-
       const idToken = await signInWithGooglePopup();
       const session = await api.auth.identityPlatform(idToken);
       saveAuthSession(session);
@@ -177,9 +146,7 @@ function LoginScreen() {
       setPendingAction(null);
       setMessage(identityPlatformErrorMessage(error));
     } finally {
-      if (!useRedirect) {
-        void clearIdentityPlatformSession().catch(() => undefined);
-      }
+      void clearIdentityPlatformSession().catch(() => undefined);
     }
   };
 
