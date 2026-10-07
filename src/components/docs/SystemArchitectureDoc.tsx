@@ -88,8 +88,8 @@ const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNo
     rows: [
       ['src/lib/api.ts', 'The REST client: access token, refresh and retry, friendly errors.'],
       ['src/lib/localAuth.ts', 'Tokens, profile and theme in localStorage.'],
-      ['src/lib/webpilot-api.ts', 'WebPilot REST calls and the live-events socket.'],
-      ['next.config.ts', <>Rewrites <code>/api/webpilot/*</code> to the WebPilot service and <code>/api/*</code> to the backend.</>],
+      ['src/lib/webpilot-api.ts', 'WebPilot REST calls and the live-events socket, both through the backend.'],
+      ['next.config.ts', <>Rewrites <code>/api/*</code> to the backend.</>],
       ['src/components/docs/', 'This page and its two diagrams.'],
       ['src/lib/docs.ts', 'Content for every other documentation page.'],
     ],
@@ -121,9 +121,9 @@ export default function SystemArchitectureDoc() {
           <figcaption>
             Schedulers call the same services the REST routes use, so a scheduled launch and a button click run the
             same code. The phone provider meets the backend three ways: the backend dials it over REST, it calls back
-            on signed webhooks, and it streams the call&apos;s audio into the gateway. WebPilot is the one feature that
-            skips the backend. The browser reaches the WebPilot service through a Next.js rewrite for REST and a direct
-            WebSocket, so the backend&apos;s proxy only serves clients that ask the backend for it.
+            on signed webhooks, and it streams the call&apos;s audio into the gateway. WebPilot runs as a separate
+            service that the browser never calls directly: its REST calls and live-events socket both go to the
+            backend, which checks the access token before proxying them.
           </figcaption>
         </figure>
 

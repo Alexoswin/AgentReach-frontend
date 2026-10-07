@@ -42,7 +42,7 @@ export default function SystemTopologyDiagram() {
       className="arch-svg"
       viewBox="0 0 1040 876"
       role="img"
-      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; webpilot-api talks to the WebPilot service directly. In the NestJS backend, main.ts sets the /api prefix and dispatches WebSocket upgrades to the realtime gateway or the WebPilot proxy. REST requests pass the global AuthGuard into ten feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, and public signal sources, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
+      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; webpilot-api sends its REST calls and live-events socket to the backend's WebPilot proxy. In the NestJS backend, main.ts sets the /api prefix and dispatches WebSocket upgrades to the realtime gateway or the WebPilot proxy. REST requests pass the global AuthGuard into ten feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, and public signal sources, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
     >
       <Markers id={ID} />
 
@@ -63,18 +63,17 @@ export default function SystemTopologyDiagram() {
         </g>
       ))}
 
-      {/* WebPilot service, reached from the browser without the backend */}
+      {/* WebPilot service, reached only through the backend's proxy */}
       <Box x={790} y={50} w={230} h={86} kind="provider" />
       <text x={806} y={72} className="title">WebPilot service</text>
       <text x={806} y={93} className="mono">WEBPILOT_URL · :8001</text>
       <Lines x={806} y={110} step={17} className="body-s" lines={['Runs browser tasks from', 'a prompt, streams frames']} />
-      <Arrow id={ID} x1={706} y1={86} x2={789} y2={86} />
-      <text x={748} y={78} textAnchor="middle" className="small">Next rewrite</text>
-      <text x={748} y={103} textAnchor="middle" className="small">+ direct WS</text>
 
       {/* Browser → backend */}
       <Arrow id={ID} x1={284.5} y1={136} x2={284.5} y2={211} />
       <text x={293} y={170} className="strong">REST /api · Bearer token</text>
+      <Arrow id={ID} x1={633} y1={136} x2={633} y2={211} />
+      <text x={641} y={170} className="small">REST + WS, token</text>
 
       {/* ── Backend ─────────────────────────────────────────────── */}
       <Group x={20} y={180} w={700} h={586} label="AGENTREACH-BACKEND · NESTJS 11" />
