@@ -16,18 +16,18 @@ import { lockBodyScroll } from '@/lib/scrollLock';
  */
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // The drawer belongs to the route it was opened on, so navigating closes
+  // it without an effect.
+  const [drawerPath, setDrawerPath] = useState<string | null>(null);
+  const drawerOpen = drawerPath === pathname;
+  const setDrawerOpen = (open: boolean) => setDrawerPath(open ? pathname : null);
 
-  // Close the drawer on navigation and lock scroll while it is open.
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
-
+  // Lock scroll while the drawer is open.
   useEffect(() => {
     if (!drawerOpen) return;
     const unlockScroll = lockBodyScroll();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setDrawerOpen(false);
+      if (event.key === 'Escape') setDrawerPath(null);
     };
     window.addEventListener('keydown', onKey);
     return () => {

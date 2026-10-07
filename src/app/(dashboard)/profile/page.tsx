@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const { showAlert } = useOutreachStore();
   const [profile, setProfile] = useState<LocalUserProfile | null>(() => getStoredUser());
   const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   // Theme picks preview live but only persist on Save; leaving the page
@@ -78,16 +79,31 @@ export default function ProfilePage() {
       initials: (profile.initials.trim() || initialsFromName).slice(0, 3).toUpperCase(),
     };
 
+    // Changing the password or sign-in email needs the current password.
+    const emailChanged =
+      nextProfile.email.toLowerCase() !== getStoredUser().email.toLowerCase();
+    if ((password || emailChanged) && !currentPassword) {
+      showAlert('Enter your current password to change your password or email.', 'error');
+      return;
+    }
+
     api.auth.updateProfile({
       ...nextProfile,
       ...(password ? { password } : {}),
+      ...(password || emailChanged ? { currentPassword } : {}),
     })
       .then((updatedProfile) => {
         saveStoredUser(updatedProfile);
         applyTheme(updatedProfile.theme, updatedProfile.accentColor);
         setProfile(updatedProfile);
         setPassword('');
-        showAlert('Profile updated successfully.', 'success');
+        setCurrentPassword('');
+        showAlert(
+          emailChanged
+            ? `Profile updated. We sent a code to ${updatedProfile.email}; you'll enter it the next time you sign in.`
+            : 'Profile updated successfully.',
+          'success',
+        );
       })
       .catch((error: Error) => {
         showAlert(error.message || 'We could not update your profile. Please try again.', 'error');
@@ -223,6 +239,13 @@ export default function ProfilePage() {
               value={password}
               onChange={setPassword}
               placeholder="Leave blank to keep current password"
+            />
+            <ProfileField
+              label="Current Password"
+              type="password"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              placeholder="Needed to change your password or email"
             />
           </div>
 

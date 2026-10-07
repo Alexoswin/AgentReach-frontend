@@ -25,6 +25,8 @@ type AuthProfileUpdate = {
   email?: string;
   theme?: string;
   accentColor?: string;
+  password?: string;
+  currentPassword?: string;
 };
 type SettingsUpdate = {
   awsAccessKeyId?: string;
@@ -144,14 +146,26 @@ type AiCallingBotCreatePayload = AiCallingBotPayload & {
 
 type HistoryParams = Record<string, string | undefined>;
 
+/** An error response from the API, keeping its HTTP status. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function handleResponse<T = LooseApiResponse>(
   res: Response,
   path: string,
 ): Promise<T> {
   if (!res.ok) {
     const errorData = await res.json().catch((): ApiPayload => ({}));
-    throw new Error(
+    throw new ApiError(
       toFriendlyApiError(errorData.message || res.statusText, res.status, path),
+      res.status,
     );
   }
   return res.json() as Promise<T>;
@@ -307,11 +321,12 @@ async function requestBlobWithAuth(
 
     if (!response.ok) {
       const errorData = await response.json().catch((): ApiPayload => ({}));
-      throw new Error(
+      throw new ApiError(
         toFriendlyApiError(
           errorData.message || response.statusText,
           response.status,
         ),
+        response.status,
       );
     }
 
