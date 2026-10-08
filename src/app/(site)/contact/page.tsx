@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import Link from 'next/link';
 import { ArrowRight, Briefcase, Bug, GitFork, Globe, Mail, MessageSquareText, Phone } from 'lucide-react';
 import Reveal from '@/components/Reveal';
@@ -13,10 +14,11 @@ import {
 } from '@/lib/site';
 import CopyButton from '@/components/CopyButton';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Contact — ReachConvert',
   description: 'Get in touch about ReachConvert: questions, feedback, collaboration, or bug reports.',
-};
+  path: '/contact',
+});
 
 const TOPICS = [
   'Questions about running or self-hosting ReachConvert',

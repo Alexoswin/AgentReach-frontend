@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -15,11 +16,12 @@ import {
 import Reveal from '@/components/Reveal';
 import { LICENSE_URL, REPOS } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Contribute — ReachConvert',
   description:
     'ReachConvert is open source under the AGPL-3.0. Report bugs, improve the docs, or send a pull request.',
-};
+  path: '/contribute',
+});
 
 const REPO_CARDS = [
   {

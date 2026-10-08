@@ -5,6 +5,7 @@ import SiteFooter from '@/components/SiteFooter';
 
 const HEADER_LINKS = [
   { label: 'Docs', href: '/documentation' },
+  { label: 'Compare', href: '/compare' },
   { label: 'Contribute', href: '/contribute' },
   { label: 'Contact', href: '/contact' },
   { label: 'Support', href: '/support' },

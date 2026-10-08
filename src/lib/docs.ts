@@ -45,6 +45,8 @@ export interface DocSection {
 export interface DocPage {
   slug: string;
   title: string;
+  /** Search-result title; defaults to "<title> — ReachConvert Docs". */
+  seoTitle?: string;
   tagline: string;
   icon: DocIcon;
   category: string;
@@ -63,6 +65,7 @@ export const DOC_CATEGORIES = [
   'Architecture',
   'Feature architecture',
   'Getting started',
+  'Guides',
   'Core features',
   'AI outreach',
   'Configuration',
@@ -653,6 +656,270 @@ export const DOC_PAGES: DocPage[] = [
       },
     ],
     related: ['quick-start', 'contacts', 'email-campaigns', 'ai-calling', 'dashboard'],
+  },
+
+  // ─────────────────────────────── Guides
+  // Problem-first articles written for people searching for how to do
+  // outreach, not only for existing users. Each one ends in the product flow.
+  {
+    slug: 'automate-cold-calls-with-ai',
+    title: 'How to automate cold calls with an AI voice agent',
+    seoTitle: 'How to Automate Cold Calls with an AI Voice Agent — ReachConvert',
+    tagline: 'Set up an AI agent that dials your list, holds a real conversation, and logs every outcome.',
+    icon: 'phone',
+    category: 'Guides',
+    audience: 'Founders, SDRs, and job seekers who make repetitive outbound calls',
+    prerequisites: [
+      'A Twilio account with a phone number that can make outbound calls.',
+      'A Gemini API key (it powers the realtime voice conversation).',
+      'A list of contacts with phone numbers, ideally in international format such as +14155550123.',
+    ],
+    lastReviewed: 'October 2026',
+    intro: [
+      'Cold calling works, but most of the time goes to dialing, voicemail, and repeating the same opening line. An AI voice agent takes over that repetitive first touch: it calls each contact, introduces itself, has a short back-and-forth conversation toward one goal, and writes down what happened.',
+      'This guide covers when AI calling makes sense, how to write an agent people do not hang up on, the rules you need to follow, and the exact steps to run your first campaign in ReachConvert.',
+    ],
+    sections: [
+      {
+        heading: 'Where an AI calling agent fits',
+        capabilities: [
+          { title: 'First-touch qualification', text: 'Confirm interest, the right contact, and timing before a person spends time on the call.' },
+          { title: 'Follow-up after email', text: 'Call contacts who opened your email but did not reply, while the message is still fresh.' },
+          { title: 'Reminders and confirmations', text: 'Confirm meetings, events, or interviews, and capture reschedules automatically.' },
+          { title: 'High-volume lists', text: 'Reach hundreds of contacts in a day without a team of callers.' },
+        ],
+        callouts: [
+          {
+            tone: 'info',
+            title: 'Keep humans on the important calls',
+            text: 'AI agents are strongest at short, structured conversations. Hand complex negotiations and warm leads to a person, using the transcript as context.',
+          },
+        ],
+      },
+      {
+        heading: 'Write an agent people stay on the line for',
+        steps: [
+          'Say who is calling and why in the first sentence. Long openers get hang-ups.',
+          'Give the agent one goal per campaign, such as booking a meeting or confirming interest, not several.',
+          'Write the two or three objections you hear most often and a short answer to each.',
+          'Tell the agent to end the call politely and confirm opt-out whenever someone asks not to be called again.',
+          'Keep the prompt focused. Long system instructions add latency, and pauses make the call feel robotic.',
+        ],
+      },
+      {
+        heading: 'Know the rules before you dial',
+        body: [
+          'Calling laws differ by country, and automated or AI-voiced calls usually face stricter rules than calls from a person.',
+        ],
+        callouts: [
+          {
+            tone: 'warning',
+            title: 'Check consent and do-not-call rules',
+            text: 'In the US, the FCC ruled in February 2024 that AI-generated voices count as artificial voices under the TCPA, so these calls generally need the recipient’s prior express consent. Many countries run do-not-call registries, such as the UK’s TPS and India’s NCPR. Disclose that the caller is an AI, honour opt-outs immediately, and confirm the rules where you call. This guide is not legal advice.',
+          },
+        ],
+      },
+      {
+        heading: 'Run your first AI calling campaign in ReachConvert',
+        steps: [
+          'Open Settings, add your Twilio account SID, auth token, and phone number, then add and test your Gemini API key.',
+          'Go to Calling Agents and create an agent: its persona, objective, opening line, objection handling, and any reference knowledge.',
+          'Import contacts with phone numbers under Contacts, or reuse an existing directory.',
+          'Create a VoiceReach campaign, choose the agent, a voice, and a language, and decide whether the AI speaks first.',
+          'Start with five to ten contacts you know, listen to the recordings, and refine the script.',
+          'Launch to the full list, or schedule the campaign for a time when people are likely to pick up.',
+        ],
+      },
+      {
+        heading: 'Measure and improve',
+        body: [
+          'The Dashboard shows calls made, call success rate, and average call duration. History stores each call’s outcome, transcript, and recording.',
+          'Read the transcripts of calls that ended early. They show exactly which line lost the person, and a fix to the agent applies to every future campaign that uses it.',
+        ],
+      },
+    ],
+    tips: [
+      'Call during local business hours for the person you are calling, not your own.',
+      'Pair calling with email: send the email first, then call the contacts who opened it.',
+    ],
+    related: ['ai-calling', 'ai-bots', 'settings', 'personalized-bulk-email-without-spam'],
+  },
+  {
+    slug: 'personalized-bulk-email-without-spam',
+    title: 'How to send personalized bulk email without landing in spam',
+    seoTitle: 'How to Send Personalized Bulk Email Without Landing in Spam',
+    tagline: 'Domain authentication, list hygiene, and personalization that keep cold email in the inbox.',
+    icon: 'mail',
+    category: 'Guides',
+    audience: 'Anyone sending cold or bulk email to more than a handful of people',
+    prerequisites: [
+      'A domain you control, so you can add DNS records.',
+      'An AWS account for Amazon SES, which ReachConvert uses to send email.',
+    ],
+    lastReviewed: 'October 2026',
+    intro: [
+      'Sending the same email to hundreds of people is easy. Getting it into the inbox, and getting replies, is the hard part. Mailbox providers like Gmail and Outlook judge every message on who sent it, whether the domain is authenticated, how recipients react, and whether it looks like a mass blast.',
+      'This guide walks through the setup and habits that keep bulk email out of spam, then shows how to run a personalized campaign in ReachConvert.',
+    ],
+    sections: [
+      {
+        heading: '1. Authenticate your sending domain',
+        body: [
+          'Unauthenticated email is the most common reason bulk mail lands in spam. Set up three DNS records for the domain you send from:',
+        ],
+        capabilities: [
+          { title: 'SPF', text: 'Lists the servers allowed to send for your domain. With SES, set a custom MAIL FROM domain so SPF aligns with your From address.' },
+          { title: 'DKIM', text: 'Cryptographically signs each message. Turn on Easy DKIM when you verify your domain in SES and add the CNAME records it gives you.' },
+          { title: 'DMARC', text: 'Tells receivers what to do when SPF or DKIM fails. Start with p=none and a reporting address, then tighten it once reports look clean.' },
+        ],
+        callouts: [
+          {
+            tone: 'info',
+            title: 'Gmail and Yahoo bulk sender rules',
+            text: 'Since February 2024, Gmail and Yahoo require bulk senders to authenticate with SPF and DKIM, publish a DMARC policy, make unsubscribing easy, and keep spam complaint rates low. Set this up before you send at volume.',
+          },
+        ],
+      },
+      {
+        heading: '2. Leave the SES sandbox and warm up',
+        steps: [
+          'New SES accounts start in the sandbox, which can only send to verified addresses. Use it to test, then request production access from the SES console.',
+          'Start with small daily volumes from a new domain or address and increase them gradually over a few weeks.',
+          'Send your first campaigns to the contacts most likely to engage. Early replies and opens build sender reputation.',
+        ],
+      },
+      {
+        heading: '3. Keep your list clean',
+        body: [
+          'Bounces and spam complaints damage your reputation faster than anything else. AWS recommends keeping your bounce rate below 5% and your complaint rate below 0.1%, and may pause sending from accounts that go well beyond those levels.',
+        ],
+        steps: [
+          'Verify addresses before importing a purchased or scraped list, and remove anything that fails.',
+          'Remove hard bounces after every campaign. History shows which recipients failed.',
+          'Give every email a clear way to opt out, and remove people who ask straight away.',
+        ],
+      },
+      {
+        heading: '4. Personalize beyond the first name',
+        body: [
+          'A first name in the greeting no longer convinces anyone. Personalization that works refers to something specific about the person or their company.',
+          'In ReachConvert, every column in your contact import becomes a template variable, so you can reference a person’s role, industry, or a note you wrote about them. Signal variables go further and reference a real event, like a funding round or a new product.',
+        ],
+        code: {
+          caption: 'A template that uses contact fields and a custom column',
+          lines: [
+            'Subject: {{company}} + quick idea for {{jobTitle}}s',
+            '',
+            'Hi {{firstName}},',
+            '',
+            'I noticed {{company}} works in {{industry}}. Teams like yours usually ...',
+          ],
+        },
+      },
+      {
+        heading: '5. Write like a person, not a newsletter',
+        steps: [
+          'Keep it short: a few sentences, one clear question, and no attachments on the first email.',
+          'Use one or two links at most, and avoid link shorteners, which spam filters distrust.',
+          'Prefer plain text or light HTML. Image-heavy layouts read as marketing.',
+          'Generate a draft with AI, then edit it so it sounds like you.',
+        ],
+      },
+      {
+        heading: 'Send your first campaign in ReachConvert',
+        steps: [
+          'Open Settings, add your SES access key, secret, region, and verified sender address, then click Test SES.',
+          'Import contacts under Contacts, mapping your columns so they become template variables.',
+          'Create a template under MailReach, by hand or with AI generation.',
+          'Create a campaign, launch it to a small directory of your own addresses first, and check the result.',
+          'Launch to the real audience, then watch delivery, opens, and replies on the Dashboard.',
+        ],
+        callouts: [
+          {
+            tone: 'tip',
+            title: 'Judge results by replies',
+            text: 'Some mail apps, such as Apple Mail with Mail Privacy Protection, load tracking pixels automatically, which inflates open rates. Reply rate is the more reliable signal of what is working.',
+          },
+        ],
+      },
+    ],
+    tips: [
+      'Send cold outreach from a separate subdomain, such as mail.yourcompany.com, so it cannot harm your main domain’s reputation.',
+      'Use the Template Performance table on the Dashboard to retire templates with low reply rates.',
+    ],
+    related: ['email-campaigns', 'settings', 'contacts', 'signal-based-outreach'],
+  },
+  {
+    slug: 'signal-based-outreach',
+    title: 'Signal-based outreach: reach prospects when they are ready',
+    seoTitle: 'Signal-Based Outreach: Reach Prospects When They Are Ready to Buy',
+    tagline: 'Use funding rounds, hiring surges, and company news to time outreach and write messages that feel relevant.',
+    icon: 'radar',
+    category: 'Guides',
+    audience: 'Sales teams, founders, and job seekers targeting specific companies',
+    lastReviewed: 'October 2026',
+    intro: [
+      'Most cold outreach fails on timing, not wording. The same message that gets ignored today might get a reply the week a company raises money, starts hiring for a team, or launches a product, because that is when its priorities change.',
+      'Signal-based outreach means watching your target accounts for those events and reaching out soon after, with a message that refers to what just happened.',
+    ],
+    sections: [
+      {
+        heading: 'Signals worth acting on',
+        capabilities: [
+          { title: 'Funding round', text: 'New budget and pressure to grow. Congratulate them, then connect your offer to what they are about to scale.' },
+          { title: 'Hiring surge', text: 'Many open roles in one area points to a growing team and growing pains. Speak to the problems that growth creates.' },
+          { title: 'Product launch', text: 'The team is focused on adoption and feedback. Offer something that helps the launch land.' },
+          { title: 'Company news', text: 'Acquisitions, expansions, and new markets. Refer to the specific change, not the company in general.' },
+          { title: 'Job change', text: 'When a contact leaves, their replacement is new to the role and open to new tools, and your old contact may buy again at their new company.' },
+        ],
+      },
+      {
+        heading: 'Match the message to the event',
+        body: [
+          'A signal is only useful if the message refers to it. Open with the event, connect it to a problem it usually creates, and ask one easy question.',
+        ],
+        code: {
+          caption: 'A playbook template using signal variables',
+          lines: [
+            'Subject: Congrats on the {{signal.type}}, {{firstName}}',
+            '',
+            'Hi {{firstName}},',
+            '',
+            'Saw the news: {{signal.summary}}',
+            'Teams usually start scaling outreach right after a moment like this.',
+            'Would a 15-minute look at how {{company}} could automate it be useful?',
+          ],
+        },
+      },
+      {
+        heading: 'Set it up in ReachConvert',
+        steps: [
+          'Import your target contacts. ReachConvert starts watching each contact’s company domain automatically, skipping free-mail domains.',
+          'Open Signals to see detected events. Collectors check Google News, SEC EDGAR filings, and public job boards on a schedule, or click Scan now.',
+          'Create a playbook: choose the signal types, the audience (a directory or everyone), and the template to send.',
+          'Start in Review mode so each triggered email waits in the Review Queue for your approval.',
+          'Switch to Auto mode once the drafts consistently look right.',
+        ],
+        callouts: [
+          {
+            tone: 'warning',
+            title: 'Guardrails protect your sending reputation',
+            text: 'Each playbook has a per-contact cooldown (30 days by default), a daily send cap (50 by default), and duplicate suppression, so one busy news week cannot flood your contacts or your domain.',
+          },
+        ],
+      },
+      {
+        heading: 'Measure the lift',
+        body: [
+          'Signal-triggered emails are tracked separately from manual campaigns, so you can compare their reply rate against your regular sends and see whether timing is paying off.',
+        ],
+      },
+    ],
+    tips: [
+      'Add a manual signal with Add signal when you learn something offline, such as meeting someone at a conference.',
+      'Keep company names and email domains consistent in your imports so signals match the right contacts.',
+    ],
+    related: ['signals', 'contacts', 'email-campaigns', 'personalized-bulk-email-without-spam'],
   },
 
   // ─────────────────────────────── Core features

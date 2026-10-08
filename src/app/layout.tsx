@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Instrument_Sans, JetBrains_Mono } from "next/font/
 import Script from "next/script";
 import "./globals.css";
 import Providers from "./providers";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -23,9 +24,24 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "ReachConvert — AI Outreach Platform",
-  description:
-    "Personalized bulk email, autonomous AI calling agents, and real-time outreach analytics in one signal-driven workspace.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "AI cold calling",
+    "AI voice agent",
+    "bulk email personalization",
+    "cold email software",
+    "sales outreach automation",
+    "signal-based selling",
+    "open-source outreach platform",
+  ],
+  // Public pages set their own canonical/OG fields via pageMetadata (lib/seo).
+  // Set GOOGLE_SITE_VERIFICATION to the Search Console token to verify the domain.
+  ...(process.env.GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
+  }),
 };
 
 export const viewport: Viewport = {

@@ -2,11 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Zap, ArrowLeft } from 'lucide-react';
 import DocSidebar from './DocSidebar';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Documentation — ReachConvert',
-  description: 'Detailed guides for every ReachConvert feature.',
-};
+  description:
+    'Guides for AI cold calling, personalized bulk email, signal-based outreach, and every ReachConvert feature.',
+  path: '/documentation',
+});
 
 export default function DocumentationLayout({
   children,

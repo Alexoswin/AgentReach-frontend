@@ -1,5 +1,14 @@
 // Public project links shown on the landing, contribute, contact, and support pages.
 
+/** Canonical public origin. Metadata, the sitemap, and OG URLs resolve against it. */
+export const SITE_URL = 'https://www.reachconvert.site';
+
+export const SITE_NAME = 'ReachConvert';
+
+/** Default description reused by the root metadata, landing page, and OG image. */
+export const SITE_DESCRIPTION =
+  'Open-source outreach platform with AI cold-calling agents, personalized bulk email, and signal-triggered campaigns in one workspace.';
+
 export const CONTACT_EMAIL = 'oswinalex1@gmail.com';
 
 export const CONTACT_PHONE = '+91 9324498843';
@@ -32,6 +41,7 @@ export const SITE_LINKS = [
   { label: 'How it works', href: '/#how' },
   { label: 'Analytics', href: '/#analytics' },
   { label: 'Docs', href: '/documentation' },
+  { label: 'Compare', href: '/compare' },
   { label: 'Contribute', href: '/contribute' },
   { label: 'Contact', href: '/contact' },
   { label: 'Support', href: '/support' },

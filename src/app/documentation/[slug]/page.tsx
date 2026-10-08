@@ -17,6 +17,7 @@ import SystemArchitectureDoc from '@/components/docs/SystemArchitectureDoc';
 import DocCallout from '@/components/docs/DocCallout';
 import DocTableOfContents, { type DocTocItem } from '@/components/docs/DocTableOfContents';
 import CopyButton from '@/components/CopyButton';
+import { pageMetadata } from '@/lib/seo';
 
 /**
  * Pages whose body is hand-written instead of generated from DocPage data.
@@ -47,10 +48,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const doc = getDocBySlug(slug);
   if (!doc) return { title: 'Documentation — ReachConvert' };
-  return {
-    title: `${doc.title.split(' — ')[0]} — ReachConvert Docs`,
+  return pageMetadata({
+    title: doc.seoTitle ?? `${doc.title.split(' — ')[0]} — ReachConvert Docs`,
     description: doc.tagline,
-  };
+    path: `/documentation/${doc.slug}`,
+  });
 }
 
 export default async function DocPageView({

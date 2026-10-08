@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -20,11 +21,12 @@ import CopyButton from '@/components/CopyButton';
 import Reveal from '@/components/Reveal';
 import { REPOS, UPI_ID, UPI_QR_SRC } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Support — ReachConvert',
   description:
     'ReachConvert is free and open source. Support its development with a UPI payment, or help for free by starring, reporting bugs, and sharing.',
-};
+  path: '/support',
+});
 
 const UPI_PAY_HREF = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent('ReachConvert')}&cu=INR`;
 
