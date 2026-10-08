@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Providers from "./providers";
 
@@ -59,6 +60,8 @@ d.body.dataset.theme=t;
 d.body.dataset.accent=a;
 }catch(e){}})();`;
 
+const GA_MEASUREMENT_ID = "G-KJ0J7EL065";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,6 +79,20 @@ export default function RootLayout({
       >
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <Providers>{children}</Providers>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
       </body>
     </html>
   );
