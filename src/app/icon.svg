@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <!-- ReachConvert "beacon" logomark — mirrors BrandMark in src/components/fx.tsx (sky accent). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate(5 .5 .5)">
+      <stop offset="0" stop-color="#0cb4ee"/>
+      <stop offset="1" stop-color="#219ef2"/>
+    </linearGradient>
+  </defs>
+  <rect width="36" height="36" rx="10" fill="url(#bg)"/>
+  <g transform="translate(6.84 6.84) scale(0.93)" fill="none" stroke="#041019" stroke-width="2.1" stroke-linecap="round">
+    <circle cx="7.5" cy="16.5" r="2.1" fill="#041019" stroke="none"/>
+    <path d="M11.5 12.5a5.7 5.7 0 0 1 1.7 4"/>
+    <path d="M14.4 9.6a9.8 9.8 0 0 1 2.9 6.9"/>
+    <path d="M17.3 6.7a13.9 13.9 0 0 1 4.1 9.8"/>
+  </g>
+</svg>
