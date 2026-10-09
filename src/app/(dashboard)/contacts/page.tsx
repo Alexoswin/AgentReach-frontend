@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { useEscapeKey } from '@/lib/useEscapeKey';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Users,
   UserPlus,
@@ -23,6 +23,8 @@ import {
   Folder,
   FolderPlus,
 } from 'lucide-react';
+
+const CONTACT_PAGE_SIZE = 100;
 
 type DirectoryFilter = 'all' | 'uncategorized' | string;
 
@@ -62,6 +64,8 @@ export default function ContactsPage() {
   const { showAlert } = useOutreachStore();
 
   const [search, setSearch] = useState('');
+  const [directorySearch, setDirectorySearch] = useState('');
+  const [rowLimit, setRowLimit] = useState({ key: '', count: CONTACT_PAGE_SIZE });
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isDirectoryModalOpen, setIsDirectoryModalOpen] = useState(false);
@@ -402,6 +406,19 @@ export default function ContactsPage() {
     );
   });
 
+  const visibleDirectories = useMemo(() => {
+    const term = directorySearch.trim().toLowerCase();
+    return [...directories]
+      .filter((directory: LooseApiResponse) => !term || directory.name.toLowerCase().includes(term))
+      .sort((a: LooseApiResponse, b: LooseApiResponse) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  }, [directories, directorySearch]);
+
+  // Rendering thousands of rows at once freezes the page, so show them in pages
+  // and start over from the first page whenever the view or search changes.
+  const rowLimitKey = `${selectedDirectoryId}|${search}`;
+  const visibleRowCount = rowLimit.key === rowLimitKey ? rowLimit.count : CONTACT_PAGE_SIZE;
+  const visibleContacts = filteredContacts.slice(0, visibleRowCount);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -437,11 +454,13 @@ export default function ContactsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5 items-start">
-        <aside className="bg-zinc-900/30 border border-zinc-850 rounded-2xl p-4 space-y-4">
+        <aside className="bg-zinc-900/30 border border-zinc-850 rounded-2xl p-4 space-y-4 lg:sticky lg:top-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Directories</p>
-              <p className="text-xs text-zinc-500 mt-1">{contacts.length} total contacts</p>
+              <p className="text-xs text-zinc-500 mt-1">
+                {directories.length} directories · {contacts.length} contacts
+              </p>
             </div>
             <button
               onClick={() => openDirectoryModal()}
@@ -450,6 +469,17 @@ export default function ContactsPage() {
             >
               <FolderPlus className="h-4 w-4" />
             </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search directories..."
+              value={directorySearch}
+              onChange={(e) => setDirectorySearch(e.target.value)}
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -473,8 +503,13 @@ export default function ContactsPage() {
                 <span className="text-[11px] text-zinc-500">{directory.count}</span>
               </button>
             ))}
+          </div>
 
-            {directories.map((directory: LooseApiResponse) => (
+          <div className="space-y-1.5 max-h-[calc(100vh-24rem)] min-h-40 overflow-y-auto pr-1">
+            {visibleDirectories.length === 0 && directorySearch && (
+              <p className="px-3 py-4 text-xs text-zinc-500 text-center">No directories match &quot;{directorySearch}&quot;.</p>
+            )}
+            {visibleDirectories.map((directory: LooseApiResponse) => (
               <div
                 key={directory.id}
                 className={`group flex items-center gap-1 rounded-xl border transition-colors ${
@@ -570,7 +605,7 @@ export default function ContactsPage() {
                       </td>
                     </tr>
                   ) : filteredContacts.length > 0 ? (
-                    filteredContacts.map((contact: LooseApiResponse) => (
+                    visibleContacts.map((contact: LooseApiResponse) => (
                       <tr key={contact.id} className="hover:bg-zinc-900/40 transition-colors">
                         <td className="px-6 py-4 font-medium text-white">
                           {contact.firstName} {contact.lastName}
@@ -637,6 +672,19 @@ export default function ContactsPage() {
                 </tbody>
               </table>
             </div>
+            {filteredContacts.length > visibleContacts.length && (
+              <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-zinc-850 bg-zinc-900/40">
+                <p className="text-xs text-zinc-500">
+                  Showing {visibleContacts.length} of {filteredContacts.length} contacts
+                </p>
+                <button
+                  onClick={() => setRowLimit({ key: rowLimitKey, count: visibleRowCount + CONTACT_PAGE_SIZE })}
+                  className="px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white hover:border-indigo-500/40 transition-colors"
+                >
+                  Show {Math.min(CONTACT_PAGE_SIZE, filteredContacts.length - visibleContacts.length)} more
+                </button>
+              </div>
+            )}
           </div>
         </main>
       </div>
