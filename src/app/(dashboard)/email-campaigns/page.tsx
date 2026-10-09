@@ -1,11 +1,14 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Pagination from "@/components/Pagination";
+import { useDebouncedValue } from "@/lib/pagination";
 import { api } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
 import { useEffect, useRef, useState } from "react";
 import {
   Mail,
+  Search,
   Plus,
   Play,
   Clock,
@@ -302,12 +305,20 @@ export default function EmailCampaignsPage() {
   );
 
   // Fetch campaigns
-  const { data: campaigns = [], isLoading: isCampaignsLoading } = useQuery<
-    EmailCampaign[]
-  >({
-    queryKey: ["email-campaigns"],
-    queryFn: () => api.emailCampaigns.list() as Promise<EmailCampaign[]>,
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const pageParams = { page, limit: pageSize, search: debouncedSearch };
+  const { data: campaignPage, isLoading: isCampaignsLoading } = useQuery({
+    queryKey: ["email-campaigns", "page", pageParams],
+    queryFn: () => api.emailCampaigns.listPage(pageParams),
+    placeholderData: keepPreviousData,
   });
+  const campaigns: EmailCampaign[] = campaignPage?.items ?? [];
+
+  // Deleting the last campaign on the last page leaves it empty; step back.
+  if (campaignPage && page > campaignPage.totalPages) setPage(campaignPage.totalPages);
 
   // Fetch single campaign details
   const { data: campaignDetails, isLoading: isCampaignDetailsLoading } =
@@ -1631,6 +1642,21 @@ export default function EmailCampaignsPage() {
 
       {/* Main Campaign List Tab */}
       {activeTab === "list" && (
+        <div className="space-y-5">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search campaigns by name..."
+            aria-label="Search campaigns"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isCampaignsLoading ? (
             [1, 2, 3].map((n) => (
@@ -1734,10 +1760,28 @@ export default function EmailCampaignsPage() {
             })
           ) : (
             <div className="col-span-full py-16 text-center border border-zinc-850 bg-zinc-900/20 rounded-2xl text-zinc-500">
-              No campaigns configured. Click &quot;New Campaign&quot; to build
-              an outreach pipeline.
+              {debouncedSearch
+                ? `No campaigns match "${debouncedSearch}".`
+                : (<>No campaigns configured. Click &quot;New Campaign&quot; to build
+              an outreach pipeline.</>)}
             </div>
           )}
+        </div>
+        {campaignPage && (
+          <Pagination
+            page={campaignPage.page}
+            limit={campaignPage.limit}
+            total={campaignPage.total}
+            totalPages={campaignPage.totalPages}
+            onPageChange={setPage}
+            onLimitChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            pageSizeOptions={[9, 18, 36, 72]}
+            label="campaigns"
+          />
+        )}
         </div>
       )}
 

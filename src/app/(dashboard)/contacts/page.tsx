@@ -1,11 +1,13 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { LooseApiResponse } from '@/lib/api';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { useEscapeKey } from '@/lib/useEscapeKey';
 import { useMemo, useState } from 'react';
+import Pagination from '@/components/Pagination';
+import { useDebouncedValue } from '@/lib/pagination';
 import {
   Users,
   UserPlus,
@@ -24,7 +26,7 @@ import {
   FolderPlus,
 } from 'lucide-react';
 
-const CONTACT_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 50;
 
 type DirectoryFilter = 'all' | 'uncategorized' | string;
 
@@ -65,7 +67,8 @@ export default function ContactsPage() {
 
   const [search, setSearch] = useState('');
   const [directorySearch, setDirectorySearch] = useState('');
-  const [rowLimit, setRowLimit] = useState({ key: '', count: CONTACT_PAGE_SIZE });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isDirectoryModalOpen, setIsDirectoryModalOpen] = useState(false);
@@ -100,10 +103,36 @@ export default function ContactsPage() {
   const [importResult, setImportResult] = useState<LooseApiResponse | null>(null);
 
   // Fetch Contacts
-  const { data: contacts = [], isLoading, isError } = useQuery({
-    queryKey: ['contacts'],
-    queryFn: api.contacts.list,
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const pageParams = {
+    page,
+    limit: pageSize,
+    search: debouncedSearch,
+    directoryId: selectedDirectoryId === 'all' ? undefined : selectedDirectoryId,
+  };
+  const { data: contactPage, isLoading, isError } = useQuery({
+    queryKey: ['contacts', 'page', pageParams],
+    queryFn: () => api.contacts.listPage(pageParams),
+    placeholderData: keepPreviousData,
   });
+  const visibleContacts: LooseApiResponse[] = contactPage?.items ?? [];
+  const totalMatching = contactPage?.total ?? 0;
+
+  // Totals for the sidebar come from the server so the page never needs the
+  // whole contact list.
+  const { data: contactSummary } = useQuery({
+    queryKey: ['contacts', 'summary'],
+    queryFn: api.contacts.summary,
+  });
+
+  // Deleting the last row of the last page leaves it empty; step back
+  // (adjusting state during render avoids a flash of the empty page).
+  if (contactPage && page > contactPage.totalPages) setPage(contactPage.totalPages);
+
+  const changeDirectory = (id: DirectoryFilter) => {
+    setSelectedDirectoryId(id);
+    setPage(1);
+  };
 
   const { data: directories = [] } = useQuery({
     queryKey: ['contact-directories'],
@@ -376,11 +405,6 @@ export default function ContactsPage() {
     setCustomFields(list);
   };
 
-  const directoryCounts = contacts.reduce((acc: Record<string, number>, contact: LooseApiResponse) => {
-    const key = contact.directoryId || 'uncategorized';
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
   const selectedDirectory = directories.find((directory: LooseApiResponse) => directory.id === selectedDirectoryId);
   const selectedDirectoryLabel =
     selectedDirectoryId === 'all'
@@ -389,35 +413,12 @@ export default function ContactsPage() {
         ? 'Unassigned'
         : selectedDirectory?.name || 'Directory';
 
-  // Filters
-  const directoryContacts = contacts.filter((contact: LooseApiResponse) => {
-    if (selectedDirectoryId === 'all') return true;
-    if (selectedDirectoryId === 'uncategorized') return !contact.directoryId;
-    return contact.directoryId === selectedDirectoryId;
-  });
-  const filteredContacts = directoryContacts.filter((c: LooseApiResponse) => {
-    const term = search.toLowerCase();
-    return (
-      c.firstName.toLowerCase().includes(term) ||
-      c.lastName.toLowerCase().includes(term) ||
-      c.email.toLowerCase().includes(term) ||
-      (c.company && c.company.toLowerCase().includes(term)) ||
-      (c.jobTitle && c.jobTitle.toLowerCase().includes(term))
-    );
-  });
-
   const visibleDirectories = useMemo(() => {
     const term = directorySearch.trim().toLowerCase();
     return [...directories]
       .filter((directory: LooseApiResponse) => !term || directory.name.toLowerCase().includes(term))
       .sort((a: LooseApiResponse, b: LooseApiResponse) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }, [directories, directorySearch]);
-
-  // Rendering thousands of rows at once freezes the page, so show them in pages
-  // and start over from the first page whenever the view or search changes.
-  const rowLimitKey = `${selectedDirectoryId}|${search}`;
-  const visibleRowCount = rowLimit.key === rowLimitKey ? rowLimit.count : CONTACT_PAGE_SIZE;
-  const visibleContacts = filteredContacts.slice(0, visibleRowCount);
 
   return (
     <div className="space-y-6">
@@ -459,7 +460,7 @@ export default function ContactsPage() {
             <div>
               <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Directories</p>
               <p className="text-xs text-zinc-500 mt-1">
-                {directories.length} directories · {contacts.length} contacts
+                {directories.length} directories · {contactSummary?.total ?? 0} contacts
               </p>
             </div>
             <button
@@ -484,12 +485,12 @@ export default function ContactsPage() {
 
           <div className="space-y-1.5">
             {[
-              { id: 'all', name: 'All Contacts', count: contacts.length },
-              { id: 'uncategorized', name: 'Unassigned', count: directoryCounts.uncategorized || 0 },
+              { id: 'all', name: 'All Contacts', count: contactSummary?.total ?? 0 },
+              { id: 'uncategorized', name: 'Unassigned', count: contactSummary?.unassigned ?? 0 },
             ].map((directory) => (
               <button
                 key={directory.id}
-                onClick={() => setSelectedDirectoryId(directory.id)}
+                onClick={() => changeDirectory(directory.id)}
                 className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border text-left transition-colors ${
                   selectedDirectoryId === directory.id
                     ? 'bg-indigo-500/10 border-indigo-500/30 text-white'
@@ -519,7 +520,7 @@ export default function ContactsPage() {
                 }`}
               >
                 <button
-                  onClick={() => setSelectedDirectoryId(directory.id)}
+                  onClick={() => changeDirectory(directory.id)}
                   className="min-w-0 flex-1 flex items-center justify-between gap-3 px-3 py-2.5 text-left"
                 >
                   <span className="flex items-center gap-2 min-w-0">
@@ -528,7 +529,7 @@ export default function ContactsPage() {
                       {directory.name}
                     </span>
                   </span>
-                  <span className="text-[11px] text-zinc-500">{directoryCounts[directory.id] || directory.contactCount || 0}</span>
+                  <span className="text-[11px] text-zinc-500">{directory.contactCount || 0}</span>
                 </button>
                 <button
                   onClick={() => openDirectoryModal(directory)}
@@ -558,7 +559,7 @@ export default function ContactsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-zinc-900/40 border border-zinc-850 rounded-2xl">
             <div className="min-w-0">
               <p className="text-sm font-bold text-white truncate">{selectedDirectoryLabel}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{directoryContacts.length} contacts in this view</p>
+              <p className="text-xs text-zinc-500 mt-0.5">{totalMatching} contacts in this view</p>
             </div>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-zinc-500" />
@@ -566,7 +567,10 @@ export default function ContactsPage() {
                 type="text"
                 placeholder="Search by name, email, company or job title..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
               />
             </div>
@@ -574,7 +578,7 @@ export default function ContactsPage() {
 
           {/* Main Table */}
           <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-22rem)] min-h-64">
               <table className="w-full min-w-[860px] table-fixed text-left text-sm text-zinc-300">
                 <colgroup>
                   <col className="w-[18%]" />
@@ -584,7 +588,7 @@ export default function ContactsPage() {
                   <col className="w-[10%]" />
                   <col className="w-[12%]" />
                 </colgroup>
-                <thead className="text-xs text-zinc-500 uppercase border-b border-zinc-850 bg-zinc-900/60">
+                <thead className="sticky top-0 z-10 text-xs text-zinc-500 uppercase border-b border-zinc-850 bg-zinc-900">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Name</th>
                     <th className="px-4 py-3 font-semibold">Email</th>
@@ -612,7 +616,7 @@ export default function ContactsPage() {
                         We could not load your contacts. Please try again in a moment.
                       </td>
                     </tr>
-                  ) : filteredContacts.length > 0 ? (
+                  ) : visibleContacts.length > 0 ? (
                     visibleContacts.map((contact: LooseApiResponse) => (
                       <tr key={contact.id} className="hover:bg-zinc-900/40 transition-colors align-middle">
                         <td className="px-4 py-3 font-medium text-white">
@@ -687,17 +691,20 @@ export default function ContactsPage() {
                 </tbody>
               </table>
             </div>
-            {filteredContacts.length > visibleContacts.length && (
-              <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-zinc-850 bg-zinc-900/40">
-                <p className="text-xs text-zinc-500">
-                  Showing {visibleContacts.length} of {filteredContacts.length} contacts
-                </p>
-                <button
-                  onClick={() => setRowLimit({ key: rowLimitKey, count: visibleRowCount + CONTACT_PAGE_SIZE })}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white hover:border-indigo-500/40 transition-colors"
-                >
-                  Show {Math.min(CONTACT_PAGE_SIZE, filteredContacts.length - visibleContacts.length)} more
-                </button>
+            {contactPage && (
+              <div className="px-4 py-3 border-t border-zinc-850 bg-zinc-900/40">
+                <Pagination
+                  page={contactPage.page}
+                  limit={contactPage.limit}
+                  total={contactPage.total}
+                  totalPages={contactPage.totalPages}
+                  onPageChange={setPage}
+                  onLimitChange={(size) => {
+                    setPageSize(size);
+                    setPage(1);
+                  }}
+                  label="contacts"
+                />
               </div>
             )}
           </div>

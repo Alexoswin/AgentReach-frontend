@@ -1,4 +1,6 @@
 import { saveAuthSession, signOut } from "./localAuth";
+import { pageQueryString } from "./pagination";
+import type { PageParams, Paginated } from "./pagination";
 
 // Same-origin path proxied to the backend by next.config.ts, so the session
 // cookies are first-party. NEXT_PUBLIC_API_URL only sets the proxy target.
@@ -491,6 +493,15 @@ export const api = {
   // Contacts
   contacts: {
     list: () => request("/contacts"),
+    listPage: (params: PageParams) =>
+      request(`/contacts${pageQueryString(params)}`) as Promise<
+        Paginated<LooseApiResponse>
+      >,
+    summary: () =>
+      request("/contacts/summary") as Promise<{
+        total: number;
+        unassigned: number;
+      }>,
     directories: {
       list: () => request("/contacts/directories"),
       create: (data: DirectoryPayload) =>
@@ -618,6 +629,10 @@ export const api = {
   // Email Campaigns
   emailCampaigns: {
     list: () => request("/email-campaigns"),
+    listPage: (params: PageParams) =>
+      request(`/email-campaigns${pageQueryString(params)}`) as Promise<
+        Paginated<LooseApiResponse>
+      >,
     get: (id: string) => request(`/email-campaigns/${id}`),
     create: (data: CampaignPayload) =>
       request("/email-campaigns", {
@@ -776,6 +791,10 @@ export const api = {
   callingCampaigns: {
     dashboard: () => request("/calling-campaigns/dashboard"),
     list: () => request("/calling-campaigns"),
+    listPage: (params: PageParams) =>
+      request(`/calling-campaigns${pageQueryString(params)}`) as Promise<
+        Paginated<LooseApiResponse>
+      >,
     get: (id: string) => request(`/calling-campaigns/${id}`),
     create: (data: CallingCampaignPayload) =>
       request("/calling-campaigns", {
