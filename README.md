@@ -62,9 +62,9 @@ src/
 │   │   ├── signals/            # signal feed + review queue
 │   │   │   └── playbooks/      # automation playbooks
 │   │   ├── contacts/           # contacts + directories
-│   │   ├── email-campaigns/    # MailReach: templates, preview, launch, relaunch
+│   │   ├── email-campaigns/    # Email campaigns: templates, preview, launch, relaunch
 │   │   ├── ai-calling-bots/    # Calling Agents: personas + RAG knowledge bases
-│   │   ├── calling-campaigns/  # VoiceReach: AI voice calling campaigns
+│   │   ├── calling-campaigns/  # AI calling: voice calling campaigns
 │   │   ├── history/            # email + call history
 │   │   ├── settings/           # SES / Twilio / Gemini credentials
 │   │   └── profile/            # profile, theme, accent colour, password
@@ -93,10 +93,10 @@ src/
 | `/signals`           | Signal feed (funding, hiring, news, bounces) and human review queue. |
 | `/signals/playbooks` | Rules that turn signals into automatic outreach. |
 | `/contacts`          | Recruiter, company, hiring-team, and lead contacts + directories; CSV/XLSX import. |
-| `/email-campaigns`   | **MailReach** — build/generate templates, preview, launch, and relaunch bulk email. |
+| `/email-campaigns`   | **Email Campaigns** — build/generate templates, preview, launch, and relaunch bulk email. |
 | `/ai-calling-bots`   | **Calling Agents** — create agent personas with a PDF-backed RAG knowledge base. |
-| `/calling-campaigns` | **VoiceReach** — configure and run AI voice calling campaigns with live outcomes. |
-| `/scheduler`         | View and cancel future MailReach/VoiceReach launches. |
+| `/calling-campaigns` | **AI Calling** — configure and run AI voice calling campaigns with live outcomes. |
+| `/scheduler`         | View and cancel future email/calling launches. |
 | `/history`           | Filterable email and call history, including replies. |
 | `/settings`          | Connect AWS SES, Twilio, and Gemini; test each connection. |
 | `/profile`           | User profile, theme, accent colours, and password update. |

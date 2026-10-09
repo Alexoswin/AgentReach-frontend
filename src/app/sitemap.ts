@@ -6,6 +6,7 @@ import { SITE_URL } from '@/lib/site';
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: '/', priority: 1 },
   { path: '/compare', priority: 0.8 },
+  { path: '/compliance', priority: 0.6 },
   { path: '/documentation', priority: 0.8 },
   { path: '/contribute', priority: 0.5 },
   { path: '/contact', priority: 0.4 },

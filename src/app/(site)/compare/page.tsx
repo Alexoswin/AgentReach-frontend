@@ -17,12 +17,12 @@ export const metadata: Metadata = pageMetadata({
 const ROWS = [
   {
     need: 'Personalized bulk email',
-    reach: 'MailReach sends through your own Amazon SES account, with merge fields from any contact column and AI-written templates.',
+    reach: 'Email campaigns send through your own Amazon SES account, with merge fields from any contact column and AI-written templates.',
     stack: 'A dedicated cold email tool, usually priced per seat or per connected mailbox.',
   },
   {
     need: 'AI voice calling',
-    reach: 'VoiceReach agents hold live conversations through Twilio and Gemini Live, with transcripts and recordings.',
+    reach: 'Calling agents hold live conversations through Twilio and Gemini Live, with transcripts and recordings.',
     stack: 'A separate AI voice agent platform, with its own contact list and its own reporting.',
   },
   {

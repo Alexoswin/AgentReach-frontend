@@ -409,7 +409,7 @@ export default function SettingsPage() {
               ))}
             </div>
             <span className="text-[11px] text-zinc-600">
-              VoiceReach campaigns launch through the active provider.
+              Calling campaigns launch through the active provider.
             </span>
           </div>
 
@@ -577,7 +577,7 @@ export default function SettingsPage() {
               />
               <p className="mt-2 text-[11px] text-zinc-500">
                 Saved encrypted and used for Gemini Live campaign calls, voice
-                previews, VoiceReach campaign generation, and AI email template
+                previews, calling campaign generation, and AI email template
                 text generation.
               </p>
             </div>

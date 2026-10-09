@@ -23,6 +23,7 @@ import {
   GitPullRequest,
   MessageSquare,
   HeartHandshake,
+  CirclePlay,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import SiteFooter from '@/components/SiteFooter';
@@ -31,7 +32,7 @@ import { Brand, CountUp, TiltCard } from '@/components/fx';
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how' },
-  { label: 'Analytics', href: '#analytics' },
+  { label: 'Pricing', href: '#pricing' },
 ];
 
 // Routes rather than in-page anchors, so they render as <Link>.
@@ -45,14 +46,14 @@ const PAGE_LINKS = [
 const FEATURES = [
   {
     icon: Mail,
-    title: 'MailReach — personalized email',
+    title: 'Personalized bulk email',
     body: 'Send thousands of tailored emails with AI-written variables, merge fields, and deliverability built in.',
     tone: 'a' as const,
   },
   {
     icon: PhoneCall,
-    title: 'VoiceReach — AI voice calling',
-    body: 'Launch VoiceReach calling campaigns where lifelike AI agents dial, qualify, and book on your behalf.',
+    title: 'AI voice calling',
+    body: 'Launch calling campaigns where lifelike AI agents dial, qualify, and book on your behalf.',
     tone: 'a2' as const,
   },
   {
@@ -102,6 +103,29 @@ const STEPS = [
     icon: Rocket,
     title: 'Launch & track live',
     body: 'Fire off email and voice campaigns, then watch replies and bookings roll in on a live dashboard.',
+  },
+];
+
+const PLANS = [
+  {
+    name: 'Hosted',
+    tagline: 'Sign up at reachconvert.site and start in minutes.',
+    points: [
+      'Email campaigns, AI calling, signals and analytics',
+      'Your data is private to your account',
+      'Connect your own AWS SES, Twilio or Plivo, and Gemini keys',
+    ],
+    cta: { label: 'Start free', href: '/login' },
+  },
+  {
+    name: 'Self-hosted',
+    tagline: 'Run it on your own servers under the AGPL-3.0 license.',
+    points: [
+      'The same app, with full source code',
+      'Your database, your infrastructure',
+      'Deploy the NestJS backend and Next.js frontend anywhere',
+    ],
+    cta: { label: 'Read the setup guide', href: '/documentation' },
   },
 ];
 
@@ -275,12 +299,10 @@ function HeroVisual() {
               <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
               <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-              <div className="sig-label ml-3 flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-400">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-400" />
-                </span>
-                LIVE SYNC
+              {/* Illustrative numbers, not usage figures: say so on the console. */}
+              <div className="sig-label ml-3 flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-amber-400">
+                <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                SAMPLE DATA
               </div>
             </div>
 
@@ -338,7 +360,7 @@ function HeroVisual() {
           </div>
           <div className="leading-tight">
             <p className="text-xs font-bold text-white">Call booked</p>
-            <p className="sig-label mt-0.5 text-zinc-500">AI AGENT · 0:42</p>
+            <p className="sig-label mt-0.5 text-zinc-500">SAMPLE · AI AGENT</p>
           </div>
         </div>
       </div>
@@ -350,7 +372,7 @@ function HeroVisual() {
           </div>
           <div className="leading-tight">
             <p className="text-xs font-bold text-white">AI drafted 40 emails</p>
-            <p className="sig-label mt-0.5 text-zinc-500">IN 3 SECONDS</p>
+            <p className="sig-label mt-0.5 text-zinc-500">SAMPLE</p>
           </div>
         </div>
       </div>
@@ -418,8 +440,9 @@ export default function LandingPage() {
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </span>
-                <a href="#features" className="sig-btn-ghost">
-                  Explore features
+                <a href="#demo" className="sig-btn-ghost">
+                  <CirclePlay className="h-4 w-4" />
+                  Watch the demo
                 </a>
               </div>
             </Reveal>
@@ -430,7 +453,7 @@ export default function LandingPage() {
                   <Check className="h-4 w-4 text-emerald-400" /> NO CREDIT CARD
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-400" /> SOC 2 FRIENDLY
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" /> OPEN SOURCE · SELF-HOSTED
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-emerald-400" /> LIVE IN MINUTES
@@ -441,6 +464,49 @@ export default function LandingPage() {
 
           <Reveal delay={200}>
             <HeroVisual />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ---------------- Demo video ---------------- */}
+      <section id="demo" className="scroll-mt-20 px-5 py-20 sm:px-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="sig-label text-indigo-400">[ SEE IT IN ACTION ]</p>
+              <h2 className="sig-display mt-4 text-3xl font-extrabold text-white sm:text-5xl">
+                From lead list to AI calls
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-400">
+                In under two minutes, with narration: import leads, send a personalized email
+                campaign, then have an AI agent call the same list. Recorded in the real app.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="sig-card mt-12 overflow-hidden">
+              <video
+                className="block aspect-video w-full bg-zinc-950"
+                controls
+                playsInline
+                preload="metadata"
+                poster="/demo/reachconvert-demo-voiceover-poster.jpg"
+                aria-label="ReachConvert product demo: importing contacts, launching an email campaign and an AI calling campaign"
+              >
+                <source src="/demo/reachconvert-demo-voiceover.mp4" type="video/mp4" />
+                <track
+                  kind="captions"
+                  src="/demo/reachconvert-demo-voiceover.vtt"
+                  srcLang="en"
+                  label="English"
+                />
+              </video>
+            </div>
+            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              Recorded in the live product with demo data. Email delivery and calls are simulated,
+              so no real messages were sent and no one was called.
+            </p>
           </Reveal>
         </div>
       </section>
@@ -562,7 +628,7 @@ export default function LandingPage() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  'Live sync across MailReach and VoiceReach campaigns',
+                  'Live sync across email and calling campaigns',
                   'Template & company-segment performance breakdowns',
                   'Deliverability, open, reply, and call success rates',
                 ].map((item) => (
@@ -634,6 +700,64 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ---------------- Pricing ---------------- */}
+      <section id="pricing" className="scroll-mt-20 px-5 py-20 sm:px-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="sig-label text-indigo-400">[ PRICING ]</p>
+              <h2 className="sig-display mt-4 text-3xl font-extrabold text-white sm:text-5xl">
+                Free, hosted or self-hosted
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-400">
+                ReachConvert itself costs nothing. You pay your providers directly for what you use.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2">
+            {PLANS.map((plan, i) => (
+              <Reveal key={plan.name} delay={i * 120} className="h-full">
+                <div className="sig-card sig-ticks flex h-full flex-col p-7">
+                  <p className="sig-label text-indigo-400">{plan.name.toUpperCase()}</p>
+                  <p className="sig-display mt-3 text-4xl font-extrabold text-white">
+                    $0
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">{plan.tagline}</p>
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {plan.points.map((point) => (
+                      <li key={point} className="flex items-start gap-2.5 text-sm leading-6 text-zinc-300">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={plan.cta.href} className="sig-btn-ghost group mt-7 justify-center">
+                    {plan.cta.label}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={240}>
+            <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-6 text-zinc-500">
+              Usage is billed by your providers, not by us: AWS SES for email, Twilio or Plivo for
+              calls, and Google for Gemini. If ReachConvert saves you time, you can{' '}
+              <Link href="/support" className="text-indigo-400 hover:text-indigo-300">
+                support the project
+              </Link>
+              . Before you send, read the{' '}
+              <Link href="/compliance" className="text-indigo-400 hover:text-indigo-300">
+                outreach compliance guide
+              </Link>
+              .
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ---------------- CTA ---------------- */}
       <section className="px-5 py-20 sm:px-8">
         <Reveal>
@@ -660,7 +784,7 @@ export default function LandingPage() {
                 Ready to convert more replies?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-base text-zinc-300">
-                Use ReachConvert to run MailReach email and VoiceReach calling campaigns that
+                Use ReachConvert to run email and AI calling campaigns that
                 actually book meetings.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

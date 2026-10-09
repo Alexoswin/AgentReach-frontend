@@ -873,7 +873,7 @@ export default function CallingCampaignsPage() {
       setGenerationJobId(job.id);
       handledGenerationJobIdRef.current = null;
       showAlert(
-        "VoiceReach campaign generation started. Status will refresh automatically.",
+        "Calling campaign generation started. Status will refresh automatically.",
         "info",
         "Generating campaign",
       );
@@ -921,7 +921,7 @@ export default function CallingCampaignsPage() {
         );
         setGenerationJobId(null);
         showAlert(
-          "VoiceReach campaign draft generated.",
+          "Calling campaign draft generated.",
           "success",
           "Campaign generated",
         );
@@ -1244,7 +1244,7 @@ export default function CallingCampaignsPage() {
     ) {
       return;
     }
-    console.debug("[VoiceReach] Launch requested", {
+    console.debug("[Calling] Launch requested", {
       campaignId: campaign.id,
       status: campaign.status,
       contactCount: campaign.contactCount,
@@ -1419,7 +1419,7 @@ export default function CallingCampaignsPage() {
       contactIds: selectedContactIds,
     };
 
-    console.debug("[VoiceReach] Saving campaign", {
+    console.debug("[Calling] Saving campaign", {
       mode: editingCampaignId ? "edit" : "create",
       campaignId: editingCampaignId,
       selectedContacts: selectedContactIds.length,
@@ -1500,8 +1500,8 @@ export default function CallingCampaignsPage() {
         }
         description={
           activeProvider === "plivo"
-            ? "To create and manage VoiceReach campaigns, you need to configure your Plivo Auth ID, Auth Token, and Phone Number in settings."
-            : "To create and manage VoiceReach campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
+            ? "To create and manage calling campaigns, you need to configure your Plivo Auth ID, Auth Token, and Phone Number in settings."
+            : "To create and manage calling campaigns, you need to configure your Twilio Account SID, Auth Token, and Phone Number in settings."
         }
       />
     );
@@ -1512,7 +1512,7 @@ export default function CallingCampaignsPage() {
     return (
       <MissingCredentials
         title="Gemini Live Key Required"
-        description="To create and launch VoiceReach campaigns, add your Gemini API key for Gemini Live in settings."
+        description="To create and launch calling campaigns, add your Gemini API key for Gemini Live in settings."
       />
     );
   }
@@ -1535,7 +1535,7 @@ export default function CallingCampaignsPage() {
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <PhoneCall className="h-8 w-8 text-indigo-400" />
-            VoiceReach Campaigns
+            AI Calling Campaigns
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
             Configure automated calling schedules with Gemini Live agents and
@@ -2123,8 +2123,8 @@ export default function CallingCampaignsPage() {
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-indigo-400" />
               {editingCampaignId
-                ? "Edit VoiceReach Campaign"
-                : "Create VoiceReach Campaign"}
+                ? "Edit Calling Campaign"
+                : "Create Calling Campaign"}
             </h3>
             <p className="text-xs text-zinc-500 mt-1">
               Configure your outbound calling AI persona, scripts, and targeting
@@ -2742,7 +2742,7 @@ export default function CallingCampaignsPage() {
                     addContactsMutation.isPending
                   }
                   onClick={() => {
-                    console.debug("[VoiceReach] Adding contacts to campaign", {
+                    console.debug("[Calling] Adding contacts to campaign", {
                       campaignId: selectedCampaignId,
                       selectedContacts: addSelectedContactIds.length,
                     });

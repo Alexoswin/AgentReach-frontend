@@ -39,8 +39,9 @@ export const LICENSE_URL = `${REPOS.frontend.url}/blob/main/LICENSE`;
 export const SITE_LINKS = [
   { label: 'Features', href: '/#features' },
   { label: 'How it works', href: '/#how' },
-  { label: 'Analytics', href: '/#analytics' },
+  { label: 'Pricing', href: '/#pricing' },
   { label: 'Docs', href: '/documentation' },
+  { label: 'Compliance', href: '/compliance' },
   { label: 'Compare', href: '/compare' },
   { label: 'Contribute', href: '/contribute' },
   { label: 'Contact', href: '/contact' },

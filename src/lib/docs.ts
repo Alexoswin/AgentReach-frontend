@@ -377,7 +377,7 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
   },
   {
     slug: 'architecture-email-campaigns',
-    title: 'MailReach architecture',
+    title: 'Email campaign architecture',
     tagline: 'Templates, recipients, personalization, launch, scheduling, and SES delivery.',
     icon: 'mail',
     category: 'Feature architecture',
@@ -406,12 +406,12 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
   },
   {
     slug: 'architecture-ai-calling',
-    title: 'VoiceReach architecture',
+    title: 'AI calling architecture',
     tagline: 'Twilio outbound calls, media streams, Gemini Live, transcripts, and recordings.',
     icon: 'phone',
     category: 'Feature architecture',
     intro: [
-      'VoiceReach combines REST campaign management with public Twilio webhooks and a raw media WebSocket. The backend owns every provider callback and persists call state in CallHistory.',
+      'AI calling combines REST campaign management with public Twilio webhooks and a raw media WebSocket. The backend owns every provider callback and persists call state in CallHistory.',
     ],
     sections: [
       {
@@ -595,9 +595,9 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'The five-minute path',
         steps: [
           'Create your account and sign in — you land on the Outreach Dashboard.',
-          'Open Settings and connect at least one channel: AWS SES for email, or a Gemini Live key for VoiceReach.',
+          'Open Settings and connect at least one channel: AWS SES for email, or a Gemini Live key for AI calling.',
           'Go to Contacts and import a CSV/XLSX, mapping columns to name, email, company, and job title.',
-          'Build a template under MailReach (write it yourself or generate it with AI), then create a campaign and add contacts.',
+          'Build a template under Email Campaigns (write it yourself or generate it with AI), then create a campaign and add contacts.',
           'Hit Launch and watch deliveries, opens, and replies stream into the Dashboard in real time.',
         ],
       },
@@ -609,7 +609,7 @@ export const DOC_PAGES: DocPage[] = [
             text: 'Importing contacts automatically starts watching their companies. Create a Playbook so funding, hiring, and news events trigger outreach on their own.',
           },
           {
-            title: 'Configure VoiceReach',
+            title: 'Configure AI calling',
             text: 'Add a Gemini Live key and design a Calling Agent persona to run automated voice campaigns through Twilio.',
           },
           {
@@ -620,7 +620,7 @@ export const DOC_PAGES: DocPage[] = [
       },
     ],
     tips: [
-      'MailReach campaigns need working AWS SES credentials and a verified sender address; a launch without them fails instead of pretending to send.',
+      'Email campaigns need working AWS SES credentials and a verified sender address; a launch without them fails instead of pretending to send.',
       'Every list view supports live sync — leave the Dashboard open during a launch to watch metrics update every 10 seconds.',
     ],
     related: ['architecture', 'architecture-contacts', 'architecture-email-campaigns', 'architecture-signals', 'dashboard'],
@@ -725,7 +725,7 @@ export const DOC_PAGES: DocPage[] = [
           'Open Settings, add your Twilio account SID, auth token, and phone number, then add and test your Gemini API key.',
           'Go to Calling Agents and create an agent: its persona, objective, opening line, objection handling, and any reference knowledge.',
           'Import contacts with phone numbers under Contacts, or reuse an existing directory.',
-          'Create a VoiceReach campaign, choose the agent, a voice, and a language, and decide whether the AI speaks first.',
+          'Create a calling campaign, choose the agent, a voice, and a language, and decide whether the AI speaks first.',
           'Start with five to ten contacts you know, listen to the recordings, and refine the script.',
           'Launch to the full list, or schedule the campaign for a time when people are likely to pick up.',
         ],
@@ -830,7 +830,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Open Settings, add your SES access key, secret, region, and verified sender address, then click Test SES.',
           'Import contacts under Contacts, mapping your columns so they become template variables.',
-          'Create a template under MailReach, by hand or with AI generation.',
+          'Create a template under Email Campaigns, by hand or with AI generation.',
           'Create a campaign, launch it to a small directory of your own addresses first, and check the result.',
           'Launch to the real audience, then watch delivery, opens, and replies on the Dashboard.',
         ],
@@ -930,7 +930,7 @@ export const DOC_PAGES: DocPage[] = [
     icon: 'layout-dashboard',
     category: 'Core features',
     intro: [
-      'The Dashboard is the first screen you see. It aggregates email deliverability, VoiceReach outcomes, template performance, and your most responsive company segments into a single live view that refreshes automatically.',
+      'The Dashboard is the first screen you see. It aggregates email deliverability, call outcomes, template performance, and your most responsive company segments into a single live view that refreshes automatically.',
     ],
     sections: [
       {
@@ -1109,7 +1109,7 @@ export const DOC_PAGES: DocPage[] = [
   },
   {
     slug: 'email-campaigns',
-    title: 'MailReach campaigns',
+    title: 'Email campaigns',
     tagline: 'Personalized bulk outreach with tracking and AI-written copy.',
     icon: 'mail',
     category: 'Core features',
@@ -1120,7 +1120,7 @@ export const DOC_PAGES: DocPage[] = [
       'A template with a subject and body, either written manually or generated with AI.',
     ],
     intro: [
-      'MailReach sends personalized bulk email through AWS SES with per-recipient merge fields, delivery tracking, and optional attachments. Templates can be written by hand or generated by AI from a short brief.',
+      'Email campaigns send personalized bulk email through AWS SES with per-recipient merge fields, delivery tracking, and optional attachments. Templates can be written by hand or generated by AI from a short brief.',
     ],
     sections: [
       {
@@ -1182,11 +1182,11 @@ export const DOC_PAGES: DocPage[] = [
   {
     slug: 'scheduler',
     title: 'Scheduler',
-    tagline: 'One place to see and cancel future MailReach and VoiceReach launches.',
+    tagline: 'One place to see and cancel future email and calling launches.',
     icon: 'calendar-clock',
     category: 'Core features',
     intro: [
-      'Scheduler shows every campaign queued for a future launch time. It combines scheduled MailReach campaigns and scheduled VoiceReach campaigns into one chronological view.',
+      'Scheduler shows every campaign queued for a future launch time. It combines scheduled email campaigns and scheduled calling campaigns into one chronological view.',
       'The backend checks due campaigns once per minute. When a scheduled time arrives, the normal launch pipeline runs, so delivery, call history, alerts, and dashboard metrics behave the same as a manual launch.',
     ],
     sections: [
@@ -1203,14 +1203,14 @@ export const DOC_PAGES: DocPage[] = [
       {
         heading: 'What appears here',
         capabilities: [
-          { title: 'MailReach campaigns', text: 'Campaigns with status SCHEDULED and a scheduledAt timestamp.' },
-          { title: 'VoiceReach campaigns', text: 'Campaigns with status SCHEDULED and a scheduledAt timestamp.' },
+          { title: 'Email campaigns', text: 'Campaigns with status SCHEDULED and a scheduledAt timestamp.' },
+          { title: 'Calling campaigns', text: 'Campaigns with status SCHEDULED and a scheduledAt timestamp.' },
         ],
       },
       {
         heading: 'Scheduling flow',
         steps: [
-          'Open MailReach or VoiceReach and configure the campaign.',
+          'Open Email Campaigns or AI Calling and configure the campaign.',
           'Choose Schedule instead of launching immediately.',
           'Pick a future date and time.',
           'Open Scheduler to verify the campaign is queued.',
@@ -1271,7 +1271,7 @@ export const DOC_PAGES: DocPage[] = [
   // ─────────────────────────────── AI outreach
   {
     slug: 'ai-calling',
-    title: 'VoiceReach campaigns',
+    title: 'Calling campaigns',
     tagline: 'Autonomous voice agents that dial, qualify, and log calls.',
     icon: 'phone',
     category: 'AI outreach',
@@ -1282,7 +1282,7 @@ export const DOC_PAGES: DocPage[] = [
       'Contacts with valid phone numbers and a saved Calling Agent.',
     ],
     intro: [
-      'VoiceReach runs automated outbound voice campaigns. A Gemini Live agent places calls through Twilio, holds a natural conversation using the persona and script you define, and logs the transcript and outcome for every call.',
+      'AI calling runs automated outbound voice campaigns. A Gemini Live agent places calls through Twilio, holds a natural conversation using the persona and script you define, and logs the transcript and outcome for every call.',
     ],
     sections: [
       {
@@ -1358,7 +1358,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Open Calling Agents and create a new agent with its persona and script.',
           'Add any knowledge or reference documents you want it to use.',
-          'Save it, then select it when configuring a VoiceReach campaign.',
+          'Save it, then select it when configuring a calling campaign.',
           'Iterate: refine the script and every future campaign using that agent inherits the improvement.',
         ],
       },
@@ -1394,7 +1394,7 @@ export const DOC_PAGES: DocPage[] = [
         heading: 'Integrations',
         capabilities: [
           { title: 'AWS SES', text: 'Powers email delivery. Add your access key, secret, region, and sender address, then Test SES.' },
-          { title: 'Gemini (Live)', text: 'Powers VoiceReach and signal classification. Add and verify your Gemini API key.' },
+          { title: 'Gemini (Live)', text: 'Powers AI calling and signal classification. Add and verify your Gemini API key.' },
           { title: 'Twilio', text: 'Places the actual phone calls. Add your account SID, auth token, and phone number.' },
           { title: 'Gemini (Text)', text: 'The same Gemini key backs AI text generation for templates. Pick a cheap text model such as gemini-2.5-flash-lite.' },
         ],
@@ -1411,7 +1411,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Enter credentials for a service.',
           'Click its Test button — a live check confirms the keys work.',
-          'A connected status unlocks the related feature (e.g. Gemini “Connected” enables VoiceReach).',
+          'A connected status unlocks the related feature (e.g. Gemini “Connected” enables AI calling).',
         ],
       },
     ],
