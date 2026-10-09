@@ -575,27 +575,35 @@ export default function ContactsPage() {
           {/* Main Table */}
           <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-zinc-300">
+              <table className="w-full min-w-[860px] table-fixed text-left text-sm text-zinc-300">
+                <colgroup>
+                  <col className="w-[18%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead className="text-xs text-zinc-500 uppercase border-b border-zinc-850 bg-zinc-900/60">
                   <tr>
-                    <th className="px-6 py-4 font-semibold">Name</th>
-                    <th className="px-6 py-4 font-semibold">Email</th>
-                    <th className="px-6 py-4 font-semibold">Organization</th>
-                    <th className="px-6 py-4 font-semibold">LinkedIn</th>
-                    <th className="px-6 py-4 font-semibold">Phone</th>
-                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                    <th className="px-4 py-3 font-semibold">Name</th>
+                    <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Company</th>
+                    <th className="px-4 py-3 font-semibold">Role</th>
+                    <th className="px-4 py-3 font-semibold">LinkedIn</th>
+                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-850">
                   {isLoading ? (
                     [1, 2, 3].map((n) => (
                       <tr key={n} className="animate-pulse">
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-24"></div></td>
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-36"></div></td>
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-20"></div></td>
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-16"></div></td>
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-24"></div></td>
-                        <td className="px-6 py-4"><div className="h-4 bg-zinc-800 rounded w-12 ml-auto"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-24"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-36"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-20"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-24"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-16"></div></td>
+                        <td className="px-4 py-3"><div className="h-4 bg-zinc-800 rounded w-12 ml-auto"></div></td>
                       </tr>
                     ))
                   ) : isError ? (
@@ -606,22 +614,30 @@ export default function ContactsPage() {
                     </tr>
                   ) : filteredContacts.length > 0 ? (
                     visibleContacts.map((contact: LooseApiResponse) => (
-                      <tr key={contact.id} className="hover:bg-zinc-900/40 transition-colors">
-                        <td className="px-6 py-4 font-medium text-white">
-                          {contact.firstName} {contact.lastName}
+                      <tr key={contact.id} className="hover:bg-zinc-900/40 transition-colors align-middle">
+                        <td className="px-4 py-3 font-medium text-white">
+                          <span className="block truncate" title={`${contact.firstName} ${contact.lastName}`}>
+                            {contact.firstName} {contact.lastName}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-zinc-400">{contact.email}</td>
-                        <td className="px-6 py-4 text-zinc-400">
+                        <td className="px-4 py-3 text-zinc-400">
+                          <span className="block truncate" title={contact.email}>{contact.email}</span>
+                        </td>
+                        <td className="px-4 py-3">
                           {contact.company ? (
-                            <div>
-                              <p className="text-zinc-300 font-semibold">{contact.company}</p>
-                              <p className="text-xs text-zinc-500">{contact.jobTitle || 'Role N/A'}</p>
-                            </div>
+                            <span className="block truncate text-zinc-300 font-semibold" title={contact.company}>{contact.company}</span>
                           ) : (
                             <span className="text-zinc-600">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 text-xs text-zinc-500">
+                          {contact.jobTitle ? (
+                            <span className="line-clamp-2 break-words" title={contact.jobTitle}>{contact.jobTitle}</span>
+                          ) : (
+                            <span className="text-zinc-600">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
                           {contact.linkedinUrl ? (
                             <a
                               href={contact.linkedinUrl}
@@ -635,9 +651,8 @@ export default function ContactsPage() {
                             <span className="text-zinc-600">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-zinc-400">{contact.phoneNumber || <span className="text-zinc-600">-</span>}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleEditClick(contact)}
                               aria-label="Edit contact"
