@@ -38,6 +38,10 @@ export const LICENSE_URL = `${REPOS.frontend.url}/blob/main/LICENSE`;
 
 export const SITE_LINKS = [
   { label: 'Features', href: '/#features' },
+  { label: 'AI Calling', href: '/ai-calling' },
+  { label: 'Calling agents', href: '/calling-agents' },
+  { label: 'Email automation', href: '/email-automation' },
+  { label: 'Outreach automation', href: '/outreach-automation' },
   { label: 'How it works', href: '/#how' },
   { label: 'Pricing', href: '/#pricing' },
   { label: 'Docs', href: '/documentation' },

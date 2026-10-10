@@ -5,6 +5,11 @@ import { SITE_URL } from '@/lib/site';
 /** Public, indexable routes. Signed-in app pages are noindex and stay out. */
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: '/', priority: 1 },
+  { path: '/ai-calling', priority: 0.9 },
+  { path: '/calling-agents', priority: 0.8 },
+  { path: '/calling-automation', priority: 0.8 },
+  { path: '/email-automation', priority: 0.9 },
+  { path: '/outreach-automation', priority: 0.8 },
   { path: '/compare', priority: 0.8 },
   { path: '/compliance', priority: 0.6 },
   { path: '/documentation', priority: 0.8 },
