@@ -17,9 +17,9 @@ export const SEO_PAGES = {
       { title: 'Create an AI calling campaign', text: 'Select contacts, choose a calling agent, and add the objective your agent should complete.' },
       { title: 'Review and follow up', text: 'Use outcomes and transcripts to identify qualified conversations and trigger the next action.' },
     ],
-    useCases: ['Lead qualification', 'Appointment setting', 'Event follow-up', 'Reactivation campaigns', 'Customer research', 'Inbound call routing'],
+    useCases: ['Lead qualification', 'Appointment setting', 'Event follow-up', 'Reactivation campaigns', 'Customer research', 'Outbound lead follow-up'],
     faqs: [
-      { question: 'What is AI calling software?', answer: 'AI calling software uses a voice agent to place or receive phone calls, hold conversations, and record outcomes according to a configured workflow.' },
+      { question: 'What is AI calling software?', answer: 'AI calling software uses a voice agent to place outbound phone calls, hold conversations, and record outcomes according to a configured workflow.' },
       { question: 'Can I use my own telephony account?', answer: 'Yes. ReachConvert is designed to connect your own Twilio or Plivo credentials, so provider usage is billed directly to your account.' },
       { question: 'Is AI calling compliant everywhere?', answer: 'No. Consent, disclosure, recording, calling hours, and do-not-call requirements vary by location. Review the compliance guide before launching calls.' },
     ],
