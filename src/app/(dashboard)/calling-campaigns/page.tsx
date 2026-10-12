@@ -541,6 +541,7 @@ export default function CallingCampaignsPage() {
   );
   const [aiSpeaksFirst, setAiSpeaksFirst] = useState(true);
   const [preventInterruption, setPreventInterruption] = useState(false);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [realtimeModel, setRealtimeModel] = useState(
     DEFAULT_GEMINI_LIVE_MODEL,
   );
@@ -966,6 +967,7 @@ export default function CallingCampaignsPage() {
     setVoicePreviewText("Hello, this is a quick ReachConvert voice preview.");
     setAiSpeaksFirst(true);
     setPreventInterruption(false);
+    setWebSearchEnabled(false);
     setRealtimeModel(DEFAULT_GEMINI_LIVE_MODEL);
     setResponseSpeed("fast");
     setAiCallingBotId(null);
@@ -1223,6 +1225,9 @@ export default function CallingCampaignsPage() {
       );
       setAiSpeaksFirst(details.aiSpeaksFirst ?? true);
       setPreventInterruption(details.preventInterruption ?? false);
+      setWebSearchEnabled(
+        Array.isArray(details.tools) && details.tools.includes("web_search"),
+      );
       setRealtimeModel(details.realtimeModel || DEFAULT_GEMINI_LIVE_MODEL);
       setResponseSpeed(normalizeResponseSpeed(details.responseSpeed));
       setAiCallingBotId(details.aiCallingBotId || null);
@@ -1428,7 +1433,9 @@ export default function CallingCampaignsPage() {
       maxTokens: 4000,
       threshold: 0,
       responseSpeed,
-      tools: ["end_call", "fetch_context"],
+      tools: webSearchEnabled
+        ? ["end_call", "fetch_context", "web_search"]
+        : ["end_call", "fetch_context"],
       contactIds: selectedContactIds,
     };
 
@@ -2506,6 +2513,15 @@ export default function CallingCampaignsPage() {
                       className="h-4 w-4 rounded border-zinc-700 bg-zinc-950 accent-indigo-500"
                     />
                     Prevent interruption
+                  </label>
+                  <label className="flex min-h-10 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-xs font-semibold text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={webSearchEnabled}
+                      onChange={(e) => setWebSearchEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-zinc-700 bg-zinc-950 accent-indigo-500"
+                    />
+                    Web search
                   </label>
                 </div>
               </div>
