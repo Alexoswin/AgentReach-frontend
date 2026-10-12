@@ -8,6 +8,7 @@ const BASE_URL = "/api";
 const REQUEST_TIMEOUT_MS = 8000;
 const AI_REQUEST_TIMEOUT_MS = 45000;
 const IMPORT_REQUEST_TIMEOUT_MS = 60000;
+const PROSPECT_RUN_TIMEOUT_MS = 120000;
 let csrfToken: string | null = null;
 let refreshInFlight: Promise<boolean> | null = null;
 const AUTH_PATHS_WITHOUT_REFRESH = new Set([
@@ -894,6 +895,73 @@ export const api = {
         undefined,
         20000,
       ),
+  },
+
+  prospects: {
+    buildProfile: (data: {
+      description: string;
+      exampleDomains?: string[];
+      maxCompanies?: number;
+    }) =>
+      request(
+        "/prospects/profile",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
+    createSearch: (data: {
+      description: string;
+      profile: ApiPayload;
+      maxCompanies?: number;
+      peoplePerCompany?: number;
+    }) =>
+      request("/prospects/searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    searches: () => request("/prospects/searches"),
+    search: (id: string) => request(`/prospects/searches/${id}`),
+    companies: (id: string) => request(`/prospects/searches/${id}/companies`),
+    people: (id: string) => request(`/prospects/searches/${id}/people`),
+    run: (id: string) =>
+      request(
+        `/prospects/searches/${id}/run`,
+        { method: "POST" },
+        PROSPECT_RUN_TIMEOUT_MS,
+      ),
+    cancel: (id: string) =>
+      request(`/prospects/searches/${id}/cancel`, { method: "POST" }),
+    remove: (id: string) =>
+      request(`/prospects/searches/${id}`, { method: "DELETE" }),
+    updatePerson: (
+      id: string,
+      data: { email?: string; action?: "dismissed" | "restore" },
+    ) =>
+      request(`/prospects/people/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    addToContacts: (data: {
+      ids: string[];
+      directoryId?: string;
+      duplicateStrategy?: "SKIP" | "OVERWRITE";
+    }) =>
+      request(
+        "/prospects/people/add-to-contacts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        IMPORT_REQUEST_TIMEOUT_MS,
+      ),
+    watchCompany: (id: string) =>
+      request(`/prospects/companies/${id}/watch`, { method: "POST" }),
   },
 
   // History

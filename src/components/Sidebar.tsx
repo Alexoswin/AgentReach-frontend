@@ -19,6 +19,7 @@ import {
   BookOpen,
   CalendarClock,
   Inbox,
+  Telescope,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -40,6 +41,7 @@ interface NavItem {
   icon: LucideIcon;
   /** Match this href exactly, ignoring child routes. */
   exact?: boolean;
+  beta?: boolean;
 }
 
 const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
@@ -53,6 +55,12 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Outreach",
     items: [
+      {
+        name: "Prospect Finder",
+        href: "/prospects",
+        icon: Telescope,
+        beta: true,
+      },
       { name: "Contacts", href: "/contacts", icon: Users },
       { name: "Email Campaigns", href: "/email-campaigns", icon: Mail },
       { name: "Replies", href: "/replies", icon: Inbox },
@@ -176,6 +184,11 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
                         }`}
                       />
                       <span className="truncate">{item.name}</span>
+                      {item.beta && (
+                        <span className="sig-label rounded border border-indigo-500/30 px-1 py-px text-[9px] text-indigo-300">
+                          Beta
+                        </span>
+                      )}
                       {isActive && (
                         <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_var(--a-400)]" />
                       )}
