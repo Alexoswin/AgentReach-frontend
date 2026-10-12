@@ -518,7 +518,7 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
       {
         heading: 'Runtime flow',
         body: [
-          'A search runs in slices of about 50 seconds. The page calls the run endpoint again while the result says it is not done, and progress is saved after every batch of three companies, so closing the tab only pauses the search and Resume continues from the saved state.',
+          'A description search has Gemini suggest companies; a company lookup skips that step and resolves the names you entered to websites, then reads people from those sites without scoring them. A search runs in slices of about 50 seconds. The page calls the run endpoint again while the result says it is not done, and progress is saved after every batch of three companies, so closing the tab only pauses the search and Resume continues from the saved state.',
         ],
         diagram: { caption: 'From description to verified prospects', chart: DIAGRAMS.prospects },
       },
@@ -1026,6 +1026,12 @@ export const DOC_PAGES: DocPage[] = [
         ],
       },
       {
+        heading: 'Already know the companies?',
+        body: [
+          'Choose Contacts at specific companies instead. Enter up to 20 websites or company names, optionally add the roles you want, and ReachConvert lists the people named on each company’s own site. It only lists what is published, so some companies will return few or no names.',
+        ],
+      },
+      {
         heading: 'What to check before you contact anyone',
         capabilities: [
           { title: 'The evidence', text: 'Open the source link next to a match. If the page does not support it, dismiss the person.' },
@@ -1202,7 +1208,7 @@ export const DOC_PAGES: DocPage[] = [
     lastReviewed: 'October 2026',
     intro: [
       'Prospect Finder builds a list from a description instead of a spreadsheet. You describe who you want to reach, it finds companies that look like a fit, checks each one against its own public website, and lists the people it can verify.',
-      'Nothing is added to Contacts until you choose it, and every match shows the page it came from.',
+      'If you already know which companies you want, name them and it lists the people it finds on their websites instead. Nothing is added to Contacts until you choose it, and every person shows the page they came from.',
     ],
     sections: [
       {
@@ -1214,6 +1220,23 @@ export const DOC_PAGES: DocPage[] = [
           'Click Create and run. Keep the page open while it works; progress and results appear as companies are checked.',
           'Review the People tab, select the people marked Ready to add, and choose a contact list.',
           'Use the Companies tab to see why a company qualified or was rejected, or to add it to your Signals watch list.',
+        ],
+      },
+      {
+        heading: 'Get the contacts at specific companies',
+        steps: [
+          'Click New search and choose Contacts at specific companies.',
+          'Enter up to 20 companies, one per line. Websites such as acme.com are the most reliable; a company name also works, and ReachConvert looks up its website first.',
+          'Optionally add the roles you care about, such as Head of HR. People in those roles are listed first, and everyone else named on the site is still shown.',
+          'Choose how many people to list per company and click Find contacts.',
+          'Review the People tab. A company already in your contacts is still looked up, and anyone who is already a contact is marked Already a contact.',
+        ],
+        callouts: [
+          {
+            tone: 'info',
+            title: 'Only what the website shows',
+            text: 'People are listed when the company’s own pages name them with a role. Sites that load their team page with JavaScript, or do not list staff, may return no one; the company card says so.',
+          },
         ],
       },
       {
@@ -1241,14 +1264,14 @@ export const DOC_PAGES: DocPage[] = [
           {
             tone: 'info',
             title: 'Emails are never guessed',
-            text: 'Prospect Finder does not build addresses such as firstname@company.com. Guessed addresses bounce and damage your sending reputation, so people without a published email stay in Needs email.',
+            text: 'Prospect Finder does not fill in addresses such as firstname@company.com. Guessed addresses bounce and damage your sending reputation, so people without a published email stay in Needs email. When published addresses at a company share a pattern, the company card shows it as a hint so you can confirm an address yourself.',
           },
         ],
       },
       {
         heading: 'Limits and cost',
         capabilities: [
-          { title: 'Per search', text: 'Up to 100 companies and 5 people per company.' },
+          { title: 'Per search', text: 'Up to 100 companies for a description search, up to 20 for a company lookup, and up to 20 people per company.' },
           { title: 'Per account', text: 'One running search at a time and 10 new searches per 24 hours.' },
           { title: 'Gemini usage', text: 'Billed to your own Gemini key. An estimate is shown before you run, and a search stops at a call budget of three per company plus five.' },
           { title: 'Retention', text: 'Companies and people you did not add are deleted after 90 days. Deleting a search removes everything it found; contacts you added are kept.' },
@@ -1267,6 +1290,7 @@ export const DOC_PAGES: DocPage[] = [
     ],
     tips: [
       'Start with ten companies to tune your description, then run a larger search.',
+      'Know the company already? Use Contacts at specific companies and enter its website for the most reliable result.',
       'If a search stops, open it and click Resume; it continues from the companies already checked.',
       'Opening a search in a second tab is fine, but only one tab should be running it.',
     ],

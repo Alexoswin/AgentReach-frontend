@@ -104,7 +104,7 @@ export const SEO_PAGES = {
     intro: 'Describe who you want to reach and ReachConvert finds matching companies, checks each one against its own public website, and lists the people it can verify, ready to add to your contacts.',
     description: 'Build an outreach list from a description of your ideal customer, with the evidence behind every match.',
     benefits: [
-      { title: 'Start from a sentence, not a spreadsheet', text: 'Describe the industry, size, location and role you sell to, then edit the profile before anything runs.' },
+      { title: 'Start from a sentence or a company name', text: 'Describe the industry, size, location and role you sell to, or enter the companies you already have in mind and get the people listed on their websites.' },
       { title: 'Every match shows its evidence', text: 'Each criterion links to the quote and page it came from, so you can see why a company qualified or was rejected.' },
       { title: 'Emails are published, never guessed', text: 'An email is kept only when it appears on the company website and matches the person; everyone else waits for you to confirm.' },
     ],
@@ -116,6 +116,7 @@ export const SEO_PAGES = {
     useCases: ['Building a first outreach list', 'Entering a new city or industry', 'Finding lookalikes of your best customers', 'Account-based prospecting', 'Founder-led sales', 'Partner and reseller research'],
     faqs: [
       { question: 'Where does the data come from?', answer: 'Gemini suggests companies that fit your description, and ReachConvert then reads each company’s own public website. Names and emails are kept only when they appear on a page that was read, and every match links to its source.' },
+      { question: 'Can I get the contacts of one specific company?', answer: 'Yes. Choose Contacts at specific companies, enter up to 20 websites or company names, and ReachConvert lists the people named on each company’s own website, with their role and a published email when there is one.' },
       { question: 'Does it guess email addresses?', answer: 'No. Guessed addresses bounce and damage your sending reputation. People without a published email are listed as Needs email so you can add one you know is correct.' },
       { question: 'Who pays for the searches?', answer: 'You do, through your own Gemini API key. An estimate is shown before a search runs and each search stops at a call budget.' },
       { question: 'Does it respect websites?', answer: 'Yes. It follows robots.txt, identifies itself as ReachConvertBot, keeps requests to one site at least a second apart, and only reads public pages.' },

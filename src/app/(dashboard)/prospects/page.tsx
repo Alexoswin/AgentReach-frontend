@@ -122,12 +122,7 @@ const splitList = (text: string) =>
     .filter(Boolean);
 const personName = (person: Person) => `${person.firstName} ${person.lastName}`;
 const formatPattern = (pattern: string, domain: string) =>
-  `${pattern
-    .replace("first", "john")
-    .replace("last", "smith")
-    .replace(/^f\./, "j.")
-    .replace(/^f(?=smith)/, "j")
-    .replace("johnl", "johns")}@${domain}`;
+  `${pattern}@${domain}`;
 
 function scoreStyle(score: number) {
   if (score >= 80) return "bg-emerald-500/10 text-emerald-400";
