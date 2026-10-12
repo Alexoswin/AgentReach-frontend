@@ -53,6 +53,14 @@ const EMAIL_STEPS = [
   'Use accurate sender names and subject lines, and keep your SES bounce and complaint rates low.',
 ];
 
+const PROSPECT_NOTES = [
+  'Prospect Finder reads only public pages, follows each site’s robots.txt, identifies itself as ReachConvertBot and keeps requests to one site at least a second apart.',
+  'It keeps a work email only when that address is published on the company’s own website and matches the person. It does not guess addresses and does not collect personal email addresses.',
+  'Every person and criterion keeps a link to the page it came from, and contacts you add carry their match score and source page.',
+  'People and companies you do not add are deleted after 90 days. Deleting a search deletes what it found; contacts you already added are kept.',
+  'It does not check opt-out lists. Finding someone on a website is not consent, so you still need a lawful reason to contact each person.',
+];
+
 const CALL_STEPS = [
   'Get the consent your jurisdiction requires before calling. In the US, the FCC confirmed in February 2024 that AI-generated voices count as “artificial” voices under the TCPA, which generally means prior express consent is needed.',
   'Check numbers against the do-not-call registry that applies to each recipient before importing them.',
@@ -157,6 +165,26 @@ export default function CompliancePage() {
                 <li key={step}>{step}</li>
               ))}
             </ol>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ---------------- Prospect data ---------------- */}
+      <section className="mx-auto mt-16 w-full max-w-5xl">
+        <Reveal>
+          <div className="sig-card p-7">
+            <h2 className="sig-display flex items-center gap-2.5 text-xl font-extrabold text-white">
+              <ShieldCheck className="h-5 w-5 text-indigo-400" />
+              Prospect data from Prospect Finder
+            </h2>
+            <ul className="mt-5 space-y-3">
+              {PROSPECT_NOTES.map((note) => (
+                <li key={note} className="flex items-start gap-2.5 text-sm leading-6 text-zinc-300">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                  {note}
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
       </section>

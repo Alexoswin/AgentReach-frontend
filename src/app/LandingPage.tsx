@@ -8,6 +8,7 @@ import {
   PhoneCall,
   Bot,
   Radar,
+  Telescope,
   Users,
   BarChart3,
   Check,
@@ -64,6 +65,12 @@ const FEATURES = [
     body: 'Track opens, replies, and call outcomes live, with template and segment performance in one view.',
     tone: 'a' as const,
   },
+  {
+    icon: Telescope,
+    title: 'Prospect Finder',
+    body: 'Describe your ideal customer and get matching companies and people, each checked against its own website, ready to add to your contacts.',
+    tone: 'a2' as const,
+  },
 ];
 
 const TONE_STYLES = {
@@ -95,7 +102,7 @@ const PLANS = [
     name: 'Hosted',
     tagline: 'Sign up at reachconvert.site and start in minutes.',
     points: [
-      'Email campaigns, AI calling, signals and analytics',
+      'Email campaigns, AI calling, signals, prospect finding and analytics',
       'Your data is private to your account',
       'Connect your own AWS SES, Twilio or Plivo, and Gemini keys',
     ],
@@ -404,7 +411,15 @@ export default function LandingPage() {
               const Icon = feature.icon;
               const tone = TONE_STYLES[feature.tone];
               return (
-                <Reveal key={feature.title} delay={(i % 3) * 90} className="h-full">
+                <Reveal
+                  key={feature.title}
+                  delay={(i % 3) * 90}
+                  className={`h-full ${
+                    i === FEATURES.length - 1 && FEATURES.length % 3 === 1
+                      ? 'lg:col-span-3'
+                      : ''
+                  }`}
+                >
                   <TiltCard className="group h-full">
                     <div className="tilt-body sig-card sig-ticks relative h-full overflow-hidden rounded-2xl p-6">
                       <div className="tilt-glare" />

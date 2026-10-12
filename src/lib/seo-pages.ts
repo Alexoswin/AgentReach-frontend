@@ -95,7 +95,33 @@ export const SEO_PAGES = {
       { question: 'Can I use my own email provider?', answer: 'Yes. ReachConvert sends through your own Amazon SES setup, giving you control over provider credentials and usage costs.' },
       { question: 'Does ReachConvert automatically manage opt-outs?', answer: 'You are responsible for adding opt-out language, honoring requests, and following the rules that apply to your recipients. Review the compliance guide before sending.' },
     ],
-    related: [{ label: 'AI calling', href: '/ai-calling' }, { label: 'Outreach automation', href: '/outreach-automation' }, { label: 'Email docs', href: '/documentation/email-campaigns' }],
+    related: [{ label: 'AI calling', href: '/ai-calling' }, { label: 'Outreach automation', href: '/outreach-automation' }, { label: 'Prospect Finder', href: '/prospect-finder' }, { label: 'Email docs', href: '/documentation/email-campaigns' }],
+  },
+  prospectFinder: {
+    path: '/prospect-finder',
+    eyebrow: 'PROSPECT FINDER',
+    title: 'Find prospects that match your ideal customer',
+    intro: 'Describe who you want to reach and ReachConvert finds matching companies, checks each one against its own public website, and lists the people it can verify, ready to add to your contacts.',
+    description: 'Build an outreach list from a description of your ideal customer, with the evidence behind every match.',
+    benefits: [
+      { title: 'Start from a sentence, not a spreadsheet', text: 'Describe the industry, size, location and role you sell to, then edit the profile before anything runs.' },
+      { title: 'Every match shows its evidence', text: 'Each criterion links to the quote and page it came from, so you can see why a company qualified or was rejected.' },
+      { title: 'Emails are published, never guessed', text: 'An email is kept only when it appears on the company website and matches the person; everyone else waits for you to confirm.' },
+    ],
+    steps: [
+      { title: 'Describe your ideal customer', text: 'Write a sentence about who you sell to, add up to three example customers, and review the profile it builds.' },
+      { title: 'Run the search', text: 'Companies are suggested, read from their own websites, scored and verified. Progress saves, so you can pause and resume.' },
+      { title: 'Add the people you approve', text: 'Select verified people, add them to a contact list, and start an email or AI calling campaign.' },
+    ],
+    useCases: ['Building a first outreach list', 'Entering a new city or industry', 'Finding lookalikes of your best customers', 'Account-based prospecting', 'Founder-led sales', 'Partner and reseller research'],
+    faqs: [
+      { question: 'Where does the data come from?', answer: 'Gemini suggests companies that fit your description, and ReachConvert then reads each company’s own public website. Names and emails are kept only when they appear on a page that was read, and every match links to its source.' },
+      { question: 'Does it guess email addresses?', answer: 'No. Guessed addresses bounce and damage your sending reputation. People without a published email are listed as Needs email so you can add one you know is correct.' },
+      { question: 'Who pays for the searches?', answer: 'You do, through your own Gemini API key. An estimate is shown before a search runs and each search stops at a call budget.' },
+      { question: 'Does it respect websites?', answer: 'Yes. It follows robots.txt, identifies itself as ReachConvertBot, keeps requests to one site at least a second apart, and only reads public pages.' },
+      { question: 'Is finding someone the same as having consent to contact them?', answer: 'No. You remain responsible for having a lawful reason to contact each person and for honouring opt-outs. Review the compliance guide before you send or call.' },
+    ],
+    related: [{ label: 'Outreach automation', href: '/outreach-automation' }, { label: 'Email automation', href: '/email-automation' }, { label: 'Compliance guide', href: '/compliance' }],
   },
   outreachAutomation: {
     path: '/outreach-automation',
@@ -119,6 +145,6 @@ export const SEO_PAGES = {
       { question: 'Why combine email and calling?', answer: 'Different prospects respond to different channels. Combining them gives teams more context and a way to coordinate follow-up without copying data between tools.' },
       { question: 'Is ReachConvert open source?', answer: 'Yes. ReachConvert is available under the AGPL-3.0 license and can be self-hosted. Provider costs for email, telephony, and AI are separate.' },
     ],
-    related: [{ label: 'AI calling', href: '/ai-calling' }, { label: 'Email automation', href: '/email-automation' }, { label: 'Compare outreach tools', href: '/compare' }],
+    related: [{ label: 'AI calling', href: '/ai-calling' }, { label: 'Email automation', href: '/email-automation' }, { label: 'Prospect Finder', href: '/prospect-finder' }, { label: 'Compare outreach tools', href: '/compare' }],
   },
 } satisfies Record<string, SEOFeaturePageData>;
