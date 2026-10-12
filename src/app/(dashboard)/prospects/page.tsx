@@ -87,7 +87,12 @@ type Person = {
 };
 
 type Estimate = { companies: number; costUsd: { min: number; max: number } };
-type PeopleFilter = "ready" | "needs_email" | "added" | "dismissed";
+type PeopleFilter =
+  | "ready"
+  | "needs_email"
+  | "added"
+  | "duplicate"
+  | "dismissed";
 type CompanyFilter = "qualified" | "rejected" | "unreachable";
 
 const SIGNAL_OPTIONS = ["hiring", "funding", "expansion", "product launch"];
@@ -1161,6 +1166,7 @@ export default function ProspectsPage() {
                       ["ready", "Ready to add"],
                       ["needs_email", "Needs email"],
                       ["added", "Added"],
+                      ["duplicate", "Already a contact"],
                       ["dismissed", "Dismissed"],
                     ] as [PeopleFilter, string][]
                   ).map(([value, label]) => (

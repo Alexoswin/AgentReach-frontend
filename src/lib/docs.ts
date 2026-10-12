@@ -17,7 +17,8 @@ export type DocIcon =
   | 'message'
   | 'history'
   | 'settings'
-  | 'user';
+  | 'user'
+  | 'search';
 
 export interface DocCapability {
   title: string;
@@ -249,6 +250,28 @@ const DIAGRAMS = {
   Match --> Playbooks
   Playbooks -->|"review mode"| Review
   Playbooks -->|"auto high confidence"| Trigger --> Email`,
+
+  prospects: String.raw`flowchart TB
+  Page["/prospects"]
+  Api["api.prospects"]
+  Controller["ProspectsController"]
+  Service["ProspectsService"]
+  Profile["Profile builder, Gemini JSON"]
+  Runner["Search runner, 50 second slices"]
+  Source["WebsiteSource, Gemini suggests companies"]
+  Reader["SiteReader, robots.txt and public addresses only"]
+  Analyze["Gemini checks the page text"]
+  Verify["Quotes, names and emails verified in code"]
+  Score["Score calculated in code"]
+  Data["ProspectSearch, ProspectCompany, Prospect"]
+  Contacts["ContactsService.importContacts"]
+  Watch["WatchService"]
+  Page --> Api --> Controller --> Service
+  Service --> Profile
+  Service --> Runner
+  Runner --> Source --> Reader --> Analyze --> Verify --> Score --> Data
+  Service --> Contacts
+  Service --> Watch`,
 
   settings: String.raw`flowchart TB
   Page["/settings"]
@@ -483,6 +506,44 @@ const FEATURE_ARCHITECTURE_PAGES: DocPage[] = [
     related: ['signals', 'architecture-contacts', 'architecture-email-campaigns'],
   },
   {
+    slug: 'architecture-prospect-finder',
+    title: 'Prospect Finder architecture',
+    tagline: 'Profile building, website reading, verification, scoring, and the hand-off to Contacts.',
+    icon: 'search',
+    category: 'Feature architecture',
+    intro: [
+      'Prospect Finder turns a plain-language description into verified people in Contacts. Gemini proposes companies and reads their websites; everything that ends up stored is checked in code, so a quote, a name or an email is only kept when it is on a page the site reader fetched.',
+    ],
+    sections: [
+      {
+        heading: 'Runtime flow',
+        body: [
+          'A search runs in slices of about 50 seconds. The page calls the run endpoint again while the result says it is not done, and progress is saved after every batch of three companies, so closing the tab only pauses the search and Resume continues from the saved state.',
+        ],
+        diagram: { caption: 'From description to verified prospects', chart: DIAGRAMS.prospects },
+      },
+      {
+        heading: 'Implementation map',
+        capabilities: [
+          { title: 'Frontend', text: '/prospects wizard, run loop with polling, companies and people views, add-to-contacts modal, and api.prospects methods.' },
+          { title: 'Backend', text: 'ProspectsController and ProspectsService, the search runner, profile builder, scoring, SiteReader, verification helpers, and the WebsiteSource candidate source.' },
+          { title: 'Data', text: 'ProspectSearch, ProspectCompany and Prospect. Unused rows expire after 90 days; adding a person to Contacts clears the expiry.' },
+          { title: 'Reuses', text: 'ContactsService.importContacts for duplicates and directories, WatchService for company watches, and the per-user Gemini key and text model from Settings.' },
+        ],
+      },
+      {
+        heading: 'Safeguards',
+        capabilities: [
+          { title: 'Network', text: 'The site reader only fetches public http and https addresses on ports 80 and 443, re-checks every redirect, and resolves addresses itself so private ranges are refused.' },
+          { title: 'Politeness', text: 'robots.txt is honoured for the ReachConvertBot agent, a failing robots.txt counts as disallowed, and requests to one host are at least a second apart.' },
+          { title: 'Evidence', text: 'A criterion only counts when its quote is found in the fetched text. People must be named on a fetched page, and an email must be published there at the company domain and match the person.' },
+          { title: 'Cost', text: 'One search at a time per user, ten searches per 24 hours, and a Gemini call budget of three per company plus five.' },
+        ],
+      },
+    ],
+    related: ['prospect-finder', 'architecture-contacts', 'architecture-signals'],
+  },
+  {
     slug: 'architecture-scheduler',
     title: 'Scheduler architecture',
     tagline: 'Mongo-backed scheduled email and calling campaign launches.',
@@ -552,7 +613,7 @@ export const DOC_PAGES: DocPage[] = [
     // this entry only feeds the index, sidebar, metadata and related links.
     intro: [],
     sections: [],
-    related: ['architecture-auth-profile', 'architecture-settings', 'architecture-contacts', 'architecture-email-campaigns', 'architecture-ai-calling', 'architecture-signals'],
+    related: ['architecture-auth-profile', 'architecture-settings', 'architecture-contacts', 'architecture-email-campaigns', 'architecture-ai-calling', 'architecture-signals', 'architecture-prospect-finder'],
   },
   ...FEATURE_ARCHITECTURE_PAGES,
 
@@ -596,7 +657,7 @@ export const DOC_PAGES: DocPage[] = [
         steps: [
           'Create your account and sign in — you land on the Outreach Dashboard.',
           'Open Settings and connect at least one channel: AWS SES for email, or a Gemini Live key for AI calling.',
-          'Go to Contacts and import a CSV/XLSX, mapping columns to name, email, company, and job title.',
+          'Go to Contacts and import a CSV/XLSX, mapping columns to name, email, company, and job title. No list yet? Describe your ideal customer in Prospect Finder and add the matches instead.',
           'Build a template under Email Campaigns (write it yourself or generate it with AI), then create a campaign and add contacts.',
           'Hit Launch and watch deliveries, opens, and replies stream into the Dashboard in real time.',
         ],
@@ -604,6 +665,10 @@ export const DOC_PAGES: DocPage[] = [
       {
         heading: 'What to set up next',
         capabilities: [
+          {
+            title: 'Find prospects',
+            text: 'Describe your ideal customer in Prospect Finder and add the verified matches to Contacts, with the page each one was found on.',
+          },
           {
             title: 'Turn on Signals',
             text: 'Importing contacts automatically starts watching their companies. Create a Playbook so funding, hiring, and news events trigger outreach on their own.',
@@ -648,6 +713,7 @@ export const DOC_PAGES: DocPage[] = [
       {
         heading: 'What connects to what',
         capabilities: [
+          { title: 'Prospect Finder -> Contacts', text: 'Verified matches are added to Contacts with their match score and source page, and can start Signals watches.' },
           { title: 'Contacts -> Campaigns', text: 'Email and calling campaigns pull audiences directly from contacts and directories.' },
           { title: 'Settings -> Delivery', text: 'Channel credentials in Settings control whether launches can actually send or call.' },
           { title: 'Signals -> Outreach', text: 'Signals and playbooks can trigger outreach automatically using your existing templates.' },
@@ -921,6 +987,72 @@ export const DOC_PAGES: DocPage[] = [
     ],
     related: ['signals', 'contacts', 'email-campaigns', 'personalized-bulk-email-without-spam'],
   },
+  {
+    slug: 'find-leads-matching-your-ideal-customer',
+    title: 'Find leads that match your ideal customer',
+    seoTitle: 'How to Find Leads That Match Your Ideal Customer Profile',
+    tagline: 'Describe who you sell to, check each company against its own website, and build a contact list from what you can verify.',
+    icon: 'search',
+    category: 'Guides',
+    audience: 'Founders and sales teams without a contact list yet',
+    lastReviewed: 'October 2026',
+    intro: [
+      'A list built from a vague idea of who might buy tends to mean wasted sends and a poor sender reputation. A better list starts from a sharp description of your best customer and checks each company against evidence.',
+      'This guide shows how to turn that description into a short list of companies and people you can contact, and what to check before you do.',
+    ],
+    sections: [
+      {
+        heading: 'Start from a sentence about one customer',
+        body: [
+          'Name the industry, the size, the place, the person you want to reach and one reason now is a good time. The more specific the sentence, the fewer companies you have to throw away.',
+        ],
+        code: {
+          caption: 'Descriptions that work well',
+          lines: [
+            'HR heads at Indian IT services companies with 200-1,000 employees that are hiring fast',
+            'Founders of seed-stage fintech startups in Bengaluru building lending products',
+            'Operations directors at logistics companies in the Netherlands with more than 50 trucks',
+          ],
+        },
+      },
+      {
+        heading: 'Find prospects in ReachConvert',
+        steps: [
+          'Open Prospect Finder and click New search. Paste your description, add up to three websites of customers you already have, and choose how many companies to look for.',
+          'Check the profile it builds: industries, locations, job titles, size and the buying signals that should count. Remove anything that is wrong and add exclusions.',
+          'Click Create and run. Companies appear as they are checked, each with a score and the quotes behind it.',
+          'Open the Companies tab and read why a company qualified or was rejected. Fix the profile and run a new search if the matches look off.',
+          'On the People tab, select the people marked Ready to add and add them to a contact list.',
+        ],
+      },
+      {
+        heading: 'What to check before you contact anyone',
+        capabilities: [
+          { title: 'The evidence', text: 'Open the source link next to a match. If the page does not support it, dismiss the person.' },
+          { title: 'People without email', text: 'Prospect Finder never guesses an address. If you know the right one, enter it; otherwise leave the person out.' },
+          { title: 'Your reason to contact', text: 'You need a lawful basis for each person, and many places require a clear way to opt out. See the compliance guide.' },
+        ],
+        callouts: [
+          {
+            tone: 'warning',
+            title: 'A match is not consent',
+            text: 'Finding someone on a company website does not give you permission to email or call them. Check the rules that apply to the person and your own message before you launch a campaign.',
+          },
+        ],
+      },
+      {
+        heading: 'Then reach out',
+        body: [
+          'Added contacts carry their match score and the page they were found on, so you can open a template with a detail that came from their own website. Use the contact list in an email or calling campaign, and let Signals watch the same companies for the right moment.',
+        ],
+      },
+    ],
+    tips: [
+      'Run a small search of ten companies first to tune the description before spending on a large one.',
+      'Add two or three customers you already have as examples; they steer the suggestions toward similar companies.',
+    ],
+    related: ['prospect-finder', 'contacts', 'signal-based-outreach', 'personalized-bulk-email-without-spam'],
+  },
 
   // ─────────────────────────────── Core features
   {
@@ -1055,8 +1187,90 @@ export const DOC_PAGES: DocPage[] = [
       'No external keys required to explore: without a Gemini key, a built-in keyword classifier handles signal typing so the whole flow works in dev.',
       'Use the “Add signal” button to inject a manual signal (e.g. “saw them speak at a conference”) and match it to a specific contact by email.',
       'Hit “Scan now” to run a collection poll immediately instead of waiting for the scheduled cycle.',
+      'Prospect Finder can add a matched company to your watch list with one click, and adding its people to Contacts starts a watch for their domain.',
     ],
     related: ['architecture-signals', 'contacts', 'email-campaigns', 'dashboard'],
+  },
+  {
+    slug: 'prospect-finder',
+    title: 'Prospect Finder',
+    tagline: 'Describe your ideal customer and add verified matches to Contacts.',
+    icon: 'search',
+    category: 'Core features',
+    audience: 'Sales teams and founders building an outreach list',
+    prerequisites: ['A Gemini API key saved in Settings.'],
+    lastReviewed: 'October 2026',
+    intro: [
+      'Prospect Finder builds a list from a description instead of a spreadsheet. You describe who you want to reach, it finds companies that look like a fit, checks each one against its own public website, and lists the people it can verify.',
+      'Nothing is added to Contacts until you choose it, and every match shows the page it came from.',
+    ],
+    sections: [
+      {
+        heading: 'How to use it',
+        steps: [
+          'Open Prospect Finder from the sidebar and click New search.',
+          'Describe your ideal customer, optionally add up to three example websites, and choose how many companies and people to look for.',
+          'Review the profile that is built from your description and edit the industries, locations, job titles, size, keywords, buying signals and exclusions.',
+          'Click Create and run. Keep the page open while it works; progress and results appear as companies are checked.',
+          'Review the People tab, select the people marked Ready to add, and choose a contact list.',
+          'Use the Companies tab to see why a company qualified or was rejected, or to add it to your Signals watch list.',
+        ],
+      },
+      {
+        heading: 'How it works',
+        steps: [
+          'Gemini turns your description into a profile and suggests real companies that fit it. Companies already in your contacts or watch list, and your exclusions, are left out.',
+          'For each company, the site reader checks robots.txt and reads the home page plus up to four linked pages such as about, team, careers and contact.',
+          'Gemini compares the text with your profile. A criterion only counts as met when its quote is found in the fetched text.',
+          'The score is calculated in code from fixed weights: industry 25, company size 20, location 15, buying signals 25 and keywords 15, using only the criteria in your profile.',
+          'A company needs at least 60%. A clear no on industry or location rejects it outright.',
+          'People are kept only when they are named on a page that was read. An email is kept only when it is published there at the company domain and matches the person.',
+        ],
+        diagram: { caption: 'From description to verified prospects', chart: DIAGRAMS.prospects },
+      },
+      {
+        heading: 'Reading the results',
+        capabilities: [
+          { title: 'Ready to add', text: 'A named person with an email that is published on the company website.' },
+          { title: 'Needs email', text: 'A named person without a published email. Add one you know is correct, or dismiss them.' },
+          { title: 'Added', text: 'Already saved to Contacts with the match score and the source page.' },
+          { title: 'Already a contact', text: 'The email matches a contact you had before the search.' },
+          { title: 'Could not read', text: 'The website was unreachable or does not allow automated access.' },
+        ],
+        callouts: [
+          {
+            tone: 'info',
+            title: 'Emails are never guessed',
+            text: 'Prospect Finder does not build addresses such as firstname@company.com. Guessed addresses bounce and damage your sending reputation, so people without a published email stay in Needs email.',
+          },
+        ],
+      },
+      {
+        heading: 'Limits and cost',
+        capabilities: [
+          { title: 'Per search', text: 'Up to 100 companies and 5 people per company.' },
+          { title: 'Per account', text: 'One running search at a time and 10 new searches per 24 hours.' },
+          { title: 'Gemini usage', text: 'Billed to your own Gemini key. An estimate is shown before you run, and a search stops at a call budget of three per company plus five.' },
+          { title: 'Retention', text: 'Companies and people you did not add are deleted after 90 days. Deleting a search removes everything it found; contacts you added are kept.' },
+        ],
+      },
+      {
+        heading: 'Compliance',
+        callouts: [
+          {
+            tone: 'warning',
+            title: 'You are responsible for how you contact people',
+            text: 'Finding a person on a public website is not consent. Check the rules for each person you contact, include a clear way to opt out, and keep the source of their details so you can say where you got them.',
+          },
+        ],
+      },
+    ],
+    tips: [
+      'Start with ten companies to tune your description, then run a larger search.',
+      'If a search stops, open it and click Resume; it continues from the companies already checked.',
+      'Opening a search in a second tab is fine, but only one tab should be running it.',
+    ],
+    related: ['find-leads-matching-your-ideal-customer', 'architecture-prospect-finder', 'contacts', 'signals', 'settings'],
   },
   {
     slug: 'contacts',
@@ -1095,6 +1309,12 @@ export const DOC_PAGES: DocPage[] = [
         ],
       },
       {
+        heading: 'Finding new contacts',
+        body: [
+          'No list yet? Prospect Finder turns a description of your ideal customer into companies and people you can verify, and adds the ones you approve here with their match score and source page.',
+        ],
+      },
+      {
         heading: 'Custom fields & personalization',
         body: [
           'Any column beyond the standard fields is stored as a custom field and becomes available as a template variable — for example a {{industry}} column becomes usable as a merge tag in your emails and calling scripts.',
@@ -1105,7 +1325,7 @@ export const DOC_PAGES: DocPage[] = [
       'Importing contacts automatically starts Signal watches for their company domains — no extra step to begin monitoring accounts.',
       'Keep company names consistent across rows so segment analytics and signal matching group them correctly.',
     ],
-    related: ['architecture-contacts', 'email-campaigns', 'signals', 'ai-calling'],
+    related: ['architecture-contacts', 'prospect-finder', 'email-campaigns', 'signals', 'ai-calling'],
   },
   {
     slug: 'email-campaigns',
@@ -1396,7 +1616,7 @@ export const DOC_PAGES: DocPage[] = [
           { title: 'AWS SES', text: 'Powers email delivery. Add your access key, secret, region, and sender address, then Test SES.' },
           { title: 'Gemini (Live)', text: 'Powers AI calling and signal classification. Add and verify your Gemini API key.' },
           { title: 'Twilio', text: 'Places the actual phone calls. Add your account SID, auth token, and phone number.' },
-          { title: 'Gemini (Text)', text: 'The same Gemini key backs AI text generation for templates. Pick a cheap text model such as gemini-2.5-flash-lite.' },
+          { title: 'Gemini (Text)', text: 'The same Gemini key backs AI text generation for templates and Prospect Finder. Pick one of the Flash models in the Text Model list; the default is the auto-updating Flash-Lite model.' },
         ],
         callouts: [
           {

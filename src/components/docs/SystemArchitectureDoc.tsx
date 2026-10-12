@@ -53,6 +53,7 @@ const MODULES: readonly {
   { name: 'calling-campaigns', file: 'calling-campaigns/', kinds: ['rest', 'webhook'], owns: 'Campaigns, dialing, provider callbacks, recordings', calls: 'Twilio or Plivo, Gemini Live preflight', stores: 'CallingCampaign, CallHistory' },
   { name: 'realtime-calling', file: 'realtime-calling/', kinds: ['realtime'], owns: 'The media sockets and the live Gemini session', calls: 'Gemini Live', stores: 'CallHistory', sub: true },
   { name: 'signals', file: 'signals/', kinds: ['rest', 'cron'], owns: 'Watches, collectors, playbooks, review queue', calls: 'News RSS, EDGAR, job boards, Gemini text', stores: 'CompanyWatch, Signal, SignalMatch, Playbook, TriggeredOutreach' },
+  { name: 'prospects', file: 'prospects/', kinds: ['rest'], owns: 'Prospect searches: profile, website reading, verification, scoring', calls: 'Gemini text, public company websites', stores: 'ProspectSearch, ProspectCompany, Prospect' },
   { name: 'scheduler', file: 'scheduler/', kinds: ['cron'], owns: 'Launches campaigns whose scheduled time has passed', calls: 'none, it calls the campaign services', stores: 'EmailCampaign, CallingCampaign' },
   { name: 'history', file: 'history/', kinds: ['rest'], owns: 'Sent email and past calls', calls: 'none', stores: 'reads only' },
   { name: 'analytics', file: 'analytics/', kinds: ['rest'], owns: 'Dashboard metrics', calls: 'none', stores: 'reads only' },
@@ -67,7 +68,7 @@ const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNo
       ['auth/auth.guard.ts', <>The global guard: Bearer token, user lookup, <code>@Public()</code> bypass.</>],
       ['auth/secrets.ts', 'JWT secret rules and the HMAC call tokens on provider callback URLs.'],
       ['settings/credential-encryption.ts', 'AES-256-GCM for provider keys, and the masking used in every response.'],
-      ['mongo.service.ts', <>Prisma-style delegates over the 16 Mongoose models in <code>schemas/</code>.</>],
+      ['mongo.service.ts', <>Prisma-style delegates over the 20 Mongoose models in <code>schemas/</code>.</>],
       ['email-campaigns/email-campaigns.service.ts', 'Launch checks, background SES sending, throttling retry.'],
       ['calling-campaigns/calling-campaigns.service.ts', 'Launch, Gemini preflight, dialing, webhooks, recordings.'],
       ['realtime-calling/realtime-calling.gateway.ts', 'The live call: sockets, Gemini session, noise gate, timers, transcript.'],
@@ -79,6 +80,8 @@ const FILES: readonly { group: string; rows: readonly (readonly [string, ReactNo
       ['signals/trigger.service.ts', 'Guardrails and the one-contact email campaign.'],
       ['signals/scheduler.service.ts', 'The six-hourly collector poll.'],
       ['scheduler/campaign-scheduler.service.ts', 'The every-minute campaign launcher.'],
+      ['prospects/search-runner.ts', 'Finds, reads, verifies and scores companies in resumable slices.'],
+      ['prospects/site-reader.ts', 'Fetches public pages: robots.txt, public addresses only, one request a second per site.'],
     ],
   },
   {
@@ -407,7 +410,7 @@ export default function SystemArchitectureDoc() {
 
       <Section id="data" title="Where the data lives">
         <p>
-          <code>MongoService</code> wraps 16 Mongoose models in Prisma-style delegates such as <code>findMany</code>,{' '}
+          <code>MongoService</code> wraps 20 Mongoose models in Prisma-style delegates such as <code>findMany</code>,{' '}
           <code>findUnique</code>, <code>create</code> and <code>update</code>, and maps Mongo&apos;s <code>_id</code> to{' '}
           <code>id</code>. Services read like a relational client while MongoDB stays the store. All accounts share one
           workspace, which is why sign-up is closed in production unless <code>ALLOW_REGISTRATION</code> is set.
@@ -433,6 +436,7 @@ export default function SystemArchitectureDoc() {
               <tr><td>Signal, SignalMatch</td><td>IngestionService, the review queue</td><td>The signals feed, the review queue</td></tr>
               <tr><td>Playbook</td><td>signals</td><td>IngestionService, TriggerService</td></tr>
               <tr><td>TriggeredOutreach</td><td>TriggerService</td><td>Signal stats, the guardrails</td></tr>
+              <tr><td>ProspectSearch, ProspectCompany, Prospect</td><td>prospects</td><td>The Prospect Finder page; adding a person writes a Contact</td></tr>
             </tbody>
           </table>
         </div>

@@ -24,6 +24,7 @@ const MODULES: readonly (readonly [string, string])[] = [
   ['ai-calling-bots', 'personas, knowledge'],
   ['calling-campaigns', 'dial, webhooks, recordings'],
   ['signals', 'watches, playbooks, review'],
+  ['prospects', 'ICP search, verified people'],
   ['history', 'sent email, past calls'],
   ['analytics', 'dashboard metrics'],
 ];
@@ -41,7 +42,7 @@ export default function SystemTopologyDiagram() {
       className="arch-svg"
       viewBox="0 0 1040 876"
       role="img"
-      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; In the NestJS backend, main.ts sets the /api prefix and hands the phone provider's WebSocket upgrades to the realtime gateway. REST requests pass the global AuthGuard into ten feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, and public signal sources, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
+      aria-label="ReachConvert system topology. In the browser, product pages call the backend through api.ts with a Bearer token; localAuth keeps tokens; In the NestJS backend, main.ts sets the /api prefix and hands the phone provider's WebSocket upgrades to the realtime gateway. REST requests pass the global AuthGuard into eleven feature modules; schedulers call the same modules on a timer. Modules call AWS SES, Gemini text, Twilio or Plivo, public signal sources and company websites, and receive signed webhooks from the phone provider. The realtime gateway bridges phone audio to Gemini Live. Every module persists through MongoService into MongoDB."
     >
       <Markers id={ID} />
 
@@ -114,9 +115,9 @@ export default function SystemTopologyDiagram() {
       <Title x={34} y={478} w={672} text="Feature modules" note="src/<module>/" />
       <line x1={50} y1={492} x2={690} y2={492} className="rule" />
       {MODULES.map(([name, role], i) => {
-        const col = Math.floor(i / 5);
+        const col = Math.floor(i / 6);
         const x = col === 0 ? 50 : 378;
-        const y = 516 + (i % 5) * 28;
+        const y = 516 + (i % 6) * 24;
         return (
           <g key={name}>
             <text x={x} y={y} className="mono mod">
@@ -135,7 +136,7 @@ export default function SystemTopologyDiagram() {
       <Box x={34} y={696} w={672} h={56} />
       <Title x={34} y={718} w={672} text="MongoService" note="mongo.service.ts" />
       <text x={50} y={740} className="body-s">
-        Prisma-style delegates over 16 Mongoose models, shared by every module and the gateway
+        Prisma-style delegates over 20 Mongoose models, shared by every module and the gateway
       </text>
 
       {/* ── Database ────────────────────────────────────────────── */}
