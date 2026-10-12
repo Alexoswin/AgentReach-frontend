@@ -37,6 +37,8 @@ type SettingsUpdate = {
   geminiApiKey?: string;
   geminiTextModel?: string;
   awsSenderEmail?: string;
+  replyTrackingDomain?: string;
+  replyTrackingTopicArn?: string;
   twilioAccountSid?: string;
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
@@ -65,6 +67,40 @@ type CampaignPayload = {
   status?: string;
   cc?: string[]; // CC email addresses
   bcc?: string[]; // BCC email addresses
+  trackOpens?: boolean;
+};
+export type EmailReply = {
+  id: string;
+  campaign: { id: string; name: string } | null;
+  contact: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    company?: string;
+  } | null;
+  subject?: string | null;
+  sentTime?: string | null;
+  repliedAt: string;
+  replySubject?: string | null;
+  replyText?: string | null;
+  read: boolean;
+};
+type ReplyListParams = {
+  page: number;
+  limit: number;
+  search?: string;
+  campaignId?: string;
+  unread?: boolean;
+};
+const replyQueryString = ({ unread, ...params }: ReplyListParams) => {
+  const query = new URLSearchParams();
+  Object.entries({ ...params, unread: unread ? "true" : "" }).forEach(
+    ([key, value]) => {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    },
+  );
+  return `?${query.toString()}`;
 };
 type CallingCampaignPayload = {
   [key: string]: unknown;
@@ -662,6 +698,16 @@ export const api = {
       request(`/email-campaigns/${id}/launch`, { method: "POST" }),
     relaunch: (id: string) =>
       request(`/email-campaigns/${id}/relaunch`, { method: "POST" }),
+    replies: (params: ReplyListParams) =>
+      request(`/email-campaigns/replies${replyQueryString(params)}`) as Promise<
+        Paginated<EmailReply> & { unreadCount: number }
+      >,
+    setReplyRead: (id: string, read: boolean) =>
+      request(`/email-campaigns/replies/${id}/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ read }),
+      }),
     schedule: (id: string, scheduledAt: string) =>
       request(`/email-campaigns/${id}/schedule`, {
         method: "POST",

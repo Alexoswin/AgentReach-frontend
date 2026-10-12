@@ -10,6 +10,7 @@ import {
   Key,
   Mail,
   Check,
+  Copy,
   RefreshCw,
 } from "lucide-react";
 
@@ -41,6 +42,20 @@ function SavedCredentialsHint() {
   );
 }
 
+/**
+ * Where SNS posts the replies SES receives. The backend URL when it is known
+ * at build time, otherwise this site's /api path, which proxies to it.
+ */
+function replyWebhookUrl() {
+  const backend = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+  const base = /^https?:\/\//.test(backend)
+    ? backend.endsWith("/api")
+      ? backend
+      : `${backend}/api`
+    : `${typeof window === "undefined" ? "" : window.location.origin}/api`;
+  return `${base}/email-track/inbound`;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Settings page                                                      */
 /* ------------------------------------------------------------------ */
@@ -52,6 +67,8 @@ export default function SettingsPage() {
   const [awsSecretAccessKey, setAwsSecretAccessKey] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [awsSenderEmail, setAwsSenderEmail] = useState("");
+  const [replyTrackingDomain, setReplyTrackingDomain] = useState("");
+  const [replyTrackingTopicArn, setReplyTrackingTopicArn] = useState("");
   const [geminiTextModel, setGeminiTextModel] = useState(
     DEFAULT_GEMINI_TEXT_MODEL,
   );
@@ -84,6 +101,8 @@ export default function SettingsPage() {
         setAwsSecretAccessKey(settings.awsSecretAccessKey || "");
         setAwsRegion(settings.awsRegion || "us-east-1");
         setAwsSenderEmail(settings.awsSenderEmail || "");
+        setReplyTrackingDomain(settings.replyTrackingDomain || "");
+        setReplyTrackingTopicArn(settings.replyTrackingTopicArn || "");
         setGeminiTextModel(
           settings.geminiTextModel || DEFAULT_GEMINI_TEXT_MODEL,
         );
@@ -239,6 +258,8 @@ export default function SettingsPage() {
       awsSecretAccessKey,
       awsRegion,
       awsSenderEmail,
+      replyTrackingDomain,
+      replyTrackingTopicArn,
       geminiApiKey,
       geminiTextModel,
       twilioAccountSid,
@@ -249,6 +270,25 @@ export default function SettingsPage() {
       plivoAuthToken,
       plivoPhoneNumber,
     });
+  };
+
+  // Mirrors the backend: Reply-To is only changed once replies can be both
+  // received and forwarded with the saved SES details.
+  const replyTrackingActive = Boolean(
+    settings?.replyTrackingDomain &&
+      settings?.replyTrackingTopicArn &&
+      settings?.awsAccessKeyId &&
+      settings?.awsSecretAccessKey &&
+      settings?.awsSenderEmail,
+  );
+
+  const copyWebhookUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(replyWebhookUrl());
+      showAlert("Webhook URL copied.", "success", "Copied");
+    } catch {
+      showAlert("Could not copy. Select the URL and copy it manually.", "error");
+    }
   };
 
   if (isLoading) {
@@ -353,6 +393,111 @@ export default function SettingsPage() {
               Test SES Connection
             </button>
             <SavedCredentialsHint />
+          </div>
+
+          {/* Reply tracking, in the same AWS account */}
+          <div className="space-y-4 border-t border-zinc-800/60 pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 className="text-sm font-bold text-white">
+                  Reply tracking{" "}
+                  <span className="font-normal text-zinc-500">(optional)</span>
+                </h4>
+                <p className="mt-0.5 text-[11px] text-zinc-500">
+                  Counts replies to campaign emails and shows them in Replies.
+                  Each reply is still forwarded to your sender address.
+                </p>
+              </div>
+              <StatusPill
+                status={replyTrackingActive ? "CONNECTED" : "DISCONNECTED"}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                  Reply domain
+                </label>
+                <input
+                  type="text"
+                  value={replyTrackingDomain}
+                  onChange={(e) => setReplyTrackingDomain(e.target.value)}
+                  placeholder="reply.yourdomain.com"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                  SNS topic ARN
+                </label>
+                <input
+                  type="text"
+                  value={replyTrackingTopicArn}
+                  onChange={(e) => setReplyTrackingTopicArn(e.target.value)}
+                  placeholder="arn:aws:sns:us-east-1:123456789012:campaign-replies"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                Webhook URL for the SNS subscription
+              </label>
+              <div className="flex gap-2">
+                <code className="flex-1 truncate rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs text-zinc-300">
+                  {replyWebhookUrl()}
+                </code>
+                <button
+                  type="button"
+                  onClick={copyWebhookUrl}
+                  className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs font-semibold text-zinc-300 hover:bg-zinc-900"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <details className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-xs text-zinc-400">
+              <summary className="cursor-pointer font-semibold text-zinc-300">
+                How to set it up in AWS
+              </summary>
+              <ol className="mt-3 list-decimal space-y-2 pl-4 leading-relaxed">
+                <li>
+                  Pick a subdomain used only for replies, such as{" "}
+                  <code>reply.yourdomain.com</code>, and verify it in SES. Use
+                  a region where SES can receive email (for example us-east-1,
+                  us-west-2 or eu-west-1).
+                </li>
+                <li>
+                  Add an MX record for that subdomain pointing to{" "}
+                  <code>inbound-smtp.&lt;region&gt;.amazonaws.com</code>
+                  (priority 10). Don&apos;t use your main domain: its mail
+                  would stop reaching your inbox.
+                </li>
+                <li>
+                  In SNS, create a topic. Enter the reply domain and the
+                  topic&apos;s ARN above and save.
+                </li>
+                <li>
+                  Then add an HTTPS subscription on the topic to the webhook
+                  URL above. It confirms itself, because the topic is saved
+                  here.
+                </li>
+                <li>
+                  In SES, create a receipt rule for the subdomain with an{" "}
+                  <strong>SNS action</strong> that publishes to that topic,
+                  encoding UTF-8.
+                </li>
+              </ol>
+              <p className="mt-3 text-zinc-500">
+                Replies are forwarded to your sender address from itself. SES
+                only passes emails up to 150 KB to SNS and bounces larger ones
+                back to the sender, so replies with big attachments
+                won&apos;t come through.
+              </p>
+            </details>
           </div>
         </div>
 

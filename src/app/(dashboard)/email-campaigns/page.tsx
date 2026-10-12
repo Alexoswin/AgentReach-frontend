@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { useDebouncedValue } from "@/lib/pagination";
 import { api } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   Mail,
   Search,
@@ -94,6 +94,13 @@ type EmailCampaign = {
   pendingCount?: number;
   failedCount?: number;
   sentCount?: number;
+  openedCount?: number;
+  repliedCount?: number;
+  openRate?: number;
+  replyRate?: number;
+  trackOpens?: boolean;
+  // CC/BCC copies share the tracking image, so their opens are counted too.
+  opensIncludeCopies?: boolean;
   cc?: string[];
   bcc?: string[];
   // findAll returns a { id, name } projection alongside each campaign.
@@ -106,10 +113,22 @@ type EmailCampaignContact = {
   deliveryStatus: string;
   openStatus?: boolean;
   replyStatus?: boolean;
+  firstOpenedAt?: string | null;
+  repliedAt?: string | null;
+  replySubject?: string | null;
+  replyText?: string | null;
+};
+type CampaignStats = {
+  sentCount: number;
+  openedCount: number;
+  repliedCount: number;
+  openRate: number;
+  replyRate: number;
 };
 type EmailCampaignDetails = EmailCampaign & {
   contacts?: EmailCampaignContact[];
   template?: Template | null;
+  stats?: CampaignStats;
 };
 type CampaignLaunchResult = {
   message?: string;
@@ -136,6 +155,66 @@ const formatBytes = (bytes: number) =>
   bytes >= 1024 * 1024
     ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+const formatDateTime = (value?: string | null) =>
+  value ? new Date(value).toLocaleString() : "";
+
+/**
+ * Sent / open / reply numbers for one campaign. Opens are approximate: some
+ * mail apps load images on the reader's behalf and others block them.
+ */
+function CampaignEngagement({
+  stats,
+  trackOpens,
+  opensIncludeCopies,
+}: {
+  stats: CampaignStats;
+  trackOpens: boolean;
+  opensIncludeCopies?: boolean;
+}) {
+  const tiles = [
+    { label: "Sent", value: String(stats.sentCount), detail: "emails" },
+    {
+      label: "Open rate",
+      value: trackOpens ? `${stats.openRate}%` : "Off",
+      detail: trackOpens
+        ? `${stats.openedCount} opened (approx.)`
+        : "Open tracking is off",
+    },
+    {
+      label: "Reply rate",
+      value: `${stats.replyRate}%`,
+      detail: `${stats.repliedCount} replied`,
+    },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-3">
+        {tiles.map((tile) => (
+          <div
+            key={tile.label}
+            className="rounded-2xl border border-zinc-850 bg-zinc-900/30 px-4 py-3"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              {tile.label}
+            </p>
+            <p className="mt-1 font-mono text-xl font-bold text-white">
+              {tile.value}
+            </p>
+            <p className="text-[11px] text-zinc-500">{tile.detail}</p>
+          </div>
+        ))}
+      </div>
+      {trackOpens && opensIncludeCopies && (
+        <p className="text-[11px] text-amber-200/70">
+          This campaign CCs or BCCs other addresses. They get the same tracking
+          image, so their opens are counted as the recipient&apos;s.
+        </p>
+      )}
+    </div>
+  );
+}
 
 /**
  * Chip-style entry for CC/BCC addresses. Commits on Enter, comma, or blur so a
@@ -249,6 +328,8 @@ export default function EmailCampaignsPage() {
   const [campaignName, setCampaignName] = useState("");
   const [campaignCc, setCampaignCc] = useState<string[]>([]);
   const [campaignBcc, setCampaignBcc] = useState<string[]>([]);
+  const [campaignTrackOpens, setCampaignTrackOpens] = useState(true);
+  const [expandedReplyId, setExpandedReplyId] = useState<string | null>(null);
   const [isEditingCopyLists, setIsEditingCopyLists] = useState(false);
   const [editCc, setEditCc] = useState<string[]>([]);
   const [editBcc, setEditBcc] = useState<string[]>([]);
@@ -381,6 +462,7 @@ export default function EmailCampaignsPage() {
       templateId: string;
       cc?: string[];
       bcc?: string[];
+      trackOpens?: boolean;
     }) => api.emailCampaigns.create(data) as Promise<EmailCampaign>,
     onSuccess: async (newCampaign) => {
       // Associate selected contacts before reporting success, so a failure
@@ -538,6 +620,32 @@ export default function EmailCampaignsPage() {
         getErrorMessage(
           err,
           "We could not update this campaign. Please try again.",
+        ),
+        "error",
+      );
+    },
+  });
+
+  const updateTrackOpensMutation = useMutation<
+    EmailCampaign,
+    Error,
+    { id: string; trackOpens: boolean }
+  >({
+    mutationFn: ({ id, trackOpens }) =>
+      api.emailCampaigns.update(id, { trackOpens }) as Promise<EmailCampaign>,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-campaigns"] });
+      if (selectedCampaignId) {
+        queryClient.invalidateQueries({
+          queryKey: ["email-campaign", selectedCampaignId],
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      showAlert(
+        getErrorMessage(
+          err,
+          "We could not change open tracking for this campaign. Please try again.",
         ),
         "error",
       );
@@ -981,6 +1089,7 @@ export default function EmailCampaignsPage() {
       templateId: selectedTemplateId,
       cc: campaignCc,
       bcc: campaignBcc,
+      trackOpens: campaignTrackOpens,
     });
   };
 
@@ -989,6 +1098,7 @@ export default function EmailCampaignsPage() {
     setCampaignName("");
     setCampaignCc([]);
     setCampaignBcc([]);
+    setCampaignTrackOpens(true);
     setSelectedTemplateId(null);
     setSelectedContactIds([]);
     setSelectedContactDirectoryId("all");
@@ -1726,6 +1836,25 @@ export default function EmailCampaignsPage() {
                         Created on{" "}
                         {new Date(camp.createdAt).toLocaleDateString()}
                       </p>
+                      {(camp.sentCount || 0) > 0 && (
+                        <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-zinc-400">
+                          <span>{camp.sentCount} sent</span>
+                          {camp.trackOpens !== false && (
+                            <span title="Approximate: some mail apps load or block images">
+                              <span className="font-semibold text-purple-300">
+                                {camp.openRate ?? 0}%
+                              </span>{" "}
+                              opened
+                            </span>
+                          )}
+                          <span>
+                            <span className="font-semibold text-emerald-300">
+                              {camp.replyRate ?? 0}%
+                            </span>{" "}
+                            replied
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -2310,6 +2439,36 @@ export default function EmailCampaignsPage() {
                 </div>
               )}
 
+              {campaignDetails.stats && (
+                <div className="space-y-3">
+                  {campaignDetails.stats.sentCount > 0 && (
+                    <CampaignEngagement
+                      stats={campaignDetails.stats}
+                      trackOpens={campaignDetails.trackOpens !== false}
+                      opensIncludeCopies={campaignDetails.opensIncludeCopies}
+                    />
+                  )}
+                  <label className="flex items-center gap-2 text-xs text-zinc-400">
+                    <input
+                      type="checkbox"
+                      checked={campaignDetails.trackOpens !== false}
+                      disabled={
+                        updateTrackOpensMutation.isPending ||
+                        campaignDetails.status === "RUNNING"
+                      }
+                      onChange={(e) =>
+                        updateTrackOpensMutation.mutate({
+                          id: campaignDetails.id,
+                          trackOpens: e.target.checked,
+                        })
+                      }
+                      className="h-3.5 w-3.5 accent-indigo-500"
+                    />
+                    Track opens on emails this campaign sends from now on
+                  </label>
+                </div>
+              )}
+
               {/* Contacts Table in Campaign */}
               <div className="bg-zinc-900/30 border border-zinc-850 rounded-2xl overflow-hidden shadow-xl">
                 <div className="px-6 py-4 border-b border-zinc-850 flex justify-between items-center">
@@ -2345,11 +2504,12 @@ export default function EmailCampaignsPage() {
                             FAILED: "bg-rose-500/10 text-rose-400",
                           };
 
+                          const showReply =
+                            expandedReplyId === cc.id && !!cc.replyText;
+
                           return (
-                            <tr
-                              key={cc.id}
-                              className="hover:bg-zinc-900/40 transition-colors"
-                            >
+                            <Fragment key={cc.id}>
+                            <tr className="hover:bg-zinc-900/40 transition-colors">
                               <td className="px-6 py-4 font-semibold text-white">
                                 {cc.contact.firstName} {cc.contact.lastName}
                               </td>
@@ -2365,7 +2525,14 @@ export default function EmailCampaignsPage() {
                               </td>
                               <td className="px-6 py-4">
                                 {cc.openStatus ? (
-                                  <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
+                                  <span
+                                    title={
+                                      cc.firstOpenedAt
+                                        ? `First opened ${formatDateTime(cc.firstOpenedAt)}`
+                                        : undefined
+                                    }
+                                    className="text-xs text-emerald-400 font-bold flex items-center gap-1"
+                                  >
                                     <CheckCircle className="h-3.5 w-3.5" />{" "}
                                     Opened
                                   </span>
@@ -2375,10 +2542,29 @@ export default function EmailCampaignsPage() {
                               </td>
                               <td className="px-6 py-4">
                                 {cc.replyStatus ? (
-                                  <span className="text-xs text-indigo-400 font-bold flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    disabled={!cc.replyText}
+                                    title={
+                                      cc.repliedAt
+                                        ? `Replied ${formatDateTime(cc.repliedAt)}`
+                                        : undefined
+                                    }
+                                    onClick={() =>
+                                      setExpandedReplyId(
+                                        showReply ? null : cc.id,
+                                      )
+                                    }
+                                    className="text-xs text-indigo-400 font-bold flex items-center gap-1 enabled:hover:text-indigo-300"
+                                  >
                                     <CheckCircle className="h-3.5 w-3.5" />{" "}
                                     Replied
-                                  </span>
+                                    {cc.replyText && (
+                                      <span className="font-medium text-zinc-500">
+                                        {showReply ? "· hide" : "· view"}
+                                      </span>
+                                    )}
+                                  </button>
                                 ) : (
                                   <span className="text-zinc-650">-</span>
                                 )}
@@ -2406,6 +2592,20 @@ export default function EmailCampaignsPage() {
                                 </button>
                               </td>
                             </tr>
+                            {showReply && (
+                              <tr className="bg-zinc-950/60">
+                                <td colSpan={6} className="px-6 py-4">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                                    {cc.replySubject || "Reply"} ·{" "}
+                                    {formatDateTime(cc.repliedAt)}
+                                  </p>
+                                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+                                    {cc.replyText}
+                                  </p>
+                                </td>
+                              </tr>
+                            )}
+                            </Fragment>
                           );
                         })
                       ) : (
@@ -2488,6 +2688,25 @@ export default function EmailCampaignsPage() {
                   (address) => !EMAIL_PATTERN.test(address),
                 )}
               />
+
+              <label className="flex items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={campaignTrackOpens}
+                  onChange={(e) => setCampaignTrackOpens(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-indigo-500"
+                />
+                <span>
+                  <span className="block text-xs font-semibold text-zinc-300">
+                    Track opens
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-zinc-500">
+                    Adds an invisible image to HTML emails to count opens.
+                    Plain-text emails can&apos;t be tracked. Replies are
+                    tracked either way.
+                  </span>
+                </span>
+              </label>
 
               {campaignCc.length + campaignBcc.length > 0 && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
