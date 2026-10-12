@@ -14,7 +14,18 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const DEFAULT_GEMINI_TEXT_MODEL = "gemini-2.5-flash-lite";
+// Mirrors GEMINI_TEXT_MODEL_OPTIONS in the backend's config/gemini-text.ts.
+const GEMINI_TEXT_MODEL_OPTIONS: Array<{ value: string; label: string }> = [
+  {
+    value: "gemini-flash-lite-latest",
+    label: "Flash-Lite latest (auto-updates)",
+  },
+  { value: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite" },
+  { value: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite" },
+  { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
+  { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash" },
+];
+const DEFAULT_GEMINI_TEXT_MODEL = GEMINI_TEXT_MODEL_OPTIONS[0].value;
 const MASKED_CREDENTIAL = "••••••••••••••••";
 
 function StatusPill({ status }: { status?: string }) {
@@ -104,7 +115,11 @@ export default function SettingsPage() {
         setReplyTrackingDomain(settings.replyTrackingDomain || "");
         setReplyTrackingTopicArn(settings.replyTrackingTopicArn || "");
         setGeminiTextModel(
-          settings.geminiTextModel || DEFAULT_GEMINI_TEXT_MODEL,
+          GEMINI_TEXT_MODEL_OPTIONS.some(
+            (option) => option.value === settings.geminiTextModel,
+          )
+            ? settings.geminiTextModel
+            : DEFAULT_GEMINI_TEXT_MODEL,
         );
         setTwilioAccountSid(settings.twilioAccountSid || "");
         setTwilioAuthToken(settings.twilioAuthToken || "");
@@ -730,16 +745,20 @@ export default function SettingsPage() {
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 Text Model (for email templates)
               </label>
-              <input
-                type="text"
+              <select
                 value={geminiTextModel}
                 onChange={(e) => setGeminiTextModel(e.target.value)}
-                placeholder={DEFAULT_GEMINI_TEXT_MODEL}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-200 focus:border-indigo-500/50 focus:outline-none"
-              />
+              >
+                {GEMINI_TEXT_MODEL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <p className="mt-2 text-[11px] text-zinc-500">
                 Cheap Gemini text model used to generate email templates.
-                Default: {DEFAULT_GEMINI_TEXT_MODEL}.
+                Default: {GEMINI_TEXT_MODEL_OPTIONS[0].label}.
               </p>
             </div>
           </div>
