@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import Pagination from "@/components/Pagination";
 import { useDebouncedValue } from "@/lib/pagination";
 import { api } from "@/lib/api";
@@ -423,6 +424,15 @@ export default function EmailCampaignsPage() {
     queryKey: ["settings"],
     queryFn: api.settings.get,
   });
+  // Same rule the backend uses before it routes replies through the
+  // reply domain (see replyDomainFor).
+  const replyTrackingActive = Boolean(
+    settings?.replyTrackingDomain &&
+      settings?.replyTrackingTopicArn &&
+      settings?.awsAccessKeyId &&
+      settings?.awsSecretAccessKey &&
+      settings?.awsSenderEmail,
+  );
 
   // Fetch templates for selection
   const { data: templates = [] } = useQuery<Template[]>({
@@ -2466,6 +2476,20 @@ export default function EmailCampaignsPage() {
                     />
                     Track opens on emails this campaign sends from now on
                   </label>
+                  {!replyTrackingActive && (
+                    <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-[11px] leading-relaxed text-amber-200/80">
+                      Reply tracking is off, so replies go straight to your
+                      sender inbox and are not counted here. Set it up under{" "}
+                      <Link
+                        href="/settings"
+                        className="font-semibold text-amber-300 underline"
+                      >
+                        Settings → Reply tracking
+                      </Link>
+                      . It applies to emails sent after that; earlier emails
+                      can&apos;t be tracked.
+                    </p>
+                  )}
                 </div>
               )}
 
