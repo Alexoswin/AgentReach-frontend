@@ -50,6 +50,8 @@ type Search = {
   peoplePerCompany: number;
   createdAt: string;
   profile: Profile;
+  mode?: "icp" | "companies";
+  targets?: string[];
 };
 
 type Criterion = {
@@ -69,6 +71,7 @@ type Company = {
   score: number;
   status: string;
   reason?: string;
+  emailPattern?: string;
 };
 
 type Person = {
@@ -88,11 +91,7 @@ type Person = {
 
 type Estimate = { companies: number; costUsd: { min: number; max: number } };
 type PeopleFilter =
-  | "ready"
-  | "needs_email"
-  | "added"
-  | "duplicate"
-  | "dismissed";
+  "ready" | "needs_email" | "added" | "duplicate" | "dismissed";
 type CompanyFilter = "qualified" | "rejected" | "unreachable";
 
 const SIGNAL_OPTIONS = ["hiring", "funding", "expansion", "product launch"];
@@ -122,6 +121,13 @@ const splitList = (text: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 const personName = (person: Person) => `${person.firstName} ${person.lastName}`;
+const formatPattern = (pattern: string, domain: string) =>
+  `${pattern
+    .replace("first", "john")
+    .replace("last", "smith")
+    .replace(/^f\./, "j.")
+    .replace(/^f(?=smith)/, "j")
+    .replace("johnl", "johns")}@${domain}`;
 
 function scoreStyle(score: number) {
   if (score >= 80) return "bg-emerald-500/10 text-emerald-400";
@@ -193,6 +199,10 @@ function NewSearchModal({
   onCreated: (id: string) => void;
 }) {
   const { showAlert } = useOutreachStore();
+  const [kind, setKind] = useState<"icp" | "companies">("icp");
+  const [companiesText, setCompaniesText] = useState("");
+  const [lookupTitles, setLookupTitles] = useState<string[]>([]);
+  const [lookupPeople, setLookupPeople] = useState(5);
   const [step, setStep] = useState<"describe" | "review">("describe");
   const [description, setDescription] = useState("");
   const [examples, setExamples] = useState("");
@@ -232,6 +242,19 @@ function NewSearchModal({
       showAlert(err.message || "Could not create the search.", "error"),
   });
 
+  const lookupMutation = useMutation({
+    mutationFn: () =>
+      api.prospects.createSearch({
+        mode: "companies",
+        companies: splitList(companiesText),
+        profile: { jobTitles: lookupTitles },
+        peoplePerCompany: lookupPeople,
+      }),
+    onSuccess: (search: LooseApiResponse) => onCreated(search.id),
+    onError: (err: Error) =>
+      showAlert(err.message || "Could not create the search.", "error"),
+  });
+
   const patch = (change: Partial<Profile>) =>
     setProfile((current) => (current ? { ...current, ...change } : current));
   const sizeValue = (value?: number) => (value === undefined ? "" : value);
@@ -253,7 +276,11 @@ function NewSearchModal({
         <div className="mb-5 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-bold text-white">
             <Telescope className="h-5 w-5 text-indigo-400" />
-            {step === "describe" ? "Who do you want to reach?" : "Review the profile"}
+            {kind === "companies"
+              ? "Which companies?"
+              : step === "describe"
+                ? "Who do you want to reach?"
+                : "Review the profile"}
           </h3>
           <button
             onClick={onClose}
@@ -264,7 +291,96 @@ function NewSearchModal({
           </button>
         </div>
 
-        {step === "describe" && (
+        <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-zinc-800 bg-zinc-950 p-1">
+          {(
+            [
+              ["icp", "Find matching companies"],
+              ["companies", "Contacts at specific companies"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setKind(value)}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                kind === value
+                  ? "bg-indigo-600 text-white"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {kind === "companies" && (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
+                Companies (one per line, up to 20)
+              </label>
+              <textarea
+                value={companiesText}
+                onChange={(event) => setCompaniesText(event.target.value)}
+                rows={5}
+                placeholder={"acme.com\nglobex.io\nInitech"}
+                className={INPUT_CLASS}
+              />
+              <p className="mt-1.5 text-[11px] text-zinc-500">
+                Websites are the most reliable. A company name works too, but we
+                have to look up its website first.
+              </p>
+            </div>
+            <TagInput
+              label="Roles you care about (optional)"
+              values={lookupTitles}
+              onChange={setLookupTitles}
+              placeholder="Head of HR, CTO"
+            />
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
+                People per company
+              </label>
+              <select
+                value={lookupPeople}
+                onChange={(event) =>
+                  setLookupPeople(Number(event.target.value))
+                }
+                className={INPUT_CLASS}
+              >
+                {[3, 5, 10, 20].map((count) => (
+                  <option key={count} value={count}>
+                    Up to {count}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-[11px] leading-5 text-zinc-400">
+              We read each company&apos;s public team, leadership and contact
+              pages. People are listed when they are named there, and an email
+              is only filled in when it is published on the site.
+            </p>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => lookupMutation.mutate()}
+                disabled={
+                  splitList(companiesText).length === 0 ||
+                  lookupMutation.isPending
+                }
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:brightness-110 disabled:opacity-60"
+              >
+                {lookupMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" />
+                )}
+                Find contacts
+              </button>
+            </div>
+          </div>
+        )}
+
+        {kind === "icp" && step === "describe" && (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
@@ -300,7 +416,9 @@ function NewSearchModal({
                 </label>
                 <select
                   value={maxCompanies}
-                  onChange={(event) => setMaxCompanies(Number(event.target.value))}
+                  onChange={(event) =>
+                    setMaxCompanies(Number(event.target.value))
+                  }
                   className={INPUT_CLASS}
                 >
                   {[10, 25, 50, 100].map((count) => (
@@ -348,7 +466,7 @@ function NewSearchModal({
           </div>
         )}
 
-        {step === "review" && profile && (
+        {kind === "icp" && step === "review" && profile && (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
@@ -593,9 +711,8 @@ function AddToContactsModal({
             Update people who are already in my contacts
           </label>
           <p className="text-[11px] leading-5 text-zinc-500">
-            Each contact keeps its match score and the page it was found on.
-            You are responsible for having a lawful reason to contact them; see
-            the{" "}
+            Each contact keeps its match score and the page it was found on. You
+            are responsible for having a lawful reason to contact them; see the{" "}
             <Link href="/compliance" className="text-indigo-400 underline">
               compliance guide
             </Link>
@@ -623,10 +740,12 @@ function CompanyCard({
   company,
   onWatch,
   watching,
+  lookup,
 }: {
   company: Company;
   onWatch: (id: string) => void;
   watching: boolean;
+  lookup: boolean;
 }) {
   const verdictIcon = {
     yes: <Check className="h-3.5 w-3.5 text-emerald-400" />,
@@ -650,7 +769,8 @@ function CompanyCard({
             {company.domain} <ExternalLink className="h-3 w-3" />
           </a>
         </div>
-        {company.status === "qualified" || company.status === "rejected" ? (
+        {!lookup &&
+        (company.status === "qualified" || company.status === "rejected") ? (
           <span
             className={`rounded-md px-2 py-1 text-xs font-bold ${scoreStyle(company.score)}`}
           >
@@ -663,6 +783,15 @@ function CompanyCard({
       )}
       {company.reason && (
         <p className="mt-2 text-xs text-amber-400">{company.reason}</p>
+      )}
+      {company.emailPattern && (
+        <p className="mt-2 text-xs text-zinc-400">
+          Published emails here look like{" "}
+          <span className="font-mono text-zinc-200">
+            {formatPattern(company.emailPattern, company.domain)}
+          </span>
+          . Confirm an address before you use it.
+        </p>
       )}
       {company.criteria.length > 0 && (
         <ul className="mt-3 space-y-1.5">
@@ -719,8 +848,12 @@ function PersonRow({
   onSaveEmail,
   onAction,
   busy,
+  showMatch,
+  pattern,
 }: {
   person: Person;
+  showMatch: boolean;
+  pattern?: string;
   selected: boolean;
   onToggle: () => void;
   onSaveEmail: (email: string) => void;
@@ -753,32 +886,42 @@ function PersonRow({
         {person.email ? (
           <p className="break-all">{person.email}</p>
         ) : person.status === "needs_email" ? (
-          <div className="flex items-center gap-1.5">
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={`name@${person.domain}`}
-              className="w-44 rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-indigo-500/50"
-            />
-            <button
-              onClick={() => onSaveEmail(email.trim())}
-              disabled={!email.trim() || busy}
-              className="rounded-lg border border-zinc-800 px-2 py-1.5 font-semibold hover:bg-zinc-900 disabled:opacity-50"
-            >
-              Save
-            </button>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={`name@${person.domain}`}
+                className="w-44 rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-indigo-500/50"
+              />
+              <button
+                onClick={() => onSaveEmail(email.trim())}
+                disabled={!email.trim() || busy}
+                className="rounded-lg border border-zinc-800 px-2 py-1.5 font-semibold hover:bg-zinc-900 disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+            {pattern && (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                Published emails at this company look like{" "}
+                {formatPattern(pattern, person.domain)}
+              </p>
+            )}
           </div>
         ) : (
           <span className="text-zinc-500">—</span>
         )}
       </td>
-      <td className="px-3 py-3">
-        <span
-          className={`rounded-md px-2 py-1 font-bold ${scoreStyle(person.score)}`}
-        >
-          {person.score}%
-        </span>
-      </td>
+      {showMatch && (
+        <td className="px-3 py-3">
+          <span
+            className={`rounded-md px-2 py-1 font-bold ${scoreStyle(person.score)}`}
+          >
+            {person.score}%
+          </span>
+        </td>
+      )}
       <td className="px-3 py-3">
         {person.sourceUrl ? (
           <a
@@ -824,7 +967,8 @@ export default function ProspectsPage() {
   const [runningId, setRunningId] = useState<string | null>(null);
   const [tab, setTab] = useState<"companies" | "people">("people");
   const [peopleFilter, setPeopleFilter] = useState<PeopleFilter>("ready");
-  const [companyFilter, setCompanyFilter] = useState<CompanyFilter>("qualified");
+  const [companyFilter, setCompanyFilter] =
+    useState<CompanyFilter>("qualified");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
   const stopRef = useRef(false);
@@ -850,6 +994,7 @@ export default function ProspectsPage() {
     : [];
   const selected = searches.find((search) => search.id === selectedId) || null;
   const live = Boolean(selected) && runningId === selectedId;
+  const lookup = selected?.mode === "companies";
 
   const companiesQuery = useQuery({
     queryKey: ["prospect-companies", selectedId],
@@ -919,7 +1064,8 @@ export default function ProspectsPage() {
       stopRef.current = true;
       refresh();
     },
-    onError: (err: Error) => showAlert(err.message || "Could not cancel.", "error"),
+    onError: (err: Error) =>
+      showAlert(err.message || "Could not cancel.", "error"),
   });
 
   const removeMutation = useMutation({
@@ -928,7 +1074,8 @@ export default function ProspectsPage() {
       setSelectedId(null);
       refresh();
     },
-    onError: (err: Error) => showAlert(err.message || "Could not delete.", "error"),
+    onError: (err: Error) =>
+      showAlert(err.message || "Could not delete.", "error"),
   });
 
   const watchMutation = useMutation({
@@ -937,7 +1084,8 @@ export default function ProspectsPage() {
       queryClient.invalidateQueries({ queryKey: ["signal-watches"] });
       showAlert("Company added to your Signals watch list.", "success");
     },
-    onError: (err: Error) => showAlert(err.message || "Could not watch.", "error"),
+    onError: (err: Error) =>
+      showAlert(err.message || "Could not watch.", "error"),
   });
 
   const personMutation = useMutation({
@@ -949,8 +1097,19 @@ export default function ProspectsPage() {
       data: { email?: string; action?: "dismissed" | "restore" };
     }) => api.prospects.updatePerson(id, data),
     onSuccess: refresh,
-    onError: (err: Error) => showAlert(err.message || "Could not update.", "error"),
+    onError: (err: Error) =>
+      showAlert(err.message || "Could not update.", "error"),
   });
+
+  const patternByCompany = useMemo(
+    () =>
+      new Map(
+        companies
+          .filter((company) => company.emailPattern)
+          .map((company) => [company.id, company.emailPattern as string]),
+      ),
+    [companies],
+  );
 
   const visiblePeople = useMemo(
     () => people.filter((person) => person.status === peopleFilter),
@@ -994,9 +1153,9 @@ export default function ProspectsPage() {
             Prospect Finder
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Describe your ideal customer. We find matching companies, check
-            them against their own websites, and add the people you approve to
-            Contacts.
+            Find matching companies from a description, or get the contacts at
+            companies you name. Every person comes from the company&apos;s own
+            website, and only the people you approve are added to Contacts.
           </p>
         </div>
         <button
@@ -1121,10 +1280,17 @@ export default function ProspectsPage() {
 
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400">
               {live && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              <span>{selected.counts?.companies ?? 0} companies found</span>
-              <span>→ {selected.counts?.qualified ?? 0} qualified</span>
+              <span>
+                {selected.counts?.companies ?? 0}{" "}
+                {lookup ? "companies" : "companies found"}
+              </span>
+              {!lookup && (
+                <span>→ {selected.counts?.qualified ?? 0} qualified</span>
+              )}
               <span>→ {selected.counts?.people ?? 0} people</span>
-              <span>→ {selected.counts?.withEmail ?? 0} with a published email</span>
+              <span>
+                → {selected.counts?.withEmail ?? 0} with a published email
+              </span>
             </div>
             {selected.note && (
               <p className="mt-2 text-xs text-amber-400">{selected.note}</p>
@@ -1234,7 +1400,7 @@ export default function ProspectsPage() {
                         <th className="px-3 py-2">Person</th>
                         <th className="px-3 py-2">Company</th>
                         <th className="px-3 py-2">Email</th>
-                        <th className="px-3 py-2">Match</th>
+                        {!lookup && <th className="px-3 py-2">Match</th>}
                         <th className="px-3 py-2">Found on</th>
                         <th className="px-3 py-2" />
                       </tr>
@@ -1247,6 +1413,8 @@ export default function ProspectsPage() {
                           selected={picked.has(person.id)}
                           onToggle={() => togglePicked(person.id)}
                           busy={personMutation.isPending}
+                          showMatch={!lookup}
+                          pattern={patternByCompany.get(person.companyId)}
                           onSaveEmail={(email) =>
                             personMutation.mutate({
                               id: person.id,
@@ -1273,23 +1441,25 @@ export default function ProspectsPage() {
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    ["qualified", "Qualified"],
+                    ["qualified", lookup ? "Looked up" : "Qualified"],
                     ["rejected", "Rejected"],
                     ["unreachable", "Could not read"],
                   ] as [CompanyFilter, string][]
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setCompanyFilter(value)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-                      companyFilter === value
-                        ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-200"
-                        : "border-zinc-800 text-zinc-400 hover:bg-zinc-900"
-                    }`}
-                  >
-                    {label} ({companyCount(value)})
-                  </button>
-                ))}
+                )
+                  .filter(([value]) => !(lookup && value === "rejected"))
+                  .map(([value, label]) => (
+                    <button
+                      key={value}
+                      onClick={() => setCompanyFilter(value)}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                        companyFilter === value
+                          ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-200"
+                          : "border-zinc-800 text-zinc-400 hover:bg-zinc-900"
+                      }`}
+                    >
+                      {label} ({companyCount(value)})
+                    </button>
+                  ))}
               </div>
               {visibleCompanies.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
@@ -1304,6 +1474,7 @@ export default function ProspectsPage() {
                       key={company.id}
                       company={company}
                       watching={watchMutation.isPending}
+                      lookup={lookup}
                       onWatch={(id) => watchMutation.mutate(id)}
                     />
                   ))}

@@ -913,8 +913,10 @@ export const api = {
         AI_REQUEST_TIMEOUT_MS,
       ),
     createSearch: (data: {
-      description: string;
-      profile: ApiPayload;
+      mode?: "icp" | "companies";
+      description?: string;
+      profile?: ApiPayload;
+      companies?: string[];
       maxCompanies?: number;
       peoplePerCompany?: number;
     }) =>
