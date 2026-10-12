@@ -96,6 +96,7 @@ type ResponseSpeed = "fast" | "balanced" | "conservative";
 // this stays a closed list instead of a free-text field the user could
 // mistype into a nonexistent model.
 type GeminiLiveModel =
+  | "gemini-3.8-live"
   | "gemini-3.1-flash-live-preview"
   | "gemini-2.5-flash-native-audio-preview-12-2025";
 
@@ -103,6 +104,7 @@ const GEMINI_LIVE_MODEL_OPTIONS: Array<{
   value: GeminiLiveModel;
   label: string;
 }> = [
+  { value: "gemini-3.8-live", label: "Gemini 3.8 Live" },
   { value: "gemini-3.1-flash-live-preview", label: "Flash Live (preview)" },
   {
     value: "gemini-2.5-flash-native-audio-preview-12-2025",
@@ -110,8 +112,7 @@ const GEMINI_LIVE_MODEL_OPTIONS: Array<{
   },
 ];
 
-const DEFAULT_GEMINI_LIVE_MODEL: GeminiLiveModel =
-  "gemini-3.1-flash-live-preview";
+const DEFAULT_GEMINI_LIVE_MODEL: GeminiLiveModel = "gemini-3.8-live";
 
 const RESPONSE_SPEED_OPTIONS: Array<{
   value: ResponseSpeed;
