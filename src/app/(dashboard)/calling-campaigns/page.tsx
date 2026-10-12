@@ -96,7 +96,6 @@ type ResponseSpeed = "fast" | "balanced" | "conservative";
 // this stays a closed list instead of a free-text field the user could
 // mistype into a nonexistent model.
 type GeminiLiveModel =
-  | "gemini-3.8-live"
   | "gemini-3.1-flash-live-preview"
   | "gemini-2.5-flash-native-audio-preview-12-2025";
 
@@ -104,7 +103,6 @@ const GEMINI_LIVE_MODEL_OPTIONS: Array<{
   value: GeminiLiveModel;
   label: string;
 }> = [
-  { value: "gemini-3.8-live", label: "Gemini 3.8 Live" },
   { value: "gemini-3.1-flash-live-preview", label: "Flash Live (preview)" },
   {
     value: "gemini-2.5-flash-native-audio-preview-12-2025",
@@ -112,7 +110,8 @@ const GEMINI_LIVE_MODEL_OPTIONS: Array<{
   },
 ];
 
-const DEFAULT_GEMINI_LIVE_MODEL: GeminiLiveModel = "gemini-3.8-live";
+const DEFAULT_GEMINI_LIVE_MODEL: GeminiLiveModel =
+  "gemini-3.1-flash-live-preview";
 
 const RESPONSE_SPEED_OPTIONS: Array<{
   value: ResponseSpeed;
@@ -1229,7 +1228,13 @@ export default function CallingCampaignsPage() {
       setWebSearchEnabled(
         Array.isArray(details.tools) && details.tools.includes("web_search"),
       );
-      setRealtimeModel(details.realtimeModel || DEFAULT_GEMINI_LIVE_MODEL);
+      setRealtimeModel(
+        GEMINI_LIVE_MODEL_OPTIONS.some(
+          (option) => option.value === details.realtimeModel,
+        )
+          ? details.realtimeModel
+          : DEFAULT_GEMINI_LIVE_MODEL,
+      );
       setResponseSpeed(normalizeResponseSpeed(details.responseSpeed));
       setAiCallingBotId(details.aiCallingBotId || null);
       setSelectedContactIds(existingContactIds);
