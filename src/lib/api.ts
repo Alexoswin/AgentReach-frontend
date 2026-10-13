@@ -52,6 +52,30 @@ type SettingsUpdate = {
   geminiStatus?: string;
 };
 
+export type EmailDomainRecord = {
+  type: "TXT" | "MX";
+  name: string;
+  value: string;
+  purpose: string;
+};
+
+export type EmailDomain = {
+  id: string;
+  domain: string;
+  status: "PENDING" | "VERIFIED";
+  defaultSenderEmail: string;
+  isDefault: boolean;
+  verifiedAt?: string | null;
+  lastCheckedAt?: string | null;
+  lastError?: string;
+  records: EmailDomainRecord[];
+};
+
+type DomainPayload = {
+  domain?: string;
+  defaultSenderEmail?: string;
+};
+
 type GeminiKeyTestPayload = {
   geminiApiKey?: string;
 };
@@ -507,6 +531,8 @@ export const api = {
         body: JSON.stringify(data),
       }),
     testSes: () => request("/settings/test-ses", { method: "POST" }),
+    testMailService: () =>
+      request("/settings/test-mail-service", { method: "POST" }),
     testTwilio: () => request("/settings/test-twilio", { method: "POST" }),
     testPlivo: () => request("/settings/test-plivo", { method: "POST" }),
     testGemini: (data?: GeminiKeyTestPayload) =>
@@ -525,6 +551,29 @@ export const api = {
         },
         AI_REQUEST_TIMEOUT_MS,
       ),
+  },
+
+  domains: {
+    list: () => request("/domains") as Promise<EmailDomain[]>,
+    create: (data: DomainPayload) =>
+      request("/domains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<EmailDomain>,
+    update: (id: string, data: DomainPayload) =>
+      request(`/domains/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<EmailDomain>,
+    verify: (id: string) =>
+      request(`/domains/${id}/verify`, { method: "POST" }) as Promise<
+        EmailDomain & { verified: boolean; message: string }
+      >,
+    setDefault: (id: string) =>
+      request(`/domains/${id}/default`, { method: "POST" }) as Promise<EmailDomain>,
+    delete: (id: string) => request(`/domains/${id}`, { method: "DELETE" }),
   },
 
   // Contacts

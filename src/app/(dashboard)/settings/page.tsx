@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
+import SendingDomainsPanel from "@/components/settings/SendingDomainsPanel";
 import { useState, useEffect, useRef } from "react";
 import {
   Settings,
@@ -330,6 +331,8 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <SendingDomainsPanel />
+
         {/* AWS SES Panel */}
         <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-zinc-800/60">
