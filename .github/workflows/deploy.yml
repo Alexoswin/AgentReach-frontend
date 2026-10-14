@@ -9,8 +9,7 @@ name: Vercel Deploy
 #   secrets.NEXT_PUBLIC_FIREBASE_* - Identity Platform web-app configuration
 #   vars.VERCEL_ORG_ID     - "orgId" from .vercel/project.json
 #   vars.VERCEL_PROJECT_ID - "projectId" from .vercel/project.json
-#   vars.BACKEND_URL       - Cloud Run URL of agentreach-backend, no trailing
-#                            slash, e.g. https://agentreach-backend-xxxx.asia-south1.run.app
+#   vars.BACKEND_URL       - public backend URL, no trailing slash
 on:
   push:
     branches: [main]
@@ -26,8 +25,9 @@ env:
   VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
   # NEXT_PUBLIC_* values and next.config.ts rewrites are baked in at build
-  # time, so they must point at the Cloud Run backend before `vercel build`.
+  # time, so they must point at the ECS backend before `vercel build`.
   NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}/api
+  NEXT_PUBLIC_ECS_API_URL: ${{ vars.BACKEND_URL }}/api
   NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
@@ -59,7 +59,7 @@ jobs:
           done
           [ -n "${{ secrets.VERCEL_TOKEN }}" ] || { echo "::error::secrets.VERCEL_TOKEN is not set"; missing=1; }
           # Without this the build silently falls back to localhost.
-          [ -n "${{ vars.BACKEND_URL }}" ] || { echo "::error::vars.BACKEND_URL (Cloud Run URL) is not set"; missing=1; }
+          [ -n "${{ vars.BACKEND_URL }}" ] || { echo "::error::vars.BACKEND_URL (public backend URL) is not set"; missing=1; }
           for name in \
             NEXT_PUBLIC_FIREBASE_API_KEY \
             NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
@@ -85,6 +85,7 @@ jobs:
           touch "$env_file"
           for key in \
             NEXT_PUBLIC_API_URL \
+            NEXT_PUBLIC_ECS_API_URL \
             NEXT_PUBLIC_FIREBASE_API_KEY \
             NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
             NEXT_PUBLIC_FIREBASE_PROJECT_ID \
