@@ -2,15 +2,22 @@ import { saveAuthSession, signOut } from "./localAuth";
 import { pageQueryString } from "./pagination";
 import type { PageParams, Paginated } from "./pagination";
 
-// Same-origin path proxied to the backend by next.config.ts, so the session
-// cookies are first-party. NEXT_PUBLIC_API_URL only sets the proxy target.
+// Same-origin path proxied to the primary backend by next.config.ts, so the
+// session cookies are first-party. ECS is used only when the primary proxy
+// cannot reach its backend. Set NEXT_PUBLIC_ECS_API_URL to the ECS API URL
+// including /api, for example https://api-123.ecs.us-east-1.on.aws/api.
 const BASE_URL = "/api";
+const ECS_BASE_URL = normalizeApiBase(process.env.NEXT_PUBLIC_ECS_API_URL);
+const FAILOVER_STATUSES = new Set([502, 503, 504]);
+const PRIMARY_RETRY_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 8000;
 const AI_REQUEST_TIMEOUT_MS = 45000;
 const IMPORT_REQUEST_TIMEOUT_MS = 60000;
 const PROSPECT_RUN_TIMEOUT_MS = 120000;
 let csrfToken: string | null = null;
 let refreshInFlight: Promise<boolean> | null = null;
+let activeBaseUrl = BASE_URL;
+let primaryUnavailableUntil = 0;
 const AUTH_PATHS_WITHOUT_REFRESH = new Set([
   "/auth/login",
   "/auth/register",
@@ -196,6 +203,90 @@ export class ApiError extends Error {
   }
 }
 
+function normalizeApiBase(value?: string) {
+  const normalized = (value || "").trim().replace(/\/+$/, "");
+  if (!normalized) return "";
+  return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
+}
+
+function isNetworkFailure(error: unknown) {
+  return (
+    error instanceof TypeError ||
+    (error instanceof DOMException && error.name === 'AbortError')
+  );
+}
+
+function shouldFailOver(method: string, response?: Response) {
+  // A failed POST may have reached the primary server before its proxy
+  // returned an error. Only replay gateway responses for safe requests to
+  // avoid sending a campaign twice. Connection failures are retried because
+  // fetch did not receive an HTTP response at all.
+  if (!response) return true;
+  return ["GET", "HEAD", "OPTIONS"].includes(method);
+}
+
+async function fetchBackend(
+  path: string,
+  init: RequestInit | undefined,
+  timeoutMs: number,
+) {
+  const method = (init?.method || 'GET').toUpperCase();
+
+  const send = async (baseUrl: string) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(`${baseUrl}${path}`, {
+        ...init,
+        credentials: 'include',
+        signal: controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
+
+  const primaryIsCoolingDown =
+    activeBaseUrl === BASE_URL && Date.now() < primaryUnavailableUntil;
+  const preferredBaseUrl = primaryIsCoolingDown ? ECS_BASE_URL : activeBaseUrl;
+
+  if (!preferredBaseUrl) {
+    return send(BASE_URL);
+  }
+
+  try {
+    const response = await send(preferredBaseUrl);
+
+    if (
+      preferredBaseUrl === BASE_URL &&
+      ECS_BASE_URL &&
+      FAILOVER_STATUSES.has(response.status) &&
+      shouldFailOver(method, response)
+    ) {
+      const fallbackResponse = await send(ECS_BASE_URL);
+      if (fallbackResponse.ok || fallbackResponse.status < 500) {
+        activeBaseUrl = ECS_BASE_URL;
+        primaryUnavailableUntil = Date.now() + PRIMARY_RETRY_DELAY_MS;
+      }
+      return fallbackResponse;
+    }
+
+    return response;
+  } catch (error) {
+    if (
+      preferredBaseUrl === BASE_URL &&
+      ECS_BASE_URL &&
+      isNetworkFailure(error)
+    ) {
+      const fallbackResponse = await send(ECS_BASE_URL);
+      activeBaseUrl = ECS_BASE_URL;
+      primaryUnavailableUntil = Date.now() + PRIMARY_RETRY_DELAY_MS;
+      return fallbackResponse;
+    }
+    throw error;
+  }
+}
+
 async function handleResponse<T = LooseApiResponse>(
   res: Response,
   path: string,
@@ -277,9 +368,6 @@ async function requestWithAuth<T = LooseApiResponse>(
   timeoutMs = REQUEST_TIMEOUT_MS,
   allowRefresh = true,
 ): Promise<T> {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
   try {
     const headers = new Headers(init?.headers);
     const method = (init?.method || "GET").toUpperCase();
@@ -287,12 +375,11 @@ async function requestWithAuth<T = LooseApiResponse>(
       headers.set("X-CSRF-Token", csrfToken);
     }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
-      ...init,
-      headers,
-      credentials: "include",
-      signal: controller.signal,
-    });
+    const response = await fetchBackend(
+      path,
+      { ...init, headers },
+      timeoutMs,
+    );
 
     csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
 
@@ -321,8 +408,6 @@ async function requestWithAuth<T = LooseApiResponse>(
     }
 
     throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
   }
 }
 
@@ -332,9 +417,6 @@ async function requestBlobWithAuth(
   timeoutMs = REQUEST_TIMEOUT_MS,
   allowRefresh = true,
 ): Promise<Blob> {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
   try {
     const headers = new Headers(init?.headers);
     const method = (init?.method || "GET").toUpperCase();
@@ -342,12 +424,11 @@ async function requestBlobWithAuth(
       headers.set("X-CSRF-Token", csrfToken);
     }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
-      ...init,
-      headers,
-      credentials: "include",
-      signal: controller.signal,
-    });
+    const response = await fetchBackend(
+      path,
+      { ...init, headers },
+      timeoutMs,
+    );
 
     csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
 
@@ -382,8 +463,6 @@ async function requestBlobWithAuth(
     }
 
     throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
   }
 }
 
@@ -401,11 +480,13 @@ function refreshAccessToken() {
 
 async function performRefresh() {
   try {
-    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+    const response = await fetchBackend("/auth/refresh", {
       method: "POST",
       headers: csrfToken ? { "X-CSRF-Token": csrfToken } : undefined,
       credentials: "include",
-    });
+    },
+    REQUEST_TIMEOUT_MS,
+    );
 
     csrfToken = response.headers.get("X-CSRF-Token") || csrfToken;
 
