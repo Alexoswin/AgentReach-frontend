@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tansta
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
 import { useDebouncedValue } from "@/lib/pagination";
-import { api } from "@/lib/api";
+import { api, type EmailDomain } from "@/lib/api";
 import { useOutreachStore } from "@/store/useOutreachStore";
 import { Fragment, useEffect, useRef, useState } from "react";
 import {
@@ -424,14 +424,32 @@ export default function EmailCampaignsPage() {
     queryKey: ["settings"],
     queryFn: api.settings.get,
   });
+  const {
+    data: sendingDomains = [],
+    isFetched: sendingDomainsFetched,
+  } = useQuery<EmailDomain[]>({
+    queryKey: ["sending-domains"],
+    queryFn: api.domains.list,
+  });
+  const selfHostedSendingReady = Boolean(
+    settings?.sendingDomainId &&
+      settings?.sendingFromEmail &&
+      sendingDomains.some(
+        (domain) =>
+          domain.id === settings.sendingDomainId &&
+          domain.status === "VERIFIED" &&
+          domain.defaultSenderEmail === settings.sendingFromEmail,
+      ),
+  );
   // Same rule the backend uses before it routes replies through the
   // reply domain (see replyDomainFor).
   const replyTrackingActive = Boolean(
-    settings?.replyTrackingDomain &&
-      settings?.replyTrackingTopicArn &&
-      settings?.awsAccessKeyId &&
-      settings?.awsSecretAccessKey &&
-      settings?.awsSenderEmail,
+    selfHostedSendingReady ||
+      (settings?.replyTrackingDomain &&
+        settings?.replyTrackingTopicArn &&
+        settings?.awsAccessKeyId &&
+        settings?.awsSecretAccessKey &&
+        settings?.awsSenderEmail),
   );
 
   // Fetch templates for selection
@@ -1710,11 +1728,16 @@ export default function EmailCampaignsPage() {
     },
   );
 
-  if (settings && (!settings.awsAccessKeyId || !settings.awsSecretAccessKey)) {
+  if (
+    settings &&
+    sendingDomainsFetched &&
+    (!settings.awsAccessKeyId || !settings.awsSecretAccessKey) &&
+    !selfHostedSendingReady
+  ) {
     return (
       <MissingCredentials
-        title="AWS Credentials Required"
-        description="To create and launch email campaigns, you need to configure your AWS SES credentials in the settings."
+        title="Email Sending Not Configured"
+        description="Configure AWS SES credentials or verify and select a sending domain connected to the ReachConvert mail service before launching campaigns."
       />
     );
   }
@@ -1724,7 +1747,7 @@ export default function EmailCampaignsPage() {
       <LoaderOverlay
         show={launchCampaignMutation.isPending}
         label="Launching campaign"
-        sublabel="Personalizing and dispatching your emails via SES…"
+        sublabel="Personalizing and dispatching your emails…"
       />
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-zinc-900">
@@ -3312,7 +3335,8 @@ export default function EmailCampaignsPage() {
                       <div className="flex flex-col gap-1 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
                         <span>
                           From:{" "}
-                          {settings?.awsSenderEmail ||
+                          {settings?.sendingFromEmail ||
+                            settings?.awsSenderEmail ||
                             "Not configured — set one in Settings"}
                         </span>
                         <span>To: {"{{email}}"}</span>
