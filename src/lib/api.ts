@@ -7,7 +7,11 @@ import type { PageParams, Paginated } from "./pagination";
 // cannot reach its backend. Set NEXT_PUBLIC_ECS_API_URL to the ECS API URL
 // including /api, for example https://api-123.ecs.us-east-1.on.aws/api.
 const BASE_URL = "/api";
-const ECS_BASE_URL = normalizeApiBase(process.env.NEXT_PUBLIC_ECS_API_URL);
+const DEFAULT_ECS_API_URL =
+  "https://ag-2bf1312f8ce3453e8c76ca79e45a3f08.ecs.ap-south-1.on.aws/api";
+const ECS_BASE_URL = normalizeApiBase(
+  process.env.NEXT_PUBLIC_ECS_API_URL || DEFAULT_ECS_API_URL,
+);
 const FAILOVER_STATUSES = new Set([502, 503, 504]);
 const PRIMARY_RETRY_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 8000;
@@ -216,12 +220,13 @@ function isNetworkFailure(error: unknown) {
   );
 }
 
-function shouldFailOver(method: string, response?: Response) {
+function shouldFailOver(method: string, path: string, response?: Response) {
   // A failed POST may have reached the primary server before its proxy
   // returned an error. Only replay gateway responses for safe requests to
   // avoid sending a campaign twice. Connection failures are retried because
   // fetch did not receive an HTTP response at all.
   if (!response) return true;
+  if (method === "POST" && path === "/auth/login") return true;
   return ["GET", "HEAD", "OPTIONS"].includes(method);
 }
 
@@ -261,7 +266,7 @@ async function fetchBackend(
       preferredBaseUrl === BASE_URL &&
       ECS_BASE_URL &&
       FAILOVER_STATUSES.has(response.status) &&
-      shouldFailOver(method, response)
+      shouldFailOver(method, path, response)
     ) {
       const fallbackResponse = await send(ECS_BASE_URL);
       if (fallbackResponse.ok || fallbackResponse.status < 500) {
