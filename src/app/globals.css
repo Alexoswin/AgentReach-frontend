@@ -639,6 +639,47 @@ body[data-accent="violet"] {
   --ink-max: #f5fafb;
 }
 
+/* Rich-text editor for emails and signatures (Tailwind's preflight strips
+   list bullets and margins, so the editable area restores them). */
+.rc-editor {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--z-100);
+  overflow-wrap: anywhere;
+}
+.rc-editor p {
+  margin: 0 0 0.5em;
+}
+.rc-editor ul,
+.rc-editor ol {
+  margin: 0 0 0.5em;
+  padding-left: 1.4em;
+}
+.rc-editor ul {
+  list-style: disc;
+}
+.rc-editor ol {
+  list-style: decimal;
+}
+.rc-editor blockquote {
+  margin: 0 0 0.5em;
+  border-left: 2px solid var(--z-700);
+  padding-left: 0.8em;
+  color: var(--z-300);
+}
+.rc-editor a {
+  color: var(--a-400);
+  text-decoration: underline;
+}
+.rc-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--z-600);
+}
+
 /* Accent-glow text (hero numerals, brand) */
 .sig-glow {
   text-shadow:

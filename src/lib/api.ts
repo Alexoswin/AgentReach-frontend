@@ -51,6 +51,9 @@ type SettingsUpdate = {
   awsSenderEmail?: string;
   replyTrackingDomain?: string;
   replyTrackingTopicArn?: string;
+  sesConfigurationSet?: string;
+  mailFromName?: string;
+  mailSignature?: string;
   twilioAccountSid?: string;
   twilioAuthToken?: string;
   twilioPhoneNumber?: string;
@@ -80,7 +83,186 @@ type CampaignPayload = {
   cc?: string[]; // CC email addresses
   bcc?: string[]; // BCC email addresses
   trackOpens?: boolean;
+  fromEmail?: string;
+  fromName?: string;
+  sendRatePerHour?: number | null;
+  unsubscribeLink?: boolean;
 };
+type CampaignTestPayload = {
+  templateId: string;
+  to?: string;
+  contactId?: string;
+  fromEmail?: string;
+  fromName?: string;
+  unsubscribeLink?: boolean;
+};
+
+export type MailFolder =
+  | "inbox"
+  | "starred"
+  | "sent"
+  | "drafts"
+  | "scheduled"
+  | "campaigns"
+  | "archive"
+  | "trash";
+export type MailAddress = { email: string; name?: string | null };
+export type MailAttachment = {
+  id: string;
+  name: string;
+  contentType: string;
+  size: number;
+  contentId?: string | null;
+  inline?: boolean;
+};
+export type MailThreadSummary = {
+  id: string;
+  subject: string;
+  snippet: string;
+  participants: MailAddress[];
+  lastMessageAt: string | null;
+  lastActivityAt: string | null;
+  messageCount: number;
+  unreadCount: number;
+  hasInbound: boolean;
+  draftCount: number;
+  scheduledCount: number;
+  hasAttachments: boolean;
+  starred: boolean;
+  archived: boolean;
+  trashed: boolean;
+  labels: string[];
+  lastDirection: "INBOUND" | "OUTBOUND" | null;
+  lastStatus: string | null;
+  contactId: string | null;
+  campaign: { id: string; name: string } | null;
+};
+export type MailMessage = {
+  id: string;
+  threadId: string;
+  direction: "INBOUND" | "OUTBOUND";
+  source: "MANUAL" | "CAMPAIGN" | null;
+  status: string;
+  from: MailAddress | null;
+  to: MailAddress[];
+  cc: MailAddress[];
+  bcc: MailAddress[];
+  replyTo?: string | null;
+  subject: string;
+  html: string;
+  text: string;
+  quotedHtml: string;
+  quotedText: string;
+  quotedMessageId?: string | null;
+  snippet: string;
+  attachments: MailAttachment[];
+  sendAt?: string | null;
+  scheduled: boolean;
+  sentAt?: string | null;
+  receivedAt?: string | null;
+  readAt?: string | null;
+  trackOpens: boolean;
+  openCount: number;
+  firstOpenedAt?: string | null;
+  lastOpenedAt?: string | null;
+  deliveredAt?: string | null;
+  bouncedAt?: string | null;
+  bounceType?: string | null;
+  complainedAt?: string | null;
+  lastError?: string | null;
+  automated: boolean;
+  campaignId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export type MailThreadDetail = MailThreadSummary & {
+  contact: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    company?: string;
+    jobTitle?: string;
+  } | null;
+  messages: MailMessage[];
+};
+export type MailCounts = {
+  inbox: number;
+  campaigns: number;
+  drafts: number;
+  scheduled: number;
+};
+export type MailSenders = {
+  defaultFrom: string | null;
+  fromName: string;
+  signature: string;
+  addresses: string[];
+  domains: string[];
+  sesConfigured: boolean;
+  replyTrackingActive: boolean;
+};
+export type MailContactContext = {
+  contact: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    company?: string;
+    jobTitle?: string;
+    phoneNumber?: string;
+    linkedinUrl?: string;
+    notes?: string;
+  } | null;
+  campaigns: {
+    id: string;
+    name: string;
+    status: string | null;
+    deliveryStatus: string;
+    sentTime?: string | null;
+    opened: boolean;
+    replied: boolean;
+  }[];
+  calls: {
+    id: string;
+    outcome: string;
+    duration: number;
+    timestamp: string;
+    summary?: string;
+  }[];
+};
+export type DraftPayload = {
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject?: string;
+  html?: string;
+  from?: string;
+  attachments?: { fileId: string; name?: string }[];
+  trackOpens?: boolean;
+};
+export type CreateDraftPayload = DraftPayload & {
+  mode?: "new" | "reply" | "replyAll" | "forward";
+  sourceMessageId?: string;
+  contactId?: string;
+};
+type ThreadListParams = {
+  folder: MailFolder;
+  page: number;
+  limit: number;
+  search?: string;
+  unread?: boolean;
+  campaignId?: string;
+};
+export type BulkThreadAction =
+  | "read"
+  | "unread"
+  | "star"
+  | "unstar"
+  | "archive"
+  | "unarchive"
+  | "trash"
+  | "untrash"
+  | "delete";
 export type EmailReply = {
   id: string;
   campaign: { id: string; name: string } | null;
@@ -781,10 +963,36 @@ export const api = {
       request(`/email-campaigns/${id}/contacts/${contactId}`, {
         method: "DELETE",
       }),
+    // Launching personalizes every email and queues it before answering, so
+    // a large campaign needs longer than the default timeout.
     launch: (id: string) =>
-      request(`/email-campaigns/${id}/launch`, { method: "POST" }),
+      request(
+        `/email-campaigns/${id}/launch`,
+        { method: "POST" },
+        IMPORT_REQUEST_TIMEOUT_MS,
+      ),
     relaunch: (id: string) =>
-      request(`/email-campaigns/${id}/relaunch`, { method: "POST" }),
+      request(
+        `/email-campaigns/${id}/relaunch`,
+        { method: "POST" },
+        IMPORT_REQUEST_TIMEOUT_MS,
+      ),
+    pause: (id: string) =>
+      request(`/email-campaigns/${id}/pause`, { method: "POST" }),
+    resume: (id: string) =>
+      request(`/email-campaigns/${id}/resume`, { method: "POST" }),
+    stop: (id: string) =>
+      request(`/email-campaigns/${id}/stop`, { method: "POST" }),
+    sendTest: (data: CampaignTestPayload) =>
+      request(
+        "/email-campaigns/test-send",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        AI_REQUEST_TIMEOUT_MS,
+      ),
     replies: (params: ReplyListParams) =>
       request(`/email-campaigns/replies${replyQueryString(params)}`) as Promise<
         Paginated<EmailReply> & { unreadCount: number }
@@ -803,6 +1011,92 @@ export const api = {
       }),
     unschedule: (id: string) =>
       request(`/email-campaigns/${id}/unschedule`, { method: "POST" }),
+  },
+
+  // Mailbox: conversations, drafts and sending
+  mail: {
+    threads: ({ unread, ...params }: ThreadListParams) =>
+      request(
+        `/mail/threads${pageQueryString({
+          ...params,
+          ...(unread ? { unread: "true" } : {}),
+        } as PageParams)}`,
+      ) as Promise<Paginated<MailThreadSummary>>,
+    thread: (id: string) =>
+      request(`/mail/threads/${id}`) as Promise<MailThreadDetail>,
+    updateThread: (
+      id: string,
+      data: {
+        read?: boolean;
+        starred?: boolean;
+        archived?: boolean;
+        trashed?: boolean;
+        labels?: string[];
+      },
+    ) =>
+      request(`/mail/threads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<MailThreadSummary>,
+    bulk: (ids: string[], action: BulkThreadAction) =>
+      request("/mail/threads/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, action }),
+      }),
+    deleteThread: (id: string) =>
+      request(`/mail/threads/${id}`, { method: "DELETE" }),
+    counts: () => request("/mail/counts") as Promise<MailCounts>,
+    senders: () => request("/mail/senders") as Promise<MailSenders>,
+    contactContext: (email: string) =>
+      request(
+        `/mail/contact-context?email=${encodeURIComponent(email)}`,
+      ) as Promise<MailContactContext>,
+    createDraft: (data: CreateDraftPayload) =>
+      request("/mail/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<MailMessage>,
+    updateDraft: (id: string, data: DraftPayload) =>
+      request(`/mail/drafts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<MailMessage>,
+    deleteDraft: (id: string) =>
+      request(`/mail/drafts/${id}`, { method: "DELETE" }),
+    sendDraft: (id: string, data: { sendAt?: string; undoSeconds?: number }) =>
+      request(`/mail/drafts/${id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }) as Promise<{
+        id: string;
+        threadId: string;
+        status: string;
+        sendAt: string;
+        scheduled: boolean;
+      }>,
+    cancelSend: (id: string) =>
+      request(`/mail/messages/${id}/cancel`, {
+        method: "POST",
+      }) as Promise<MailMessage>,
+    uploadAttachment: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request(
+        "/mail/attachments",
+        { method: "POST", body: formData },
+        IMPORT_REQUEST_TIMEOUT_MS,
+      ) as Promise<MailAttachment>;
+    },
+    downloadAttachment: (id: string) =>
+      requestBlob(`/mail/attachments/${id}`, undefined, 30000),
+    // Same-origin path for inline images shown inside an email.
+    inlineImageUrl: (id: string) =>
+      `${BASE_URL}/mail/attachments/${id}?inline=1`,
   },
 
   // Signal-based outreach
