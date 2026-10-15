@@ -2,12 +2,6 @@
 
 import { api } from '@/lib/api';
 import {
-  clearIdentityPlatformSession,
-  identityPlatformErrorMessage,
-  isIdentityPlatformConfigured,
-  signInWithGooglePopup,
-} from '@/lib/identityPlatform';
-import {
   ACCENT_OPTIONS,
   applyTheme,
   getStoredUser,
@@ -121,29 +115,11 @@ export default function ProfilePage() {
 
   const handleLinkGoogle = async () => {
     setLinkingGoogle(true);
-    if (isCognitoConfigured()) {
-      try {
-        await startGoogleSignIn('link', '/profile');
-      } catch (error) {
-        setLinkingGoogle(false);
-        showAlert(error instanceof Error ? error.message : 'Could not link Google.', 'error');
-      }
-      return;
-    }
     try {
-      const idToken = await signInWithGooglePopup();
-      const updatedProfile = await api.auth.linkGoogle(idToken);
-      saveStoredUser(updatedProfile);
-      setProfile(updatedProfile);
-      showAlert('Google sign-in is now linked to this account.', 'success');
+      await startGoogleSignIn('link', '/profile');
     } catch (error) {
-      showAlert(
-        identityPlatformErrorMessage(error),
-        'error',
-      );
-    } finally {
-      await clearIdentityPlatformSession().catch(() => undefined);
       setLinkingGoogle(false);
+      showAlert(error instanceof Error ? error.message : 'Could not link Google.', 'error');
     }
   };
 
@@ -267,7 +243,7 @@ export default function ProfilePage() {
             />
           </div>
 
-          {(isCognitoConfigured() || isIdentityPlatformConfigured()) && (
+          {isCognitoConfigured() && (
             <div className="mt-6 flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold text-white">

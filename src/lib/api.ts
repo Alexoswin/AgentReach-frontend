@@ -25,7 +25,6 @@ let primaryUnavailableUntil = 0;
 const AUTH_PATHS_WITHOUT_REFRESH = new Set([
   "/auth/login",
   "/auth/register",
-  "/auth/identity-platform",
   "/auth/cognito",
   "/auth/forgot-password",
   "/auth/reset-password",
@@ -732,18 +731,6 @@ export const api = {
     refresh: () =>
       request("/auth/refresh", {
         method: "POST",
-      }),
-    identityPlatform: (idToken: string) =>
-      request("/auth/identity-platform", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      }),
-    linkGoogle: (idToken: string) =>
-      request("/auth/link-google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
       }),
     // Google sign-in through the AWS Cognito user pool.
     cognito: (idToken: string, nonce: string) =>

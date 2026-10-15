@@ -1,13 +1,6 @@
 "use client";
 
 import { api } from "@/lib/api";
-import {
-  clearIdentityPlatformSession,
-  identityPlatformErrorMessage,
-  isIdentityPlatformConfigured,
-  prepareGoogleSignIn,
-  signInWithGooglePopup,
-} from "@/lib/identityPlatform";
 import { isCognitoConfigured, startGoogleSignIn } from "@/lib/cognitoAuth";
 import { applyTheme, getStoredUser, saveAuthSession } from "@/lib/localAuth";
 import { LoaderOverlay } from "@/components/Loader";
@@ -95,18 +88,12 @@ function LoginScreen() {
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-  // Google sign-in goes through AWS Cognito once it is configured; the
-  // Firebase popup stays as the fallback until then.
-  const useCognito = isCognitoConfigured();
-  const googleAvailable = useCognito || isIdentityPlatformConfigured();
+  // Google sign-in goes through the AWS Cognito user pool.
+  const googleAvailable = isCognitoConfigured();
 
   useEffect(() => {
     applyTheme(storedUser.theme, storedUser.accentColor);
   }, [storedUser.accentColor, storedUser.theme]);
-
-  useEffect(() => {
-    if (!useCognito && googleAvailable) prepareGoogleSignIn();
-  }, [useCognito, googleAvailable]);
 
   // Drop the token from the address bar so it does not linger in history.
   useEffect(() => {
@@ -141,27 +128,11 @@ function LoginScreen() {
     setPendingAction("google");
     setMessage("");
 
-    if (useCognito) {
-      try {
-        await startGoogleSignIn("login", "/dashboard");
-      } catch (error) {
-        setPendingAction(null);
-        setMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
-      }
-      return;
-    }
-
     try {
-      const idToken = await signInWithGooglePopup();
-      const session = await api.auth.identityPlatform(idToken);
-      saveAuthSession(session);
-      applyTheme(session.user.theme, session.user.accentColor);
-      router.replace("/dashboard");
+      await startGoogleSignIn("login", "/dashboard");
     } catch (error) {
       setPendingAction(null);
-      setMessage(identityPlatformErrorMessage(error));
-    } finally {
-      void clearIdentityPlatformSession().catch(() => undefined);
+      setMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
     }
   };
 
