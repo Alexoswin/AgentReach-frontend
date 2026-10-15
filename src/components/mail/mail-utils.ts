@@ -8,7 +8,7 @@ export const FOLDER_LABELS: Record<MailFolder, string> = {
   sent: "Sent",
   drafts: "Drafts",
   scheduled: "Scheduled",
-  campaigns: "Campaign replies",
+  campaigns: "Campaigns",
   archive: "Archive",
   trash: "Trash",
 };

@@ -252,6 +252,7 @@ type ThreadListParams = {
   search?: string;
   unread?: boolean;
   campaignId?: string;
+  replied?: "true" | "false";
 };
 export type BulkThreadAction =
   | "read"

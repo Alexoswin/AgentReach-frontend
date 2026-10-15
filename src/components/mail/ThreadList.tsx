@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Archive, CheckSquare, Mail, MailOpen, Paperclip, Square, Star, Trash2 } from "lucide-react";
+import { Archive, CheckSquare, Mail, MailOpen, Megaphone, Paperclip, Square, Star, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { BulkThreadAction, MailFolder, MailThreadSummary } from "@/lib/api";
 import type { Paginated } from "@/lib/pagination";
@@ -130,6 +130,21 @@ function ThreadRow({
           {thread.subject || "(no subject)"}
           {thread.snippet ? ` — ${thread.snippet}` : ""}
         </p>
+        {thread.campaign && (
+          <div className="mt-1 flex min-w-0 items-center gap-1.5">
+            <span className="flex min-w-0 items-center gap-1 rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300">
+              <Megaphone className="h-3 w-3 shrink-0" />
+              <span className="truncate">{thread.campaign.name}</span>
+            </span>
+            <span
+              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                thread.hasInbound ? "bg-emerald-500/10 text-emerald-300" : "bg-zinc-850 text-zinc-500"
+              }`}
+            >
+              {thread.hasInbound ? "Replied" : "No reply yet"}
+            </span>
+          </div>
+        )}
       </div>
     </li>
   );

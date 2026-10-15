@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle,
   Clock,
+  Inbox,
   Loader2,
   MessageSquare,
   Paperclip,
@@ -422,6 +423,15 @@ export default function CampaignDetail({
                   <Clock className="h-3.5 w-3.5" /> Schedule
                 </button>
               )
+            )}
+            {finished > 0 && (
+              <Link
+                href={`/inbox?folder=campaigns&campaign=${campaignId}`}
+                title="See every email and reply of this campaign in the Inbox"
+                className={buttonClass}
+              >
+                <Inbox className="h-3.5 w-3.5" /> Open in Inbox
+              </Link>
             )}
             <button
               type="button"

@@ -24,6 +24,7 @@ import {
   Send,
   Star,
   Trash2,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
@@ -67,6 +68,13 @@ function Mailbox() {
   const folderParam = searchParams.get("folder");
   const folder: MailFolder = isMailFolder(folderParam) ? folderParam : "inbox";
   const threadId = searchParams.get("thread");
+  // In the Campaigns folder: one campaign, and replied or not.
+  const campaignId = folder === "campaigns" ? searchParams.get("campaign") : null;
+  const repliedParam = searchParams.get("replied");
+  const replied: "true" | "false" | undefined =
+    folder === "campaigns" && (repliedParam === "true" || repliedParam === "false")
+      ? repliedParam
+      : undefined;
 
   const [search, setSearch] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -87,7 +95,18 @@ function Mailbox() {
   const openFolder = (next: MailFolder) => {
     setPage(1);
     setSelectedIds(new Set());
-    setParams({ folder: next === "inbox" ? null : next, thread: null });
+    setParams({
+      folder: next === "inbox" ? null : next,
+      thread: null,
+      campaign: null,
+      replied: null,
+    });
+  };
+
+  const openCampaign = (id: string | null) => {
+    setPage(1);
+    setSelectedIds(new Set());
+    setParams({ folder: "campaigns", campaign: id, thread: null });
   };
 
   const { data: counts } = useQuery({
@@ -101,12 +120,27 @@ function Mailbox() {
     staleTime: 5 * 60_000,
   });
 
+  const { data: campaignPage } = useQuery({
+    queryKey: ["email-campaigns", "inbox-nav"],
+    queryFn: () => api.emailCampaigns.listPage({ page: 1, limit: 8 }),
+    staleTime: 60_000,
+  });
+  const recentCampaigns = (campaignPage?.items || []) as {
+    id: string;
+    name: string;
+    repliedCount?: number;
+    sentCount?: number;
+  }[];
+  const activeCampaign = recentCampaigns.find((campaign) => campaign.id === campaignId);
+
   const params = {
     folder,
     page,
     limit: PAGE_SIZE,
     search: debouncedSearch,
     unread: unreadOnly,
+    ...(campaignId ? { campaignId } : {}),
+    ...(replied ? { replied } : {}),
   };
   const { data: threadPage, isLoading: listLoading } = useQuery({
     queryKey: ["mail", "threads", params],
@@ -311,12 +345,98 @@ function Mailbox() {
               );
             })}
           </ul>
+          {recentCampaigns.some((campaign) => (campaign.sentCount || 0) > 0) && (
+            <div className="hidden lg:block">
+              <p className="sig-label px-3 pb-1.5 pt-2 text-zinc-600">Campaigns</p>
+              <ul className="space-y-0.5">
+                {recentCampaigns
+                  .filter((campaign) => (campaign.sentCount || 0) > 0)
+                  .map((campaign) => (
+                    <li key={campaign.id}>
+                      <button
+                        type="button"
+                        onClick={() => openCampaign(campaign.id)}
+                        title={campaign.name}
+                        className={`flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs transition-colors ${
+                          campaignId === campaign.id
+                            ? "bg-purple-500/10 font-semibold text-purple-200"
+                            : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+                        }`}
+                      >
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400/70" />
+                        <span className="flex-1 truncate text-left">{campaign.name}</span>
+                        {(campaign.repliedCount || 0) > 0 && (
+                          <span className="shrink-0 text-[10px] text-emerald-300">
+                            {campaign.repliedCount}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+              <Link
+                href="/email-campaigns"
+                className="block px-3 py-1.5 text-[11px] font-semibold text-zinc-600 hover:text-zinc-300"
+              >
+                All campaigns →
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* Conversations */}
         <section
           className={`${threadId ? "hidden lg:flex" : "flex"} min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-zinc-850 bg-zinc-900/30`}
         >
+          {folder === "campaigns" && (
+            <div className="space-y-2 border-b border-zinc-850 px-3 py-2">
+              {campaignId && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Megaphone className="h-3.5 w-3.5 shrink-0 text-purple-300" />
+                  <span className="min-w-0 flex-1 truncate font-semibold text-zinc-200">
+                    {activeCampaign?.name || "Campaign"}
+                  </span>
+                  <Link
+                    href={`/email-campaigns?campaign=${campaignId}`}
+                    className="shrink-0 font-semibold text-indigo-300 hover:text-indigo-200"
+                  >
+                    View campaign
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label="Show all campaigns"
+                    onClick={() => openCampaign(null)}
+                    className="shrink-0 text-zinc-500 hover:text-zinc-200"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-1">
+                {[
+                  { value: null, label: "All" },
+                  { value: "true", label: "Replied" },
+                  { value: "false", label: "No reply yet" },
+                ].map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    onClick={() => {
+                      setPage(1);
+                      setParams({ replied: option.value, thread: null });
+                    }}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      (replied ?? null) === option.value
+                        ? "bg-indigo-500/15 text-indigo-200"
+                        : "text-zinc-500 hover:text-zinc-200"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="min-h-0 flex-1">
             <ThreadList
               folder={folder}
