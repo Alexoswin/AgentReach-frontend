@@ -30,6 +30,7 @@ import {
   saveStoredUser,
   signOut,
 } from "@/lib/localAuth";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { onThemeChange } from "@/lib/themeColors";
 import { LoaderOverlay } from "@/components/Loader";
@@ -63,7 +64,7 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       },
       { name: "Contacts", href: "/contacts", icon: Users },
       { name: "Email Campaigns", href: "/email-campaigns", icon: Mail },
-      { name: "Replies", href: "/replies", icon: Inbox },
+      { name: "Inbox", href: "/inbox", icon: Inbox },
       { name: "AI Calling", href: "/calling-campaigns", icon: PhoneCall },
       { name: "Scheduler", href: "/scheduler", icon: CalendarClock },
       { name: "Calling Agents", href: "/ai-calling-bots", icon: Bot },
@@ -89,6 +90,11 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
   const router = useRouter();
   const [user, setUser] = useState<LocalUserProfile | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const { data: mailCounts } = useQuery({
+    queryKey: ["mail", "counts"],
+    queryFn: api.mail.counts,
+    refetchInterval: 30_000,
+  });
 
   useEffect(() => {
     const refreshUser = () => setUser(getStoredUser());
@@ -187,6 +193,11 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
                       {item.beta && (
                         <span className="sig-label rounded border border-indigo-500/30 px-1 py-px text-[9px] text-indigo-300">
                           Beta
+                        </span>
+                      )}
+                      {item.href === "/inbox" && (mailCounts?.inbox || 0) > 0 && (
+                        <span className="ml-auto rounded-full bg-indigo-500/15 px-1.5 py-px text-[10px] font-bold text-indigo-300">
+                          {mailCounts!.inbox}
                         </span>
                       )}
                       {isActive && (

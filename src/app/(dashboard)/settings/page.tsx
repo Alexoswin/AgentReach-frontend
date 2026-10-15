@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import RichTextEditor from "@/components/mail/RichTextEditor";
 import { useOutreachStore } from "@/store/useOutreachStore";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   Check,
   Copy,
   RefreshCw,
+  Inbox,
 } from "lucide-react";
 
 // Mirrors GEMINI_TEXT_MODEL_OPTIONS in the backend's config/gemini-text.ts.
@@ -80,6 +82,9 @@ export default function SettingsPage() {
   const [awsSenderEmail, setAwsSenderEmail] = useState("");
   const [replyTrackingDomain, setReplyTrackingDomain] = useState("");
   const [replyTrackingTopicArn, setReplyTrackingTopicArn] = useState("");
+  const [sesConfigurationSet, setSesConfigurationSet] = useState("");
+  const [mailFromName, setMailFromName] = useState("");
+  const [mailSignature, setMailSignature] = useState("");
   const [geminiTextModel, setGeminiTextModel] = useState(
     DEFAULT_GEMINI_TEXT_MODEL,
   );
@@ -114,6 +119,9 @@ export default function SettingsPage() {
         setAwsSenderEmail(settings.awsSenderEmail || "");
         setReplyTrackingDomain(settings.replyTrackingDomain || "");
         setReplyTrackingTopicArn(settings.replyTrackingTopicArn || "");
+        setSesConfigurationSet(settings.sesConfigurationSet || "");
+        setMailFromName(settings.mailFromName || "");
+        setMailSignature(settings.mailSignature || "");
         setGeminiTextModel(
           GEMINI_TEXT_MODEL_OPTIONS.some(
             (option) => option.value === settings.geminiTextModel,
@@ -275,6 +283,9 @@ export default function SettingsPage() {
       awsSenderEmail,
       replyTrackingDomain,
       replyTrackingTopicArn,
+      sesConfigurationSet,
+      mailFromName,
+      mailSignature,
       geminiApiKey,
       geminiTextModel,
       twilioAccountSid,
@@ -419,7 +430,7 @@ export default function SettingsPage() {
                   <span className="font-normal text-zinc-500">(optional)</span>
                 </h4>
                 <p className="mt-0.5 text-[11px] text-zinc-500">
-                  Counts replies to campaign emails and shows them in Replies.
+                  Brings replies into your Inbox and counts them on campaigns.
                   Each reply is still forwarded to your sender address.
                 </p>
               </div>
@@ -452,6 +463,26 @@ export default function SettingsPage() {
                   placeholder="arn:aws:sns:us-east-1:123456789012:campaign-replies"
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                  SES configuration set{" "}
+                  <span className="normal-case tracking-normal text-zinc-600">
+                    (optional, for delivery and bounce tracking)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={sesConfigurationSet}
+                  onChange={(e) => setSesConfigurationSet(e.target.value)}
+                  placeholder="reachconvert"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+                />
+                <p className="mt-1.5 text-[11px] text-zinc-600">
+                  Its delivery, bounce and complaint events must publish to the
+                  same SNS topic. Bounced and complaining addresses are then
+                  skipped by future campaigns.
+                </p>
               </div>
             </div>
 
@@ -502,17 +533,63 @@ export default function SettingsPage() {
                 </li>
                 <li>
                   In SES, create a receipt rule for the subdomain with an{" "}
-                  <strong>SNS action</strong> that publishes to that topic,
-                  encoding UTF-8.
+                  <strong>S3 action</strong> that stores the email in a bucket
+                  of yours and publishes to that topic. Your SES keys need
+                  read access to the bucket. (An <strong>SNS action</strong>,
+                  encoding UTF-8, also works, but SES only passes emails up
+                  to 150 KB that way, so replies with big attachments
+                  bounce.)
+                </li>
+                <li>
+                  Optional: create an SES configuration set with an event
+                  destination for Delivery, Bounce and Complaint that
+                  publishes to the same topic, and enter its name above.
                 </li>
               </ol>
               <p className="mt-3 text-zinc-500">
-                Replies are forwarded to your sender address from itself. SES
-                only passes emails up to 150 KB to SNS and bounces larger ones
-                back to the sender, so replies with big attachments
-                won&apos;t come through.
+                Replies are forwarded to your sender address from itself.
               </p>
             </details>
+          </div>
+        </div>
+
+        {/* Mailbox */}
+        <div className="p-6 bg-zinc-900/40 border border-zinc-850 rounded-2xl shadow-xl space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-zinc-800/60">
+            <Inbox className="h-5 w-5 text-indigo-400" />
+            <h3 className="text-base font-bold text-white">Mailbox</h3>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+              Your name on emails
+            </label>
+            <input
+              type="text"
+              value={mailFromName}
+              onChange={(e) => setMailFromName(e.target.value)}
+              placeholder="Jane from Acme"
+              maxLength={100}
+              className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50"
+            />
+            <p className="mt-1.5 text-[11px] text-zinc-600">
+              Shown next to your address in the recipient&apos;s inbox.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+              Signature
+            </label>
+            <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
+              <RichTextEditor
+                value={mailSignature}
+                onChange={setMailSignature}
+                placeholder="Jane Doe · Head of Sales · Acme"
+                minHeight={90}
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] text-zinc-600">
+              Added to new emails, replies and forwards you write in the Inbox.
+            </p>
           </div>
         </div>
 

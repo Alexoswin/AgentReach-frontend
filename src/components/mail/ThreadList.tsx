@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, CheckSquare, Mail, MailOpen, Paperclip, Square, Star, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
-import type { BulkThreadAction, MailFolder, MailThreadSummary, Paginated } from "@/lib/api";
+import type { BulkThreadAction, MailFolder, MailThreadSummary } from "@/lib/api";
+import type { Paginated } from "@/lib/pagination";
 import { useOutreachStore } from "@/store/useOutreachStore";
 import { addressName, formatListTime, getErrorMessage } from "./mail-utils";
 
@@ -149,7 +149,6 @@ export default function ThreadList({
   onSelectedIdsChange,
   onOpen,
   isLoading,
-  data,
 }: {
   folder: MailFolder;
   page: Paginated<MailThreadSummary> | undefined;
