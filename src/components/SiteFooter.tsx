@@ -22,6 +22,7 @@ const FOOTER_GROUPS = [
       { label: 'Compliance guide', href: '/compliance' },
       { label: 'Support', href: '/support' },
       { label: 'Contact', href: '/contact' },
+      { label: 'Privacy policy', href: '/privacy' },
     ],
   },
   {

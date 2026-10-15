@@ -17,6 +17,7 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: '/contribute', priority: 0.5 },
   { path: '/contact', priority: 0.4 },
   { path: '/support', priority: 0.4 },
+  { path: '/privacy', priority: 0.3 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
