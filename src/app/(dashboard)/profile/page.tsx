@@ -18,6 +18,7 @@ import {
 } from '@/lib/localAuth';
 import { useOutreachStore } from '@/store/useOutreachStore';
 import { PageLoader } from '@/components/Loader';
+import { isCognitoConfigured, startGoogleSignIn } from '@/lib/cognitoAuth';
 import { GoogleIcon } from '@/components/GoogleIcon';
 import { Check, Mail, Monitor, Moon, Palette, Save, Sun, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -36,6 +37,14 @@ export default function ProfilePage() {
   const [password, setPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [linkingGoogle, setLinkingGoogle] = useState(false);
+
+  // Back from linking Google through Cognito (see /auth/callback).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('google') !== 'linked') return;
+    showAlert('Google sign-in is now linked to this account.', 'success');
+    window.history.replaceState(null, '', window.location.pathname);
+  }, [showAlert]);
 
   // Theme picks preview live but only persist on Save; leaving the page
   // drops an unsaved preview so the app matches the stored preference.
@@ -112,6 +121,15 @@ export default function ProfilePage() {
 
   const handleLinkGoogle = async () => {
     setLinkingGoogle(true);
+    if (isCognitoConfigured()) {
+      try {
+        await startGoogleSignIn('link', '/profile');
+      } catch (error) {
+        setLinkingGoogle(false);
+        showAlert(error instanceof Error ? error.message : 'Could not link Google.', 'error');
+      }
+      return;
+    }
     try {
       const idToken = await signInWithGooglePopup();
       const updatedProfile = await api.auth.linkGoogle(idToken);
@@ -249,7 +267,7 @@ export default function ProfilePage() {
             />
           </div>
 
-          {isIdentityPlatformConfigured() && (
+          {(isCognitoConfigured() || isIdentityPlatformConfigured()) && (
             <div className="mt-6 flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold text-white">

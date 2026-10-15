@@ -7,6 +7,8 @@ name: Vercel Deploy
 # Required repo settings:
 #   secrets.VERCEL_TOKEN   - Vercel access token (vercel.com/account/tokens)
 #   secrets.NEXT_PUBLIC_FIREBASE_* - Identity Platform web-app configuration
+#   secrets.NEXT_PUBLIC_COGNITO_*  - AWS Cognito Google sign-in; when set it
+#                                    replaces the Firebase sign-in
 #   vars.VERCEL_ORG_ID     - "orgId" from .vercel/project.json
 #   vars.VERCEL_PROJECT_ID - "projectId" from .vercel/project.json
 #   vars.BACKEND_URL       - public backend URL, no trailing slash
@@ -33,6 +35,8 @@ env:
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
   NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+  NEXT_PUBLIC_COGNITO_DOMAIN: ${{ secrets.NEXT_PUBLIC_COGNITO_DOMAIN }}
+  NEXT_PUBLIC_COGNITO_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_COGNITO_CLIENT_ID }}
 
 jobs:
   deploy:
@@ -90,7 +94,9 @@ jobs:
             NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
             NEXT_PUBLIC_FIREBASE_PROJECT_ID \
             NEXT_PUBLIC_FIREBASE_APP_ID \
-            NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID; do
+            NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID \
+            NEXT_PUBLIC_COGNITO_DOMAIN \
+            NEXT_PUBLIC_COGNITO_CLIENT_ID; do
             [ -n "${!key}" ] || continue
             sed -i "/^$key=/d" "$env_file"
             echo "$key=\"${!key}\"" >> "$env_file"

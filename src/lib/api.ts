@@ -26,6 +26,7 @@ const AUTH_PATHS_WITHOUT_REFRESH = new Set([
   "/auth/login",
   "/auth/register",
   "/auth/identity-platform",
+  "/auth/cognito",
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
@@ -743,6 +744,19 @@ export const api = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
+      }),
+    // Google sign-in through the AWS Cognito user pool.
+    cognito: (idToken: string, nonce: string) =>
+      request("/auth/cognito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, nonce }),
+      }),
+    linkCognito: (idToken: string, nonce: string) =>
+      request("/auth/link-cognito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, nonce }),
       }),
     me: () => request("/auth/me"),
     updateProfile: (data: AuthProfileUpdate) =>

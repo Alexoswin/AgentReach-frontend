@@ -8,6 +8,7 @@ import {
   prepareGoogleSignIn,
   signInWithGooglePopup,
 } from "@/lib/identityPlatform";
+import { isCognitoConfigured, startGoogleSignIn } from "@/lib/cognitoAuth";
 import { applyTheme, getStoredUser, saveAuthSession } from "@/lib/localAuth";
 import { LoaderOverlay } from "@/components/Loader";
 import { Brand } from "@/components/fx";
@@ -94,15 +95,18 @@ function LoginScreen() {
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-  const googleAvailable = isIdentityPlatformConfigured();
+  // Google sign-in goes through AWS Cognito once it is configured; the
+  // Firebase popup stays as the fallback until then.
+  const useCognito = isCognitoConfigured();
+  const googleAvailable = useCognito || isIdentityPlatformConfigured();
 
   useEffect(() => {
     applyTheme(storedUser.theme, storedUser.accentColor);
   }, [storedUser.accentColor, storedUser.theme]);
 
   useEffect(() => {
-    if (googleAvailable) prepareGoogleSignIn();
-  }, [googleAvailable]);
+    if (!useCognito && googleAvailable) prepareGoogleSignIn();
+  }, [useCognito, googleAvailable]);
 
   // Drop the token from the address bar so it does not linger in history.
   useEffect(() => {
@@ -136,6 +140,16 @@ function LoginScreen() {
   const handleGoogleLogin = async () => {
     setPendingAction("google");
     setMessage("");
+
+    if (useCognito) {
+      try {
+        await startGoogleSignIn("login", "/dashboard");
+      } catch (error) {
+        setPendingAction(null);
+        setMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
+      }
+      return;
+    }
 
     try {
       const idToken = await signInWithGooglePopup();
