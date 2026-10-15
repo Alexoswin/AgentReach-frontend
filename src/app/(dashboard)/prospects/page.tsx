@@ -16,7 +16,9 @@ import {
   CircleHelp,
   ExternalLink,
   Loader2,
+  Mail,
   Pause,
+  Phone,
   Play,
   Plus,
   Radar,
@@ -62,6 +64,13 @@ type Criterion = {
   url: string;
 };
 
+type CompanyContact = {
+  value: string;
+  label: string;
+  url: string;
+  type?: string;
+};
+
 type Company = {
   id: string;
   name: string;
@@ -72,6 +81,9 @@ type Company = {
   status: string;
   reason?: string;
   emailPattern?: string;
+  emails?: CompanyContact[];
+  phones?: CompanyContact[];
+  linkedinUrl?: string;
 };
 
 type Person = {
@@ -83,6 +95,9 @@ type Person = {
   lastName: string;
   jobTitle?: string;
   email?: string;
+  phone?: string;
+  phoneType?: string;
+  linkedinUrl?: string;
   sourceUrl?: string;
   score: number;
   reasons: string[];
@@ -123,6 +138,19 @@ const splitList = (text: string) =>
 const personName = (person: Person) => `${person.firstName} ${person.lastName}`;
 const formatPattern = (pattern: string, domain: string) =>
   `${pattern}@${domain}`;
+const PHONE_LABELS: Record<string, string> = {
+  mobile: "Mobile",
+  landline: "Landline",
+  toll_free: "Toll-free",
+  main: "Main line",
+  whatsapp: "WhatsApp",
+};
+const phoneLabel = (phone: { type?: string; label?: string }) =>
+  [phone.label, phone.type === "phone" ? "" : phone.type]
+    .filter(Boolean)
+    .map((key) => PHONE_LABELS[key as string] || (key as string))
+    .map((text) => text.charAt(0).toUpperCase() + text.slice(1))
+    .join(" · ");
 
 function scoreStyle(score: number) {
   if (score >= 80) return "bg-emerald-500/10 text-emerald-400";
@@ -352,8 +380,9 @@ function NewSearchModal({
             </div>
             <p className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-[11px] leading-5 text-zinc-400">
               We read each company&apos;s public team, leadership and contact
-              pages. People are listed when they are named there, and an email
-              is only filled in when it is published on the site.
+              pages. People are listed when they are named there, and an email,
+              phone number or LinkedIn profile is only filled in when the site
+              lists it with that person.
             </p>
             <div className="flex justify-end pt-2">
               <button
@@ -583,9 +612,9 @@ function NewSearchModal({
                 </p>
                 <p className="mt-1">
                   Companies are suggested by Gemini and then checked against
-                  their own public website. Work emails are only kept when they
-                  are published on that website, and every match shows the page
-                  it came from.
+                  their own public website. Work emails, phone numbers and
+                  LinkedIn profiles are only kept when they are published on
+                  that website, and every match shows the page it came from.
                 </p>
               </div>
             )}
@@ -788,6 +817,59 @@ function CompanyCard({
           . Confirm an address before you use it.
         </p>
       )}
+      {Boolean(
+        company.phones?.length ||
+          company.emails?.length ||
+          company.linkedinUrl,
+      ) && (
+        <div className="mt-3 space-y-1.5 text-xs text-zinc-300">
+          {company.phones?.map((phone) => (
+            <p key={phone.value} className="flex flex-wrap items-center gap-2">
+              <Phone className="h-3.5 w-3.5 text-zinc-500" />
+              <a href={`tel:${phone.value}`} className="hover:underline">
+                {phone.value}
+              </a>
+              {phoneLabel(phone) && (
+                <span className="text-zinc-500">{phoneLabel(phone)}</span>
+              )}
+              <a
+                href={phone.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 hover:underline"
+              >
+                source
+              </a>
+            </p>
+          ))}
+          {company.emails?.map((email) => (
+            <p key={email.value} className="flex flex-wrap items-center gap-2">
+              <Mail className="h-3.5 w-3.5 text-zinc-500" />
+              <a href={`mailto:${email.value}`} className="hover:underline">
+                {email.value}
+              </a>
+              <a
+                href={email.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 hover:underline"
+              >
+                source
+              </a>
+            </p>
+          ))}
+          {company.linkedinUrl && (
+            <a
+              href={company.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-indigo-400 hover:underline"
+            >
+              LinkedIn page <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      )}
       {company.criteria.length > 0 && (
         <ul className="mt-3 space-y-1.5">
           {company.criteria.map((criterion) => (
@@ -872,6 +954,16 @@ function PersonRow({
       <td className="px-3 py-3">
         <p className="font-semibold text-white">{personName(person)}</p>
         <p className="text-zinc-500">{person.jobTitle || "—"}</p>
+        {person.linkedinUrl && (
+          <a
+            href={person.linkedinUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-1 text-indigo-400 hover:underline"
+          >
+            LinkedIn <ExternalLink className="h-3 w-3" />
+          </a>
+        )}
       </td>
       <td className="px-3 py-3">
         <p>{person.companyName}</p>
@@ -904,6 +996,22 @@ function PersonRow({
               </p>
             )}
           </div>
+        ) : (
+          <span className="text-zinc-500">—</span>
+        )}
+      </td>
+      <td className="px-3 py-3">
+        {person.phone ? (
+          <>
+            <a href={`tel:${person.phone}`} className="hover:underline">
+              {person.phone}
+            </a>
+            {phoneLabel({ type: person.phoneType }) && (
+              <p className="text-zinc-500">
+                {phoneLabel({ type: person.phoneType })}
+              </p>
+            )}
+          </>
         ) : (
           <span className="text-zinc-500">—</span>
         )}
@@ -1202,6 +1310,7 @@ export default function ProspectsPage() {
                 {search.counts?.qualified ?? 0} qualified ·{" "}
                 {search.counts?.people ?? 0} people ·{" "}
                 {search.counts?.withEmail ?? 0} with email ·{" "}
+                {search.counts?.withPhone ?? 0} with phone ·{" "}
                 {new Date(search.createdAt).toLocaleDateString()}
               </p>
             </button>
@@ -1286,6 +1395,7 @@ export default function ProspectsPage() {
               <span>
                 → {selected.counts?.withEmail ?? 0} with a published email
               </span>
+              <span>· {selected.counts?.withPhone ?? 0} with a phone</span>
             </div>
             {selected.note && (
               <p className="mt-2 text-xs text-amber-400">{selected.note}</p>
@@ -1388,13 +1498,14 @@ export default function ProspectsPage() {
                 </p>
               ) : (
                 <div className="overflow-x-auto rounded-2xl border border-zinc-800">
-                  <table className="w-full min-w-[760px] text-left">
+                  <table className="w-full min-w-220 text-left">
                     <thead className="text-[11px] uppercase tracking-wider text-zinc-500">
                       <tr>
                         <th className="w-10 px-3 py-2" />
                         <th className="px-3 py-2">Person</th>
                         <th className="px-3 py-2">Company</th>
                         <th className="px-3 py-2">Email</th>
+                        <th className="px-3 py-2">Phone</th>
                         {!lookup && <th className="px-3 py-2">Match</th>}
                         <th className="px-3 py-2">Found on</th>
                         <th className="px-3 py-2" />
