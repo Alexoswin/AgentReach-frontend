@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LandingPage from './LandingPage';
+import AdSenseScript from '@/components/AdSenseScript';
 import { pageMetadata } from '@/lib/seo';
 import { REPOS, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 
@@ -26,6 +27,7 @@ const STRUCTURED_DATA = {
 export default function Home() {
   return (
     <>
+      <AdSenseScript />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
