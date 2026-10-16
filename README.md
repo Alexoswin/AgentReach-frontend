@@ -186,7 +186,7 @@ NEXT_PUBLIC_COGNITO_CLIENT_ID=2s32tm07mrvhfugpa5gl35uana
 
 Google sign-in uses the `reachconvert-users` Cognito user pool in `ap-south-1`
 with Google as its identity provider. The pool, app client and domain are set up
-already; [`deploy/cognito-google-sso.sh`](https://github.com/Alexoswin/AgentReach-backend/blob/main/deploy/cognito-google-sso.sh)
+already; [`deploy/cognito-google-sso.sh`](https://github.com/OutReachAgent/AgentReach-backend/blob/main/deploy/cognito-google-sso.sh)
 in the backend repo connects the Google OAuth client. The Google OAuth client
 needs `https://reachconvert-auth.auth.ap-south-1.amazoncognito.com/oauth2/idpresponse`
 as an authorized redirect URI, and each site origin's `/auth/callback` must be an

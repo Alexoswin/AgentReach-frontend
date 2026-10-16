@@ -25,11 +25,11 @@ export const PORTFOLIO_URL = 'https://www.oswinalex.site/';
 export const REPOS = {
   frontend: {
     name: 'AgentReach-frontend',
-    url: 'https://github.com/Alexoswin/AgentReach-frontend',
+    url: 'https://github.com/OutReachAgent/AgentReach-frontend',
   },
   backend: {
     name: 'AgentReach-backend',
-    url: 'https://github.com/Alexoswin/AgentReach-backend',
+    url: 'https://github.com/OutReachAgent/AgentReach-backend',
   },
 } as const;
 
