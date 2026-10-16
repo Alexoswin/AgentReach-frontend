@@ -279,19 +279,18 @@ export default function LandingPage() {
 
             <Reveal delay={80}>
               <h1 className="sig-display mt-6 text-4xl font-extrabold leading-[1.02] text-white sm:text-6xl lg:text-7xl">
-                AI calling and email automation for{' '}
+                Turn cold outreach into{' '}
                 <span className="sig-glow animate-gradient bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  booked conversations
+                  booked meetings
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
               <p className="mt-6 max-w-xl text-base leading-7 text-zinc-400 sm:text-lg">
-                ReachConvert is an open-source outreach platform that combines AI calling agents,
-                automated outbound calls, personalized email automation, and signal-triggered
-                campaigns with real-time analytics — so your team can reach more people and convert
-                more replies.
+                AI voice agents call your leads while personalized emails land in their inbox —
+                all triggered by real buying signals and run from one workspace. Open source, live
+                in minutes.
               </p>
             </Reveal>
 
